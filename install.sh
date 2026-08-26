@@ -6,8 +6,8 @@ if [ -z "${BASH_VERSION:-}" ]; then
     exec /bin/bash "$0" "$@"
 fi
 
-REPO="${REPO:-ashtanko/ubuntu-post-install}"
-PREFIX="${PREFIX:-$HOME/.local/share/ubuntu-post-install}"
+REPO="${REPO:-ashtanko/fedora-post-install}"
+PREFIX="${PREFIX:-$HOME/.local/share/fedora-post-install}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -80,11 +80,11 @@ is_semver "$SEMVER" || {
     exit 2
 }
 
-TARBALL="ubuntu-post-install-${SEMVER}.tar.gz"
+TARBALL="fedora-post-install-${SEMVER}.tar.gz"
 BASE_URL="${RELEASE_BASE_URL:-https://github.com/${REPO}/releases/download/${TAG}}"
 BASE_URL="${BASE_URL%/}"
 
-info "Installing ubuntu-post-install ${TAG}"
+info "Installing fedora-post-install ${TAG}"
 info "Source: ${BASE_URL}"
 
 curl -fsSL --retry 3 --retry-all-errors -o "$TMP/$TARBALL"   "$BASE_URL/$TARBALL"
@@ -101,10 +101,10 @@ success "Checksum verified"
 
 INSTALL_DIR="$PREFIX/$SEMVER"
 mkdir -p "$INSTALL_DIR"
-# Strip the top-level ubuntu-post-install-<version>/ directory from the tarball.
+# Strip the top-level fedora-post-install-<version>/ directory from the tarball.
 tar -xzf "$TMP/$TARBALL" -C "$INSTALL_DIR" --strip-components=1
 
-LINK="$BIN_DIR/ubuntu-post-install"
+LINK="$BIN_DIR/fedora-post-install"
 mkdir -p "$BIN_DIR"
 
 if [[ -e "$LINK" || -L "$LINK" ]]; then
@@ -119,7 +119,7 @@ ln -s "$INSTALL_DIR/setup.sh" "$LINK"
 
 success "Installed to $INSTALL_DIR"
 success "Symlink: $LINK -> $INSTALL_DIR/setup.sh"
-info "Configuration: ${UBUNTU_POST_INSTALL_CONFIG:-$HOME/.env-ubuntu-post-install}"
+info "Configuration: ${FEDORA_POST_INSTALL_CONFIG:-$HOME/.env-fedora-post-install}"
 
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
@@ -129,9 +129,9 @@ esac
 cat <<EOF
 
   Next steps:
-    1. (optional) cp $INSTALL_DIR/.env.example ${UBUNTU_POST_INSTALL_CONFIG:-$HOME/.env-ubuntu-post-install}
-    2. ubuntu-post-install --version
-    3. ubuntu-post-install            # launches the full-screen terminal installer
-       ubuntu-post-install --classic  # optional classic Bash menu
+    1. (optional) cp $INSTALL_DIR/.env.example ${FEDORA_POST_INSTALL_CONFIG:-$HOME/.env-fedora-post-install}
+    2. fedora-post-install --version
+    3. fedora-post-install            # launches the full-screen terminal installer
+       fedora-post-install --classic  # optional classic Bash menu
 
 EOF

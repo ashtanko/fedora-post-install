@@ -33,7 +33,7 @@ BEFORE_VERSION=$("$JUST_BIN" --version 2>/dev/null | head -1 || true)
 echo "🚀 Updating just..."
 echo "   Before: ${BEFORE_VERSION:-version unknown}"
 
-UPI_JUST_UPDATE=1 /bin/bash "$REPO_ROOT/tools/just.sh"
+FPI_JUST_UPDATE=1 /bin/bash "$REPO_ROOT/tools/just.sh"
 
 if [ ! -x "$JUST_BIN" ]; then
     echo "❌ just was not found at $JUST_BIN after the update" >&2

@@ -453,7 +453,7 @@ test_prompt_runner_config() {
     local bin="$TEST_TMP/prompt-bin"
     local output="$TEST_TMP/prompt.out"
     mkdir -p "$home" "$bin"
-    printf '%s\n' 'PROMPT_BACKEND=from-user-config' > "$home/.env-ubuntu-post-install"
+    printf '%s\n' 'PROMPT_BACKEND=from-user-config' > "$home/.env-fedora-post-install"
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 exit 99

@@ -80,7 +80,7 @@ jobs:
           SEMVER: ${{ steps.ver.outputs.semver }}
         run: |
           set -euo pipefail
-          STAGE="dist/ubuntu-post-install-${SEMVER}"
+          STAGE="dist/fedora-post-install-${SEMVER}"
           mkdir -p "$STAGE"
           # Copy repo contents excluding VCS, IDE, build, and local config
           rsync -a \
@@ -101,10 +101,10 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          tar -czf "ubuntu-post-install-${SEMVER}.tar.gz" "ubuntu-post-install-${SEMVER}"
-          rm -rf "ubuntu-post-install-${SEMVER}"
+          tar -czf "fedora-post-install-${SEMVER}.tar.gz" "fedora-post-install-${SEMVER}"
+          rm -rf "fedora-post-install-${SEMVER}"
           cp ../install.sh ./install.sh
-          sha256sum "ubuntu-post-install-${SEMVER}.tar.gz" install.sh > SHA256SUMS
+          sha256sum "fedora-post-install-${SEMVER}.tar.gz" install.sh > SHA256SUMS
 
       - name: Verify release artifact
         env:
@@ -117,7 +117,7 @@ jobs:
         with:
           name: release-${{ steps.ver.outputs.semver }}
           path: |
-            dist/ubuntu-post-install-${{ steps.ver.outputs.semver }}.tar.gz
+            dist/fedora-post-install-${{ steps.ver.outputs.semver }}.tar.gz
             dist/install.sh
             dist/SHA256SUMS
 
@@ -129,6 +129,6 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ steps.ver.outputs.prerelease }}
           files: |
-            dist/ubuntu-post-install-${{ steps.ver.outputs.semver }}.tar.gz
+            dist/fedora-post-install-${{ steps.ver.outputs.semver }}.tar.gz
             dist/install.sh
             dist/SHA256SUMS

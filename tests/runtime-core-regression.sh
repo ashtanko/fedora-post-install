@@ -14,8 +14,8 @@ assert_contains() {
 
 test_setup_summary() {
     local root="$TEST_ROOT/setup" home="$TEST_ROOT/setup/home" fakebin="$TEST_ROOT/setup/bin"
-    mkdir -p "$home/.cache/ubuntu-setup" "$fakebin"
-    touch "$home/.cache/ubuntu-setup/essentials_auto-updates.sh.done"
+    mkdir -p "$home/.cache/fedora-setup" "$fakebin"
+    touch "$home/.cache/fedora-setup/essentials_auto-updates.sh.done"
     cat > "$fakebin/clear" <<'EOF'
 #!/bin/bash
 exit 0

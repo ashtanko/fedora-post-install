@@ -17,7 +17,7 @@ source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&
 
 echo "🚀 Installing lazydocker (terminal UI for Docker)..."
 
-if command -v lazydocker &>/dev/null && [ "${UPI_LAZYDOCKER_UPDATE:-0}" != "1" ]; then
+if command -v lazydocker &>/dev/null && [ "${FPI_LAZYDOCKER_UPDATE:-0}" != "1" ]; then
     echo "✅ lazydocker already installed ($(lazydocker --version 2>/dev/null | head -1))"
     exit 0
 fi

@@ -30,7 +30,7 @@ if ! [[ "$TIMEOUT" =~ ^-?[0-9]+$ ]]; then
     exit 1
 fi
 
-DROPIN_FILE="/etc/sudoers.d/99-upi-timeout"
+DROPIN_FILE="/etc/sudoers.d/99-fpi-timeout"
 DESIRED_CONFIG="Defaults timestamp_timeout=$TIMEOUT"
 
 if [ -f "$DROPIN_FILE" ] && printf '%s\n' "$DESIRED_CONFIG" | sudo cmp -s - "$DROPIN_FILE"; then

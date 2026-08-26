@@ -144,12 +144,12 @@ func parseOptions(args []string) (options, bool, error) {
 		return options{}, false, fmt.Errorf("resolve home directory: %w", err)
 	}
 
-	flags := flag.NewFlagSet("ubuntu-post-install-tui", flag.ContinueOnError)
+	flags := flag.NewFlagSet("fedora-post-install-tui", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	root := flags.String("root", defaultRoot, "installer repository root")
 	catalogPath := flags.String("catalog", "", "installer catalog")
-	markerDir := flags.String("marker-dir", filepath.Join(defaultHome, ".cache", "ubuntu-setup"), "completion marker directory")
-	logFile := flags.String("log-file", filepath.Join(defaultHome, "ubuntu-setup.log"), "installer log")
+	markerDir := flags.String("marker-dir", filepath.Join(defaultHome, ".cache", "fedora-setup"), "completion marker directory")
+	logFile := flags.String("log-file", filepath.Join(defaultHome, "fedora-setup.log"), "installer log")
 	version := flags.String("version", "dev", "installer version")
 	checkOnly := flags.Bool("check", false, "validate the catalog and exit")
 	if err := flags.Parse(args); err != nil {
@@ -453,7 +453,7 @@ func (m model) startNextScript() (tea.Model, tea.Cmd) {
 		started := time.Now()
 		command := exec.Command("/bin/bash", filepath.Join(m.opts.root, "setup.sh"), "--run-item", m.items[index].script)
 		command.Dir = m.opts.root
-		command.Env = append(os.Environ(), "UPI_PROGRESS="+strconv.Itoa(m.queuePosition+1)+"/"+strconv.Itoa(len(m.queue)))
+		command.Env = append(os.Environ(), "FPI_PROGRESS="+strconv.Itoa(m.queuePosition+1)+"/"+strconv.Itoa(len(m.queue)))
 		return m, tea.ExecProcess(command, func(err error) tea.Msg {
 			return scriptFinishedMsg{index: index, err: err, duration: time.Since(started)}
 		})
@@ -550,7 +550,7 @@ func (m model) View() tea.View {
 	}
 	view := tea.NewView(content)
 	view.AltScreen = true
-	view.WindowTitle = "Ubuntu Post Install"
+	view.WindowTitle = "Fedora Post Install"
 	return view
 }
 
@@ -570,7 +570,7 @@ func (m model) selectionView() string {
 	}
 
 	var body strings.Builder
-	body.WriteString(headerStyle.Render("UBUNTU POST INSTALL"))
+	body.WriteString(headerStyle.Render("FEDORA POST INSTALL"))
 	body.WriteString("  ")
 	body.WriteString(mutedStyle.Render("v" + m.opts.version))
 	body.WriteString("\n")

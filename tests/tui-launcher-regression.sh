@@ -32,7 +32,7 @@ chmod +x "$FAKE_BIN/bash"
 
 HOME="$HOME_DIR" PATH="$FAKE_BIN:$PATH" SETUP_LOG_FILE="$TEST_ROOT/setup.log" \
     /bin/bash "$REPO_ROOT/setup.sh" --run-item essentials/system-info.sh >/dev/null
-[ -f "$HOME_DIR/.cache/ubuntu-setup/essentials_system-info.sh.done" ] \
+[ -f "$HOME_DIR/.cache/fedora-setup/essentials_system-info.sh.done" ] \
     || fail "successful TUI runner item did not create its marker"
 
 # A completed item must skip without invoking the now-failing child stub.
@@ -58,7 +58,7 @@ unknown_status=$?
 set -e
 
 [ "$failure_status" -eq 1 ] || fail "failed TUI runner item returned $failure_status instead of 1"
-[ ! -f "$HOME_DIR/.cache/ubuntu-setup/essentials_swap.sh.done" ] \
+[ ! -f "$HOME_DIR/.cache/fedora-setup/essentials_swap.sh.done" ] \
     || fail "failed TUI runner item created a completion marker"
 [ "$unknown_status" -eq 2 ] || fail "unknown TUI runner item returned $unknown_status instead of 2"
 

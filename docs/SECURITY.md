@@ -29,13 +29,13 @@ If you SSH into the box, the OpenSSH `limit` rule is permissive enough for norma
 
 ## Sudo timestamp timeout ([system/sudoers.sh](../system/sudoers.sh))
 
-Off by default — the script only acts when you set `SUDO_TIMESTAMP_TIMEOUT_MINUTES` in `.env`. When set, it writes a single `Defaults timestamp_timeout=<N>` line to `/etc/sudoers.d/99-upi-timeout`, validated with `visudo -cf` *before* it's installed so a bad value can't lock you out of `sudo`.
+Off by default — the script only acts when you set `SUDO_TIMESTAMP_TIMEOUT_MINUTES` in `.env`. When set, it writes a single `Defaults timestamp_timeout=<N>` line to `/etc/sudoers.d/99-fpi-timeout`, validated with `visudo -cf` *before* it's installed so a bad value can't lock you out of `sudo`.
 
 This script intentionally does **not** offer a passwordless-sudo option. Widening a sudoers rule is a bigger security trade-off than an idempotent provisioning script should make silently on your behalf — do that by hand if you decide you want it, with `visudo`.
 
 ## DNS resolvers ([system/hosts-dns.sh](../system/hosts-dns.sh))
 
-Points `systemd-resolved` at third-party resolvers (default: Cloudflare `1.1.1.1` / Quad9 `9.9.9.9`) via a drop-in at `/etc/systemd/resolved.conf.d/upi-dns.conf`. That means DNS queries — effectively every hostname you resolve — now go to those resolvers instead of your network's default (e.g. your ISP or VPN). Set `DNS_SERVERS`/`DNS_FALLBACK_SERVERS` to resolvers you trust, or leave the script out of your run entirely if you want to keep whatever DNS your network hands out via DHCP/NetworkManager. The script no-ops on systems that don't run `systemd-resolved` rather than fighting the existing resolver setup.
+Points `systemd-resolved` at third-party resolvers (default: Cloudflare `1.1.1.1` / Quad9 `9.9.9.9`) via a drop-in at `/etc/systemd/resolved.conf.d/fpi-dns.conf`. That means DNS queries — effectively every hostname you resolve — now go to those resolvers instead of your network's default (e.g. your ISP or VPN). Set `DNS_SERVERS`/`DNS_FALLBACK_SERVERS` to resolvers you trust, or leave the script out of your run entirely if you want to keep whatever DNS your network hands out via DHCP/NetworkManager. The script no-ops on systems that don't run `systemd-resolved` rather than fighting the existing resolver setup.
 
 ## GPG ([system/gpg.sh](../system/gpg.sh))
 

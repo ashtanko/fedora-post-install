@@ -34,7 +34,7 @@ BEFORE_VERSION=$("$NVIM_MANAGED_BIN" --version 2>/dev/null | head -1 || true)
 echo "🚀 Updating Neovim..."
 echo "   Before: ${BEFORE_VERSION:-version unknown}"
 
-UPI_NVIM_UPDATE=1 /bin/bash "$REPO_ROOT/ide/nvim.sh"
+FPI_NVIM_UPDATE=1 /bin/bash "$REPO_ROOT/ide/nvim.sh"
 
 if [ ! -x "$NVIM_MANAGED_BIN" ]; then
     echo "❌ Neovim is no longer available after the update" >&2

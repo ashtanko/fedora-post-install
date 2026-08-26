@@ -31,7 +31,7 @@ if ! [[ "$JOURNAL_MAX_USE" =~ ^[0-9]+(%|[KMGT]?)$ ]]; then
 fi
 
 DROPIN_DIR="/etc/systemd/journald.conf.d"
-DROPIN_FILE="$DROPIN_DIR/99-upi-journal.conf"
+DROPIN_FILE="$DROPIN_DIR/99-fpi-journal.conf"
 
 DESIRED_CONFIG="[Journal]
 SystemMaxUse=$JOURNAL_MAX_USE"

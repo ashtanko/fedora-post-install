@@ -1,4 +1,4 @@
-# ubuntu-post-install — developer convenience targets.
+# fedora-post-install — developer convenience targets.
 # Run `make help` for the list. UBUNTU and SCRIPT are optional overrides.
 
 SHELL  := /bin/bash
@@ -8,7 +8,7 @@ VERSION ?=
 export VERSION
 
 .DEFAULT_GOAL := help
-.PHONY: help lint manifest config-regression pkg-regression runtime-regression installer-regression \
+.PHONY: help lint manifest config-regression pkg-regression identity-regression runtime-regression installer-regression \
         contract-regression regressions check smoke smoke-all \
         idempotency idempotency-all setup version tui-test tui-build tag dist release-artifact \
         release-dry-run clean clean-markers
@@ -36,6 +36,9 @@ config-regression: ## Verify config precedence and secret export isolation
 pkg-regression: ## Verify Fedora package helper behavior and repository trust checks
 	bash tests/pkg-regression.sh
 
+identity-regression: ## Verify the Fedora project identity is used consistently
+	bash tests/identity-regression.sh
+
 runtime-regression: ## Verify runtime safety and transactional install behavior
 	bash tests/runtime-core-regression.sh
 
@@ -51,19 +54,19 @@ regressions: ## Run all fast local regression checks
 check: lint manifest regressions tui-test ## Run all static and regression checks
 
 tui-test: ## Format-check, test, vet, and compile the terminal UI
-	@test -z "$$(gofmt -l cmd/ubuntu-post-install-tui)" \
-		|| { echo "Go files need formatting:"; gofmt -l cmd/ubuntu-post-install-tui; exit 1; }
-	go test ./cmd/ubuntu-post-install-tui
-	go vet ./cmd/ubuntu-post-install-tui
-	go build -o /tmp/ubuntu-post-install-tui-check ./cmd/ubuntu-post-install-tui
-	/tmp/ubuntu-post-install-tui-check --root . --catalog config/catalog.txt --check
+	@test -z "$$(gofmt -l cmd/fedora-post-install-tui)" \
+		|| { echo "Go files need formatting:"; gofmt -l cmd/fedora-post-install-tui; exit 1; }
+	go test ./cmd/fedora-post-install-tui
+	go vet ./cmd/fedora-post-install-tui
+	go build -o /tmp/fedora-post-install-tui-check ./cmd/fedora-post-install-tui
+	/tmp/fedora-post-install-tui-check --root . --catalog config/catalog.txt --check
 
 tui-build: ## Build release TUI binaries for Linux amd64 and arm64
 	@mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' \
-		-o bin/ubuntu-post-install-tui-amd64 ./cmd/ubuntu-post-install-tui
+		-o bin/fedora-post-install-tui-amd64 ./cmd/fedora-post-install-tui
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags='-s -w' \
-		-o bin/ubuntu-post-install-tui-arm64 ./cmd/ubuntu-post-install-tui
+		-o bin/fedora-post-install-tui-arm64 ./cmd/fedora-post-install-tui
 
 # ── Docker tests ─────────────────────────────────────────────────────────────
 
@@ -93,8 +96,8 @@ setup: ## Launch the interactive installer locally
 version: ## Print the version embedded in setup.sh
 	@bash setup.sh --version
 
-clean-markers: ## Reset ~/.cache/ubuntu-setup/ markers (force re-run on next setup)
-	rm -rf $(HOME)/.cache/ubuntu-setup
+clean-markers: ## Reset ~/.cache/fedora-setup/ markers (force re-run on next setup)
+	rm -rf $(HOME)/.cache/fedora-setup
 	@echo "  ✅ marker cache cleared"
 
 # ── Release ──────────────────────────────────────────────────────────────────
@@ -108,7 +111,7 @@ tag: ## Cut and push a release tag (make tag VERSION=1.0.0)
 	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
 	git push origin "v$(VERSION)"
 	@echo "  ✅ pushed v$(VERSION) — watch the workflow at:"
-	@echo "  https://github.com/ashtanko/ubuntu-post-install/actions/workflows/release.yml"
+	@echo "  https://github.com/ashtanko/fedora-post-install/actions/workflows/release.yml"
 
 dist: clean ## Build the release tarball locally (mirrors release.yml; no upload)
 	@$(MAKE) tui-build
@@ -117,17 +120,17 @@ dist: clean ## Build the release tarball locally (mirrors release.yml; no upload
 		|| git describe --tags --abbrev=0 2>/dev/null \
 		|| echo "v0.0.0-local"); \
 	SEMVER=$${VERSION_LOCAL#v}; \
-	STAGE="dist/ubuntu-post-install-$$SEMVER"; \
+	STAGE="dist/fedora-post-install-$$SEMVER"; \
 	echo "==> staging $$STAGE"; \
 	mkdir -p "$$STAGE"; \
 	rsync -a --exclude='.git/' --exclude='.github/' --exclude='.idea/' \
 	         --exclude='.omx/' --exclude='dist/' --exclude='.env' ./ "$$STAGE/"; \
 	sed -i "s/^VERSION=.*/VERSION=\"$$SEMVER\"/" "$$STAGE/setup.sh"; \
 	echo "$$SEMVER" > "$$STAGE/VERSION"; \
-	cd dist && tar -czf "ubuntu-post-install-$$SEMVER.tar.gz" "ubuntu-post-install-$$SEMVER"; \
-	rm -rf "ubuntu-post-install-$$SEMVER"; \
+	cd dist && tar -czf "fedora-post-install-$$SEMVER.tar.gz" "fedora-post-install-$$SEMVER"; \
+	rm -rf "fedora-post-install-$$SEMVER"; \
 	cp ../install.sh ./install.sh; \
-	sha256sum "ubuntu-post-install-$$SEMVER.tar.gz" install.sh > SHA256SUMS; \
+	sha256sum "fedora-post-install-$$SEMVER.tar.gz" install.sh > SHA256SUMS; \
 	echo "==> dist/"; ls -la
 
 release-artifact: dist ## Build and verify the local release artifact set
@@ -140,4 +143,4 @@ release-dry-run: check release-artifact ## Run checks and verify a tarball — n
 
 clean: ## Remove build artifacts
 	rm -rf dist/
-	rm -f bin/ubuntu-post-install-tui-amd64 bin/ubuntu-post-install-tui-arm64
+	rm -f bin/fedora-post-install-tui-amd64 bin/fedora-post-install-tui-arm64

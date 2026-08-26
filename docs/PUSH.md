@@ -1,6 +1,6 @@
 # Publishing a new release
 
-This page describes how to cut a new versioned release of `ubuntu-post-install`. Releases are git-tag driven — pushing a tag matching `v<major>.<minor>.<patch>` (optionally with a `-suffix`) triggers [.github/workflows/release.yml](../.github/workflows/release.yml), which lints, runs the Docker smoke matrix, builds the artifacts, and publishes a GitHub Release.
+This page describes how to cut a new versioned release of `fedora-post-install`. Releases are git-tag driven — pushing a tag matching `v<major>.<minor>.<patch>` (optionally with a `-suffix`) triggers [.github/workflows/release.yml](../.github/workflows/release.yml), which lints, runs the Docker smoke matrix, builds the artifacts, and publishes a GitHub Release.
 
 ## Versioning
 
@@ -42,12 +42,12 @@ That's it. Within ~5–15 minutes (depending on the Docker matrix), the workflow
 
 1. Run `make check`: shellcheck, manifest validation, and all local regressions.
 2. Run the smoke stage on Ubuntu 22.04, 24.04, and 26.04 in parallel.
-3. Stage `dist/ubuntu-post-install-<semver>/`, `sed`-replace `VERSION="dev"` in `setup.sh` with the tag, write a `VERSION` file.
-4. Build `dist/ubuntu-post-install-<semver>.tar.gz`, copy `install.sh` into `dist/`, and generate `dist/SHA256SUMS`.
+3. Stage `dist/fedora-post-install-<semver>/`, `sed`-replace `VERSION="dev"` in `setup.sh` with the tag, write a `VERSION` file.
+4. Build `dist/fedora-post-install-<semver>.tar.gz`, copy `install.sh` into `dist/`, and generate `dist/SHA256SUMS`.
 5. Verify checksums, archive paths, required runtime files, shell syntax, and both extracted and installed launcher behavior.
 6. Publish a GitHub Release with auto-generated notes and three attached files: the tarball, `install.sh`, and `SHA256SUMS`. Versions containing a prerelease suffix are marked as GitHub prereleases and do not replace `latest`.
 
-Watch progress at the [Actions tab](https://github.com/ashtanko/ubuntu-post-install/actions/workflows/release.yml).
+Watch progress at the [Actions tab](https://github.com/ashtanko/fedora-post-install/actions/workflows/release.yml).
 
 ## Dry-run a release (no tag)
 
@@ -65,16 +65,16 @@ After the workflow completes:
 TAG=v1.0.0
 
 # 1. Install via the new install.sh
-curl -fsSL "https://github.com/ashtanko/ubuntu-post-install/releases/download/${TAG}/install.sh" | bash
+curl -fsSL "https://github.com/ashtanko/fedora-post-install/releases/download/${TAG}/install.sh" | bash
 
 # 2. Confirm the embedded version
-~/.local/bin/ubuntu-post-install --version
-# → ubuntu-post-install 1.0.0
+~/.local/bin/fedora-post-install --version
+# → fedora-post-install 1.0.0
 
 # 3. Manually verify the checksum
 cd /tmp
-curl -LO "https://github.com/ashtanko/ubuntu-post-install/releases/download/${TAG}/SHA256SUMS"
-curl -LO "https://github.com/ashtanko/ubuntu-post-install/releases/download/${TAG}/ubuntu-post-install-${TAG#v}.tar.gz"
+curl -LO "https://github.com/ashtanko/fedora-post-install/releases/download/${TAG}/SHA256SUMS"
+curl -LO "https://github.com/ashtanko/fedora-post-install/releases/download/${TAG}/fedora-post-install-${TAG#v}.tar.gz"
 sha256sum -c SHA256SUMS
 ```
 

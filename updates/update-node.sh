@@ -45,8 +45,8 @@ restore_nvm_checkout() {
     return 1
 }
 BEFORE_VERSION=$(node --version 2>/dev/null || true)
-if [ -n "${UPI_NVM_LATEST_TAG:-}" ]; then
-    NVM_LATEST_TAG="$UPI_NVM_LATEST_TAG"
+if [ -n "${FPI_NVM_LATEST_TAG:-}" ]; then
+    NVM_LATEST_TAG="$FPI_NVM_LATEST_TAG"
 else
     GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
     # shellcheck source=lib/github.bash

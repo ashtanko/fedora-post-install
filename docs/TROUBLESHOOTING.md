@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common failures and how to recover from them. The full log is at `~/ubuntu-setup.log` (or `$SETUP_LOG_FILE`); start there for the actual error message.
+Common failures and how to recover from them. The full log is at `~/fedora-setup.log` (or `$SETUP_LOG_FILE`); start there for the actual error message.
 
 ## A script failed mid-run
 
@@ -17,7 +17,7 @@ bash dev/node.sh
 If a *successful* run set the wrong marker (e.g. you fixed an env var and want to re-run cleanly):
 
 ```bash
-rm ~/.cache/ubuntu-setup/dev_node.sh.done
+rm ~/.cache/fedora-setup/dev_node.sh.done
 bash setup.sh
 ```
 
@@ -28,14 +28,14 @@ See [SETUP.md](SETUP.md) for how marker files map to script paths.
 Markers track *successful invocation*, not the current state of the system. If you uninstalled a tool manually, or a partial reinstall left it broken:
 
 ```bash
-rm ~/.cache/ubuntu-setup/<category>_<name>.sh.done
+rm ~/.cache/fedora-setup/<category>_<name>.sh.done
 bash <category>/<name>.sh
 ```
 
 To wipe every marker and start fresh:
 
 ```bash
-rm -rf ~/.cache/ubuntu-setup/
+rm -rf ~/.cache/fedora-setup/
 ```
 
 ## `[[: not found` or `Bad substitution` when running a script
@@ -111,11 +111,11 @@ If a block is missing, the script likely exited before the append step. Re-run w
 
 That item already has a marker. Either:
 
-- Delete the marker (`rm ~/.cache/ubuntu-setup/<...>.done`) and re-run `setup.sh`, or
+- Delete the marker (`rm ~/.cache/fedora-setup/<...>.done`) and re-run `setup.sh`, or
 - Run the script directly with `bash <path>`, which ignores markers entirely.
 
 ## Still stuck
 
-1. Tail the log: `tail -200 ~/ubuntu-setup.log`.
+1. Tail the log: `tail -200 ~/fedora-setup.log`.
 2. Run the failing script standalone and watch the live output.
 3. Check the matching test in [tests/manifest.sh](../tests/manifest.sh) — the `compat` column flags scripts that aren't expected to work in certain environments (e.g. UFW / GNOME / systemd inside a container).

@@ -17,7 +17,7 @@ source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&
 
 echo "🚀 Installing just (command runner)..."
 
-if command -v just &>/dev/null && [ "${UPI_JUST_UPDATE:-0}" != "1" ]; then
+if command -v just &>/dev/null && [ "${FPI_JUST_UPDATE:-0}" != "1" ]; then
     echo "✅ just already installed ($(just --version 2>/dev/null | head -1))"
     exit 0
 fi

@@ -1,4 +1,4 @@
-module github.com/ashtanko/ubuntu-post-install
+module github.com/ashtanko/fedora-post-install
 
 go 1.25.0
 

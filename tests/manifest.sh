@@ -22,9 +22,9 @@ SCRIPTS=(
   "essentials/locale-timezone.sh|partial|TZ=Etc/UTC,LOCALE=en_US.UTF-8|[[ \$(locale -a) == *en_US.utf8* ]]|timedatectl needs systemd; locale-gen part works"
   "essentials/motd-news.sh|no|||/etc/default/motd-news and motd-news.timer aren't present in the minimal container base image"
   "essentials/swap.sh|no|||needs real block device + /etc/fstab persistence"
-  "essentials/sysctl-limits.sh|partial||grep -q 'fs.inotify.max_user_watches=524288' /etc/sysctl.d/99-upi-inotify.conf \&\& grep -q 'soft nofile 1048576' /etc/security/limits.d/99-upi-nofile.conf|/proc/sys is read-only in an unprivileged container; sysctl -p no-ops but the drop-in files still land and are verified|/etc/sysctl.d/99-upi-inotify.conf,/etc/security/limits.d/99-upi-nofile.conf"
+  "essentials/sysctl-limits.sh|partial||grep -q 'fs.inotify.max_user_watches=524288' /etc/sysctl.d/99-fpi-inotify.conf \&\& grep -q 'soft nofile 1048576' /etc/security/limits.d/99-fpi-nofile.conf|/proc/sys is read-only in an unprivileged container; sysctl -p no-ops but the drop-in files still land and are verified|/etc/sysctl.d/99-fpi-inotify.conf,/etc/security/limits.d/99-fpi-nofile.conf"
   "essentials/system-info.sh|yes||ls \$HOME/system-info-*.log >/dev/null|"
-  "essentials/fail2ban.sh|partial||grep -q 'maxretry = 5' /etc/fail2ban/jail.d/99-upi-sshd.local|no systemd to start the fail2ban service; the jail.d drop-in still lands and is verified|/etc/fail2ban/jail.d/99-upi-sshd.local"
+  "essentials/fail2ban.sh|partial||grep -q 'maxretry = 5' /etc/fail2ban/jail.d/99-fpi-sshd.local|no systemd to start the fail2ban service; the jail.d drop-in still lands and is verified|/etc/fail2ban/jail.d/99-fpi-sshd.local"
   "essentials/lynis.sh|yes||ls \$HOME/lynis-audit-*.log >/dev/null|"
 
   # system/
@@ -35,7 +35,7 @@ SCRIPTS=(
   "system/keyboard.sh|no|||keyd daemon needs /dev/uinput + systemd"
   "system/ntp.sh|partial||dpkg -s chrony &>/dev/null|systemd-timesyncd path needs systemd as PID 1; container run only exercises the chrony-install fallback"
   "system/ssh.sh|partial|GIT_EMAIL=ci@example.com|test -f \$HOME/.ssh/id_ed25519|may prompt for passphrase if interactive|\$HOME/.ssh"
-  "system/sudoers.sh|yes|SUDO_TIMESTAMP_TIMEOUT_MINUTES=15|sudo grep -q 'timestamp_timeout=15' /etc/sudoers.d/99-upi-timeout|"
+  "system/sudoers.sh|yes|SUDO_TIMESTAMP_TIMEOUT_MINUTES=15|sudo grep -q 'timestamp_timeout=15' /etc/sudoers.d/99-fpi-timeout|"
   "system/user-groups.sh|yes||grep -qw dialout <(sudo -u \$(id -un) id -nG) && grep -qw plugdev <(sudo -u \$(id -un) id -nG)|"
 
   # apps/

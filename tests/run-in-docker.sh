@@ -39,7 +39,7 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 1
 fi
 
-IMAGE="ubuntu-setup-test:${UBUNTU_VERSION}"
+IMAGE="fedora-setup-test:${UBUNTU_VERSION}"
 
 echo "🐳 Building image $IMAGE..."
 # CI sets DOCKER_BUILD_CACHE_DIR so the image's apt layer survives between runs;

@@ -104,3 +104,23 @@ func TestHelpers(t *testing.T) {
 		t.Fatalf("unexpected progress bar: %q", got)
 	}
 }
+
+func TestParseOptionsUsesFedoraDefaults(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	root := t.TempDir()
+
+	opts, checkOnly, err := parseOptions([]string{"--root", root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if checkOnly {
+		t.Fatal("default options unexpectedly enabled check-only mode")
+	}
+	if want := filepath.Join(home, ".cache", "fedora-setup"); opts.markerDir != want {
+		t.Fatalf("unexpected default marker directory: got %q, want %q", opts.markerDir, want)
+	}
+	if want := filepath.Join(home, "fedora-setup.log"); opts.logFile != want {
+		t.Fatalf("unexpected default log file: got %q, want %q", opts.logFile, want)
+	}
+}

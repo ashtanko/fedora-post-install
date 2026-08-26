@@ -33,7 +33,7 @@ BEFORE_VERSION=$("$LAZYDOCKER_BIN" --version 2>/dev/null | head -1 || true)
 echo "🚀 Updating lazydocker..."
 echo "   Before: ${BEFORE_VERSION:-version unknown}"
 
-UPI_LAZYDOCKER_UPDATE=1 /bin/bash "$REPO_ROOT/tools/lazydocker.sh"
+FPI_LAZYDOCKER_UPDATE=1 /bin/bash "$REPO_ROOT/tools/lazydocker.sh"
 
 if [ ! -x "$LAZYDOCKER_BIN" ]; then
     echo "❌ lazydocker was not found at $LAZYDOCKER_BIN after the update" >&2

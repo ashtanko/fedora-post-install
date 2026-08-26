@@ -9,7 +9,7 @@ source "$CONFIG_HELPER"
 load_config "$REPO_ROOT"
 ```
 
-For a source checkout, `.env` is gitignored and is a convenient repo-local config. Release installs advertise the stable user config path `~/.env-ubuntu-post-install` (override it with `UBUNTU_POST_INSTALL_CONFIG`). Copy [.env.example](../.env.example) to either location and edit. **No value is required** — scripts fall back to interactive prompts or sensible defaults.
+For a source checkout, `.env` is gitignored and is a convenient repo-local config. Release installs advertise the stable user config path `~/.env-fedora-post-install` (override it with `FEDORA_POST_INSTALL_CONFIG`). Copy [.env.example](../.env.example) to either location and edit. **No value is required** — scripts fall back to interactive prompts or sensible defaults.
 
 ## Variables
 
@@ -40,7 +40,7 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `DOCKER_PRUNE_IMAGES` | [tools/docker-maintenance.sh](../tools/docker-maintenance.sh) | `dangling` | `all` also removes tagged images no container references |
 | `DOCKER_PRUNE_VOLUMES` | [tools/docker-maintenance.sh](../tools/docker-maintenance.sh) | `no` | Opt-in: `yes` deletes unused volumes, which may hold real data |
 | `DOCKER_PRUNE_UNTIL` | [tools/docker-maintenance.sh](../tools/docker-maintenance.sh) | `168h` | Age cutoff for containers, networks, images, and build cache |
-| `SETUP_LOG_FILE` | [setup.sh](../setup.sh) | `$HOME/ubuntu-setup.log` | Where the master installer appends timestamped output |
+| `SETUP_LOG_FILE` | [setup.sh](../setup.sh) | `$HOME/fedora-setup.log` | Where the master installer appends timestamped output |
 | `SWAP_SIZE_GB` | [essentials/swap.sh](../essentials/swap.sh) | `4` | Skipped if any swap is already active |
 | `SWAP_FILE` / `FSTAB_FILE` | [essentials/swap.sh](../essentials/swap.sh) | `/swapfile` / `/etc/fstab` | Overrideable paths also support isolated regression testing |
 | `ENABLE_UFW` | [essentials/firewall.sh](../essentials/firewall.sh) | `yes` | Set `no` to skip firewall configuration |
@@ -92,7 +92,7 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 ## Behaviour notes
 
 - **Identity propagation** — when `GIT_NAME` and `GIT_EMAIL` are set, [system/gpg.sh](../system/gpg.sh) generates the key non-interactively (RSA 4096, no passphrase). Without them it falls back to the interactive `gpg --full-generate-key` wizard.
-- **Order of precedence** — inherited environment variables take precedence over repo `.env`, which takes precedence over `~/.env-ubuntu-post-install`. Inline overrides work: `GIT_EDITOR=vim bash system/base.sh`.
+- **Order of precedence** — inherited environment variables take precedence over repo `.env`, which takes precedence over `~/.env-fedora-post-install`. Inline overrides work: `GIT_EDITOR=vim bash system/base.sh`.
 - **Export isolation** — values read only from config files remain shell variables and are not automatically inherited by child processes. Variables that were already exported remain exported.
 - **Booleans** — feature flags use string `yes` / `no`, not `true` / `false` or numeric values.
 - **Paths with `$HOME`** — quote them; config files are sourced as Bash, so normal parameter expansion applies.

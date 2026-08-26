@@ -1,17 +1,17 @@
-# ubuntu-post-install
+# fedora-post-install
 
 Automated shell scripts to provision a fresh Ubuntu installation with a developer's preferred toolchain — runtimes, editors, CLI tools, AI tooling, and OS hardening — through a single interactive installer.
 
-[![Lint](https://github.com/ashtanko/ubuntu-post-install/actions/workflows/lint.yml/badge.svg)](https://github.com/ashtanko/ubuntu-post-install/actions/workflows/lint.yml)
-[![Docker tests](https://github.com/ashtanko/ubuntu-post-install/actions/workflows/docker-tests.yml/badge.svg)](https://github.com/ashtanko/ubuntu-post-install/actions/workflows/docker-tests.yml)
+[![Lint](https://github.com/ashtanko/fedora-post-install/actions/workflows/lint.yml/badge.svg)](https://github.com/ashtanko/fedora-post-install/actions/workflows/lint.yml)
+[![Docker tests](https://github.com/ashtanko/fedora-post-install/actions/workflows/docker-tests.yml/badge.svg)](https://github.com/ashtanko/fedora-post-install/actions/workflows/docker-tests.yml)
 
 ## Highlights
 
 - **Full-screen terminal installer** — a responsive ANSI interface with categorized selection, progress, retry, and a final result summary.
 - **Classic fallback** — redirected output, unsupported terminals, and `--classic` keep the original Bash menu available.
 - **Re-run tested** — runnable container-compatible scripts execute twice and must preserve configured state snapshots.
-- **Configurable** — inherited environment variables override repo `.env`, which overrides `~/.env-ubuntu-post-install`.
-- **Resumable** — completed steps are tracked under `~/.cache/ubuntu-setup/`; full timestamped log at `~/ubuntu-setup.log`.
+- **Configurable** — inherited environment variables override repo `.env`, which overrides `~/.env-fedora-post-install`.
+- **Resumable** — completed steps are tracked under `~/.cache/fedora-setup/`; full timestamped log at `~/fedora-setup.log`.
 - **Tested** — Docker smoke and idempotency jobs cover Ubuntu 22.04, 24.04, and 26.04 where scripts are container-compatible.
 
 ## Requirements
@@ -28,24 +28,24 @@ Automated shell scripts to provision a fresh Ubuntu installation with a develope
 Install the latest release without cloning the repo:
 
 ```bash
-curl -fsSL https://github.com/ashtanko/ubuntu-post-install/releases/latest/download/install.sh | bash
-ubuntu-post-install --version          # confirm install
-ubuntu-post-install                    # launch the full-screen terminal installer
+curl -fsSL https://github.com/ashtanko/fedora-post-install/releases/latest/download/install.sh | bash
+fedora-post-install --version          # confirm install
+fedora-post-install                    # launch the full-screen terminal installer
 ```
 
 Pin a specific version:
 
 ```bash
-VERSION=v1.0.0 bash <(curl -fsSL https://github.com/ashtanko/ubuntu-post-install/releases/download/v1.0.0/install.sh)
+VERSION=v1.0.0 bash <(curl -fsSL https://github.com/ashtanko/fedora-post-install/releases/download/v1.0.0/install.sh)
 ```
 
-The installer writes scripts to `~/.local/share/ubuntu-post-install/<version>/` and symlinks `~/.local/bin/ubuntu-post-install` (override with `PREFIX=` and `BIN_DIR=`). Make sure `~/.local/bin` is on your `PATH`.
+The installer writes scripts to `~/.local/share/fedora-post-install/<version>/` and symlinks `~/.local/bin/fedora-post-install` (override with `PREFIX=` and `BIN_DIR=`). Make sure `~/.local/bin` is on your `PATH`.
 
 ## Quick Start (from source)
 
 ```bash
-git clone https://github.com/ashtanko/ubuntu-post-install.git
-cd ubuntu-post-install
+git clone https://github.com/ashtanko/fedora-post-install.git
+cd fedora-post-install
 
 cp .env.example .env      # optional but recommended
 $EDITOR .env              # set GIT_NAME, GIT_EMAIL, etc.
@@ -64,7 +64,7 @@ items and `l` opens the full log.
 Use the classic menu when preferred or when diagnosing terminal compatibility:
 
 ```bash
-ubuntu-post-install --classic
+fedora-post-install --classic
 ```
 
 The classic installer walks through the same catalog. For each category you can select:
@@ -123,7 +123,7 @@ Browse [docs/SCRIPTS.md](docs/SCRIPTS.md) for the complete inventory. Categories
 
 ## Configuration
 
-Scripts load configuration through `lib/config.bash`; every variable is optional. Inherited environment variables have highest precedence, followed by repo `.env`, then `~/.env-ubuntu-post-install`. The most-used knobs:
+Scripts load configuration through `lib/config.bash`; every variable is optional. Inherited environment variables have highest precedence, followed by repo `.env`, then `~/.env-fedora-post-install`. The most-used knobs:
 
 | Variable | Purpose |
 |---|---|
@@ -140,12 +140,12 @@ See [docs/CONFIG.md](docs/CONFIG.md) for the full table and [.env.example](.env.
 
 ## Logs and resume
 
-- **Log file** — `~/ubuntu-setup.log` (override with `SETUP_LOG_FILE`); every run is appended with timestamps.
-- **Marker files** — `~/.cache/ubuntu-setup/<script_path>.done` (e.g. `dev_node.sh.done`). Delete a marker to force a script to re-run on the next `setup.sh` invocation.
+- **Log file** — `~/fedora-setup.log` (override with `SETUP_LOG_FILE`); every run is appended with timestamps.
+- **Marker files** — `~/.cache/fedora-setup/<script_path>.done` (e.g. `dev_node.sh.done`). Delete a marker to force a script to re-run on the next `setup.sh` invocation.
 
 ```bash
-rm ~/.cache/ubuntu-setup/dev_node.sh.done    # re-run dev/node.sh next time
-rm -rf ~/.cache/ubuntu-setup/                # reset everything
+rm ~/.cache/fedora-setup/dev_node.sh.done    # re-run dev/node.sh next time
+rm -rf ~/.cache/fedora-setup/                # reset everything
 ```
 
 ## Testing

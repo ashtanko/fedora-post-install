@@ -208,8 +208,8 @@ The last three are enforced by [tests/script-contract-regression.sh](tests/scrip
 
 - Displays a category menu; user selects items by number, `a` (all), or `n` (none)
 - Recommended order (top-to-bottom in the menu): essentials → system → apps → dev → tools → ide → ai → software → vpn
-- Logs all output with timestamps to `~/ubuntu-setup.log`
-- Tracks completed steps via marker files in `~/.cache/ubuntu-setup/`; delete a marker to force re-run
+- Logs all output with timestamps to `~/fedora-setup.log`
+- Tracks completed steps via marker files in `~/.cache/fedora-setup/`; delete a marker to force re-run
 - Shows a pass/fail/skipped summary at the end
 
 ## .env Configuration
@@ -247,7 +247,7 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `DOCKER_PRUNE_IMAGES` | tools/docker-maintenance.sh | `dangling` (or `all`) |
 | `DOCKER_PRUNE_VOLUMES` | tools/docker-maintenance.sh | `no` |
 | `DOCKER_PRUNE_UNTIL` | tools/docker-maintenance.sh | `168h` |
-| `SETUP_LOG_FILE` | setup.sh | `$HOME/ubuntu-setup.log` |
+| `SETUP_LOG_FILE` | setup.sh | `$HOME/fedora-setup.log` |
 | `SWAP_SIZE_GB` | essentials/swap.sh | `4` |
 | `SWAP_FILE` / `FSTAB_FILE` | essentials/swap.sh | `/swapfile` / `/etc/fstab` |
 | `ENABLE_UFW` | essentials/firewall.sh | `yes` |

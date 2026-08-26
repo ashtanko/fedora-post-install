@@ -31,7 +31,7 @@ fi
 # the shipped defaults without editing (and losing on package upgrade) the
 # distro-owned jail.conf.
 DROPIN_DIR="/etc/fail2ban/jail.d"
-DROPIN_FILE="$DROPIN_DIR/99-upi-sshd.local"
+DROPIN_FILE="$DROPIN_DIR/99-fpi-sshd.local"
 
 BANTIME="${FAIL2BAN_BANTIME:-1h}"
 FINDTIME="${FAIL2BAN_FINDTIME:-10m}"

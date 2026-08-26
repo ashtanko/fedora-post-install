@@ -1,4 +1,4 @@
-# Gemini CLI Project Context: ubuntu-post-install
+# Gemini CLI Project Context: fedora-post-install
 
 This repository contains automated, idempotent Bash scripts to provision a fresh Ubuntu installation with a developer-preferred toolchain. It uses an interactive menu system (`setup.sh`) and is designed to be safe to re-run.
 
@@ -8,8 +8,8 @@ This repository contains automated, idempotent Bash scripts to provision a fresh
 - **Architecture:** Modular scripts organized by category (essentials, system, apps, dev, tools, ide, ai, software), plus maintenance wrappers under `updates/`.
 - **Core Technologies:** Bash (4.0+), Ubuntu (22.04+), Docker (for testing).
 - **Configuration:** Environment variables defined in a `.env` file (copied from `.env.example`).
-- **Idempotency:** Scripts detect existing installations and skip already-completed steps using marker files in `~/.cache/ubuntu-setup/`.
-- **Logging:** All actions are logged to `~/ubuntu-setup.log`.
+- **Idempotency:** Scripts detect existing installations and skip already-completed steps using marker files in `~/.cache/fedora-setup/`.
+- **Logging:** All actions are logged to `~/fedora-setup.log`.
 
 ## Building and Running
 

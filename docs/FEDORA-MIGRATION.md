@@ -11,11 +11,11 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 |---|---|---|
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 installer/manual scripts and 44 updater scripts inventoried below |
 | 1 — shared package layer | In progress | `lib/pkg.bash` and isolated regression coverage added; installer callers are not migrated yet |
-| 2 — identity rename | Not started | Project paths, environment variables, TUI, release artifacts, and documentation still use the Ubuntu identity |
+| 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
 | 3 — installer ports | Not started | Category scripts still contain Debian/Ubuntu package paths |
 | 4 — updater ports | Not started | Updater ownership and DNF-managed skip decisions still require audit |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
-| 6 — documentation | Not started | Documentation remains Ubuntu-oriented except for this ledger and the implementation prompt |
+| 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
 
 ## Dispositions
 
@@ -195,9 +195,10 @@ until its implementation and tests have moved to Fedora.
 
 ## Entry points and updater inventory
 
-`setup.sh` and `install.sh` are `port` work: both need the Fedora identity,
-paths, release artifacts, and host checks. The 44 updater scripts are tracked
-below so Phase 4 can update them in lockstep with their installers.
+`setup.sh` and `install.sh` now use the Fedora identity, paths, configuration,
+and release artifacts. Their remaining distro behavior will be audited with the
+installer and test phases. The 44 updater scripts are tracked below so Phase 4
+can update them in lockstep with their installers.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
@@ -275,3 +276,22 @@ Verified references (checked 2026-08-26):
 
 No third-party RPM repository URL or fingerprint is accepted into the ledger
 until it is verified against that vendor's current primary documentation.
+
+## Identity migration notes
+
+The Fedora fork deliberately does not fall back to the former Ubuntu-named
+configuration. Existing users should move their stable config once:
+
+```bash
+mv ~/.env-ubuntu-post-install ~/.env-fedora-post-install
+```
+
+Replace `UBUNTU_POST_INSTALL_CONFIG` with `FEDORA_POST_INSTALL_CONFIG` in shell
+profiles or automation. Completion markers move from `~/.cache/ubuntu-setup/`
+to `~/.cache/fedora-setup/`, so the first Fedora run starts with a clean marker
+set. The default log similarly moves from `~/ubuntu-setup.log` to
+`~/fedora-setup.log`; old logs and markers are not deleted.
+
+The installer now manages `~/.local/bin/fedora-post-install` under
+`~/.local/share/fedora-post-install`. Its refusal to overwrite an existing
+unmanaged symlink or file remains covered by the installer regressions.

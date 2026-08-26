@@ -17,7 +17,7 @@ RUN_ITEM=""
 
 case "${1:-}" in
     -v|--version)
-        echo "ubuntu-post-install $VERSION"
+        echo "fedora-post-install $VERSION"
         exit 0
         ;;
     --classic)
@@ -25,14 +25,14 @@ case "${1:-}" in
         shift
         ;;
     --run-item)
-        [ "$#" -eq 2 ] || { echo "usage: ubuntu-post-install --run-item <script>" >&2; exit 2; }
+        [ "$#" -eq 2 ] || { echo "usage: fedora-post-install --run-item <script>" >&2; exit 2; }
         MODE="run-item"
         RUN_ITEM="$2"
         shift 2
         ;;
     -h|--help)
         cat <<'EOF'
-Usage: ubuntu-post-install [--classic | --run-item <script> | --version]
+Usage: fedora-post-install [--classic | --run-item <script> | --version]
 
   (no arguments)       launch the full-screen installer when available
   --classic            use the original category-by-category menu
@@ -55,8 +55,8 @@ CONFIG_HELPER="$SCRIPT_DIR/lib/config.bash"
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$SCRIPT_DIR"
 
-LOG_FILE="${SETUP_LOG_FILE:-$HOME/ubuntu-setup.log}"
-MARKER_DIR="$HOME/.cache/ubuntu-setup"
+LOG_FILE="${SETUP_LOG_FILE:-$HOME/fedora-setup.log}"
+MARKER_DIR="$HOME/.cache/fedora-setup"
 CATALOG_FILE="$SCRIPT_DIR/config/catalog.txt"
 
 mkdir -p "$MARKER_DIR"
@@ -86,8 +86,8 @@ run_script() {
         return
     fi
 
-    if [ -n "${UPI_PROGRESS:-}" ]; then
-        log "\n$(date '+%Y-%m-%d %H:%M:%S') ▶ [$UPI_PROGRESS] Running: $label"
+    if [ -n "${FPI_PROGRESS:-}" ]; then
+        log "\n$(date '+%Y-%m-%d %H:%M:%S') ▶ [$FPI_PROGRESS] Running: $label"
     else
         log "\n$(date '+%Y-%m-%d %H:%M:%S') ▶ Running: $label"
     fi
@@ -169,7 +169,7 @@ case "$(uname -m)" in
     aarch64|arm64) TUI_ARCH="arm64" ;;
     *) TUI_ARCH="" ;;
 esac
-TUI_BIN="$SCRIPT_DIR/bin/ubuntu-post-install-tui-$TUI_ARCH"
+TUI_BIN="$SCRIPT_DIR/bin/fedora-post-install-tui-$TUI_ARCH"
 if [ "$MODE" = "auto" ] && [ -n "$TUI_ARCH" ] && [ -t 0 ] && [ -t 1 ] \
     && [ "${TERM:-dumb}" != "dumb" ] && [ -x "$TUI_BIN" ]; then
     exec "$TUI_BIN" \
@@ -222,7 +222,7 @@ select_items() {
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 clear
-header "Ubuntu Dev Environment Setup"
+header "Fedora Dev Environment Setup"
 log "  Log file: $LOG_FILE"
 log "  $(date)"
 

@@ -50,7 +50,7 @@ Backends (set via -b or \$PROMPT_BACKEND):
   openai     OpenAI Chat Completions, requires \$OPENAI_API_KEY
   anthropic  Anthropic Messages,        requires \$ANTHROPIC_API_KEY
 
-Defaults can be set in repo .env or ~/.env-ubuntu-post-install: PROMPT_BACKEND, PROMPT_MODEL, OLLAMA_HOST.
+Defaults can be set in repo .env or ~/.env-fedora-post-install: PROMPT_BACKEND, PROMPT_MODEL, OLLAMA_HOST.
 EOF
     exit "${1:-0}"
 }

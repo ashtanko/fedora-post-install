@@ -952,11 +952,11 @@ assert_log_line 'sudo apt-get install -y --only-upgrade code' \
 
 # Release-replacement wrappers delegate to the checksum-verifying installers
 # using private force flags rather than running mutable remote scripts.
-grep -Fq 'UPI_LAZYDOCKER_UPDATE=1' "$UPDATES_DIR/update-lazydocker.sh" \
+grep -Fq 'FPI_LAZYDOCKER_UPDATE=1' "$UPDATES_DIR/update-lazydocker.sh" \
     || fail "update-lazydocker does not delegate to the verified installer"
-grep -Fq 'UPI_JUST_UPDATE=1' "$UPDATES_DIR/update-just.sh" \
+grep -Fq 'FPI_JUST_UPDATE=1' "$UPDATES_DIR/update-just.sh" \
     || fail "update-just does not delegate to the verified installer"
-grep -Fq 'UPI_NVIM_UPDATE=1' "$UPDATES_DIR/update-nvim.sh" \
+grep -Fq 'FPI_NVIM_UPDATE=1' "$UPDATES_DIR/update-nvim.sh" \
     || fail "update-nvim does not delegate to the rollback-capable installer"
 
 for verified_release_updater in ctop gitleaks yq; do
@@ -1005,7 +1005,7 @@ GIT_STUB
 chmod +x "$nvm_case/bin/git"
 : >"$nvm_case/invocations.log"
 /usr/bin/env -i HOME="$nvm_case/home" PATH="$nvm_case/bin" \
-    UPI_NVM_LATEST_TAG=v9.9.9 \
+    FPI_NVM_LATEST_TAG=v9.9.9 \
     UPDATE_TEST_LOG="$nvm_case/invocations.log" \
     /bin/bash "$UPDATES_DIR/update-node.sh" >"$nvm_case/output.log" 2>&1 \
     || fail "updates/update-node.sh failed against the isolated NVM stub"
@@ -1017,7 +1017,7 @@ assert_log_line "git -C $nvm_case/home/.nvm checkout --detach v9.9.9" \
     "$nvm_case/invocations.log"
 
 if /usr/bin/env -i HOME="$nvm_case/home" PATH="$nvm_case/bin" \
-    UPI_NVM_LATEST_TAG=v9.9.9 UPDATE_TEST_NVM_CHECKOUT_FAIL=1 \
+    FPI_NVM_LATEST_TAG=v9.9.9 UPDATE_TEST_NVM_CHECKOUT_FAIL=1 \
     UPDATE_TEST_LOG="$nvm_case/invocations.log" \
     /bin/bash "$UPDATES_DIR/update-node.sh" >"$nvm_case/rollback-failure.log" 2>&1; then
     fail "update-node accepted a failed NVM checkout and failed rollback"

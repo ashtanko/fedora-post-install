@@ -4,7 +4,7 @@
 
 ## Full-screen terminal UI
 
-Run `ubuntu-post-install` and use:
+Run `fedora-post-install` and use:
 
 | Key | Effect |
 |---|---|
@@ -24,13 +24,13 @@ to read or store passwords. Pressing `Ctrl+C` during a child script stops the
 current run and returns to the summary.
 
 The packaged release includes native Linux binaries for amd64 and arm64. The
-classic menu remains available with `ubuntu-post-install --classic`.
+classic menu remains available with `fedora-post-install --classic`.
 
 ## Flow
 
 1. **Bash re-exec shim** — re-execs under bash if invoked via `sh`, so dash-isms in the menu code don't break.
-2. **Configuration is loaded** with precedence `environment > repo .env > ~/.env-ubuntu-post-install`; config-only secrets are not automatically exported to child processes.
-3. **Marker directory** is created at `~/.cache/ubuntu-setup/`.
+2. **Configuration is loaded** with precedence `environment > repo .env > ~/.env-fedora-post-install`; config-only secrets are not automatically exported to child processes.
+3. **Marker directory** is created at `~/.cache/fedora-setup/`.
 4. **Nine category menus** are read from `config/catalog.txt` in order: Essentials → System → Apps → Development → Terminal Tools → IDEs → AI Tools → Virtualization → VPN. You select items per category.
 5. **Confirmation** — selections are echoed back; press `Y` (default) to proceed, `n` to abort.
 6. **Run loop** — each selected script is invoked via `bash`, with stdout+stderr `tee`'d to the log.
@@ -48,13 +48,13 @@ Invalid numbers are silently ignored. Items with a `✓` next to them already ha
 
 ## Marker files
 
-Each script has a corresponding marker at `~/.cache/ubuntu-setup/<path>.done`, where `<path>` is the script's repo-relative path with `/` replaced by `_`:
+Each script has a corresponding marker at `~/.cache/fedora-setup/<path>.done`, where `<path>` is the script's repo-relative path with `/` replaced by `_`:
 
 | Script | Marker |
 |---|---|
-| `dev/node.sh` | `~/.cache/ubuntu-setup/dev_node.sh.done` |
-| `essentials/firewall.sh` | `~/.cache/ubuntu-setup/essentials_firewall.sh.done` |
-| `tools/cli-tools.sh` | `~/.cache/ubuntu-setup/tools_cli-tools.sh.done` |
+| `dev/node.sh` | `~/.cache/fedora-setup/dev_node.sh.done` |
+| `essentials/firewall.sh` | `~/.cache/fedora-setup/essentials_firewall.sh.done` |
+| `tools/cli-tools.sh` | `~/.cache/fedora-setup/tools_cli-tools.sh.done` |
 
 A marker is created when the script's exit status is `0`. It's checked at the start of `run_script` — if present, the script is reported as `skipped` and not executed.
 
@@ -64,14 +64,14 @@ A marker is created when the script's exit status is `0`. It's checked at the st
 
 | What | Where |
 |---|---|
-| Default | `~/ubuntu-setup.log` |
-| Override | export `SETUP_LOG_FILE`, or set it in repo `.env` / `~/.env-ubuntu-post-install` |
+| Default | `~/fedora-setup.log` |
+| Override | export `SETUP_LOG_FILE`, or set it in repo `.env` / `~/.env-fedora-post-install` |
 | Format | `tee -a` of the menu's own messages plus full stdout+stderr of every script run |
 
 Each run header is timestamped with `date '+%Y-%m-%d %H:%M:%S'`. Tail it for the actual error when something fails:
 
 ```bash
-tail -200 ~/ubuntu-setup.log
+tail -200 ~/fedora-setup.log
 ```
 
 The log is **appended**, not truncated. Multiple runs accumulate; rotate manually if it grows large.
@@ -90,13 +90,13 @@ If any script reports `failed`, `setup.sh` exits non-zero — useful when wrappi
 
 ```bash
 # Re-run a single script next time (e.g. you fixed a bug or added env vars)
-rm ~/.cache/ubuntu-setup/dev_node.sh.done
+rm ~/.cache/fedora-setup/dev_node.sh.done
 
 # Re-run a category
-rm ~/.cache/ubuntu-setup/dev_*.done
+rm ~/.cache/fedora-setup/dev_*.done
 
 # Wipe everything — next setup.sh treats it as a fresh machine
-rm -rf ~/.cache/ubuntu-setup/
+rm -rf ~/.cache/fedora-setup/
 ```
 
 Markers are independent of the log; deleting markers does not erase log history.

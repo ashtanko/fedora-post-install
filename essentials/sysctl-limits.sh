@@ -29,7 +29,7 @@ for name in INOTIFY_MAX_WATCHES INOTIFY_MAX_INSTANCES NOFILE_LIMIT; do
 done
 
 # ── inotify watches (sysctl, applies immediately) ───────────────────────────
-SYSCTL_FILE="/etc/sysctl.d/99-upi-inotify.conf"
+SYSCTL_FILE="/etc/sysctl.d/99-fpi-inotify.conf"
 DESIRED_SYSCTL="fs.inotify.max_user_watches=$INOTIFY_MAX_WATCHES
 fs.inotify.max_user_instances=$INOTIFY_MAX_INSTANCES"
 
@@ -43,7 +43,7 @@ else
 fi
 
 # ── open-file limits (pam_limits, needs a new login session) ───────────────
-LIMITS_FILE="/etc/security/limits.d/99-upi-nofile.conf"
+LIMITS_FILE="/etc/security/limits.d/99-fpi-nofile.conf"
 DESIRED_LIMITS="* soft nofile $NOFILE_LIMIT
 * hard nofile $NOFILE_LIMIT"
 
