@@ -51,4 +51,7 @@ fi
 
 echo "🔧 Installing $DROPIN_FILE (timestamp_timeout=$TIMEOUT)..."
 sudo install -m 0440 -o root -g root "$TMP" "$DROPIN_FILE"
+if command -v restorecon &>/dev/null; then
+    sudo restorecon "$DROPIN_FILE"
+fi
 echo "✅ sudo timestamp_timeout set to $TIMEOUT minute(s)"

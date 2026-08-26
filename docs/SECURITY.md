@@ -35,7 +35,15 @@ This script intentionally does **not** offer a passwordless-sudo option. Widenin
 
 ## DNS resolvers ([system/hosts-dns.sh](../system/hosts-dns.sh))
 
-Points `systemd-resolved` at third-party resolvers (default: Cloudflare `1.1.1.1` / Quad9 `9.9.9.9`) via a drop-in at `/etc/systemd/resolved.conf.d/fpi-dns.conf`. That means DNS queries — effectively every hostname you resolve — now go to those resolvers instead of your network's default (e.g. your ISP or VPN). Set `DNS_SERVERS`/`DNS_FALLBACK_SERVERS` to resolvers you trust, or leave the script out of your run entirely if you want to keep whatever DNS your network hands out via DHCP/NetworkManager. The script no-ops on systems that don't run `systemd-resolved` rather than fighting the existing resolver setup.
+When `systemd-resolved` is already active, this script points it at third-party resolvers (default: Cloudflare `1.1.1.1` / Quad9 `9.9.9.9`) through `/etc/systemd/resolved.conf.d/fpi-dns.conf`. That means DNS queries — effectively every hostname you resolve — go to those resolvers instead of the network default. Set `DNS_SERVERS`/`DNS_FALLBACK_SERVERS` to resolvers you trust or omit this script.
+
+Fedora Workstation normally lets NetworkManager manage DNS per connection. The script deliberately does not enable `systemd-resolved`, rewrite `/etc/resolv.conf`, or mutate active NetworkManager profiles; it skips cleanly when NetworkManager owns the resolver stack.
+
+## Keyboard remapping ([system/keyboard.sh](../system/keyboard.sh))
+
+`keyd` is not currently in Fedora's main package repositories. When keyd is absent, the script enables the third-party `alternateved/keyd` COPR and installs it through DNF. COPR packages are community-maintained and are not signed with Fedora release keys or reviewed as official Fedora packages; selecting this script explicitly accepts that additional trust boundary.
+
+The script requires `/dev/uinput`, restores the SELinux label on `/etc/keyd`, and refuses to report success unless the keyd service is active. It does not generate an SELinux allow policy automatically; if startup fails, inspect the service journal and recent AVC denials before deciding whether a local policy is appropriate.
 
 ## GPG ([system/gpg.sh](../system/gpg.sh))
 

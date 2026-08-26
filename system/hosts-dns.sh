@@ -14,23 +14,60 @@ load_config "$REPO_ROOT"
 
 echo "🚀 Configuring DNS resolvers..."
 
-# Only touch systemd-resolved. On systems that don't run it (containers, WSL,
-# NetworkManager-only DNS, servers using /etc/resolv.conf directly) forcing it
-# in would fight the existing resolver setup, so we bow out instead.
-if ! command -v resolvectl &>/dev/null && ! command -v systemd-resolve &>/dev/null; then
-    echo "⏭️  systemd-resolved not present — skipping (edit /etc/resolv.conf manually if needed)"
+# Fedora Workstation normally lets NetworkManager own DNS. Only modify
+# systemd-resolved when the machine has already chosen and activated it; never
+# enable a second resolver stack or rewrite NetworkManager connection profiles.
+SYSTEMD_RUNTIME_DIR="${_FPI_SYSTEMD_RUNTIME_DIR:-/run/systemd/system}"
+if [ ! -d "$SYSTEMD_RUNTIME_DIR" ] || ! command -v systemctl &>/dev/null; then
+    echo "⏭️  systemd is not active — leaving the existing resolver setup unchanged"
     exit 0
 fi
 
-if [ ! -d /run/systemd/system ] || ! systemctl list-unit-files systemd-resolved.service &>/dev/null; then
-    echo "⏭️  systemd-resolved service not available — skipping"
+if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+    if command -v nmcli &>/dev/null; then
+        echo "⏭️  NetworkManager is managing DNS — leaving active connection profiles unchanged"
+    else
+        echo "⏭️  systemd-resolved is not active — leaving the existing resolver setup unchanged"
+    fi
     exit 0
+fi
+
+if ! command -v resolvectl &>/dev/null; then
+    echo "❌ systemd-resolved is active but resolvectl is unavailable" >&2
+    exit 1
 fi
 
 DNS_SERVERS="${DNS_SERVERS:-1.1.1.1 9.9.9.9}"
 DNS_FALLBACK_SERVERS="${DNS_FALLBACK_SERVERS:-1.0.0.1 149.112.112.112}"
 
-DROPIN_DIR="/etc/systemd/resolved.conf.d"
+validate_dns_list() {
+    local name="$1" value="$2" allow_empty="$3" server
+    local -a servers=()
+
+    if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+        echo "❌ $name must be a single space-separated line of IP addresses" >&2
+        return 1
+    fi
+    read -ra servers <<< "$value"
+    if (( ${#servers[@]} == 0 )); then
+        [[ "$allow_empty" == "yes" ]] && return 0
+        echo "❌ $name must contain at least one IP address" >&2
+        return 1
+    fi
+    for server in "${servers[@]}"; do
+        if ! [[ "$server" =~ ^[0-9A-Fa-f:.]+$ ]] \
+            || [[ "$server" != *.* && "$server" != *:* ]]; then
+            echo "❌ $name contains an invalid IP address: $server" >&2
+            return 1
+        fi
+    done
+}
+
+validate_dns_list DNS_SERVERS "$DNS_SERVERS" no
+validate_dns_list DNS_FALLBACK_SERVERS "$DNS_FALLBACK_SERVERS" yes
+
+# Underscored override is an isolated regression-test seam, not user config.
+DROPIN_DIR="${_FPI_RESOLVED_DROPIN_DIR:-/etc/systemd/resolved.conf.d}"
 DROPIN_FILE="$DROPIN_DIR/fpi-dns.conf"
 
 DESIRED_CONFIG="[Resolve]
@@ -44,9 +81,8 @@ if [ -f "$DROPIN_FILE" ] && printf '%s\n' "$DESIRED_CONFIG" | sudo cmp -s - "$DR
 else
     echo "🔧 Writing $DROPIN_FILE (DNS=$DNS_SERVERS, FallbackDNS=$DNS_FALLBACK_SERVERS)..."
     printf '%s\n' "$DESIRED_CONFIG" | sudo tee "$DROPIN_FILE" >/dev/null
-
-    if ! systemctl is-enabled --quiet systemd-resolved 2>/dev/null; then
-        sudo systemctl enable systemd-resolved >/dev/null 2>&1 || true
+    if command -v restorecon &>/dev/null; then
+        sudo restorecon "$DROPIN_FILE"
     fi
 
     echo "🔄 Restarting systemd-resolved..."

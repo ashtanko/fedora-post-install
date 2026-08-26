@@ -30,12 +30,12 @@ SCRIPTS=(
   "system/base.sh|yes|GIT_NAME=CI Tester,GIT_EMAIL=ci@example.com|FILE||\$HOME/.gitconfig"
   "system/gpg.sh|partial|GIT_NAME=CI Tester,GIT_EMAIL=ci@example.com|[[ \$(gpg --list-secret-keys) == *ci@example.com* ]]|entropy slow; key generated but git signing config skipped if no rc|\$HOME/.gnupg,\$HOME/.gitconfig"
   "system/hostname.sh|no|||hostnamectl/UTS namespace changes aren't meaningful inside a container"
-  "system/hosts-dns.sh|no|||requires systemd-resolved (resolvectl); not present in minimal containers"
+  "system/hosts-dns.sh|no|||Fedora containers have neither an active NetworkManager connection nor systemd-resolved"
   "system/keyboard.sh|no|||keyd daemon needs /dev/uinput + systemd"
-  "system/ntp.sh|partial||dpkg -s chrony &>/dev/null|systemd-timesyncd path needs systemd as PID 1; container run only exercises the chrony-install fallback"
+  "system/ntp.sh|partial||rpm -q chrony &>/dev/null|chronyd cannot be started without systemd as PID 1; package installation is still verified"
   "system/ssh.sh|partial|GIT_EMAIL=ci@example.com|test -f \$HOME/.ssh/id_ed25519|may prompt for passphrase if interactive|\$HOME/.ssh"
   "system/sudoers.sh|yes|SUDO_TIMESTAMP_TIMEOUT_MINUTES=15|sudo grep -q 'timestamp_timeout=15' /etc/sudoers.d/99-fpi-timeout|"
-  "system/user-groups.sh|yes||grep -qw dialout <(sudo -u \$(id -un) id -nG) && grep -qw plugdev <(sudo -u \$(id -un) id -nG)|"
+  "system/user-groups.sh|yes||grep -qw wheel <(sudo -u \$(id -un) id -nG) && grep -qw dialout <(sudo -u \$(id -un) id -nG)|"
 
   # apps/
   "apps/browsers.sh|no|||Chrome installs but is GUI-only; not useful in CI"

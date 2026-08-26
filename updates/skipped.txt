@@ -10,15 +10,15 @@ essentials/sysctl-limits.sh|system configuration task; no independently versione
 essentials/system-info.sh|diagnostic task; it does not install independently versioned software
 essentials/fail2ban.sh|fail2ban and its firewalld integration are maintained through DNF
 essentials/lynis.sh|Fedora package is maintained through DNF
-system/base.sh|performs system-wide APT maintenance itself; it is not one project-owned tool
+system/base.sh|performs system-wide DNF maintenance itself; its packages update through Fedora repositories
 system/hostname.sh|system configuration task; no independently versioned software is installed
 system/user-groups.sh|system configuration task; no independently versioned software is installed
-system/ntp.sh|Ubuntu system service is maintained through APT
-system/hosts-dns.sh|system configuration task; systemd-resolved is maintained through Ubuntu updates
+system/ntp.sh|chrony is maintained through Fedora's DNF repositories
+system/hosts-dns.sh|system configuration task; NetworkManager and systemd-resolved are maintained through Fedora updates
 system/sudoers.sh|system configuration task; no independently versioned software is installed
-system/keyboard.sh|Ubuntu package is maintained through APT
-system/gpg.sh|credential/configuration task; GnuPG is maintained through APT
-system/ssh.sh|credential/configuration task; OpenSSH is maintained through APT
+system/keyboard.sh|keyd is maintained through the enabled alternateved/keyd COPR and DNF
+system/gpg.sh|credential/configuration task; GnuPG is maintained through DNF
+system/ssh.sh|credential/configuration task; OpenSSH clients are maintained through DNF
 apps/browsers.sh|configured browser packages are maintained through their APT repositories
 apps/guake.sh|Ubuntu package is maintained through APT
 apps/postman.sh|the application manages its own updates

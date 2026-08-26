@@ -10,11 +10,11 @@ essentials|Essentials|inotify + open-file limits|essentials/sysctl-limits.sh
 essentials|Essentials|System info dump|essentials/system-info.sh
 essentials|Essentials|fail2ban (SSH brute-force protection)|essentials/fail2ban.sh
 essentials|Essentials|Lynis security audit|essentials/lynis.sh
-system|System|Base system (apt upgrade, build tools, git)|system/base.sh
+system|System|Base system (DNF upgrade, development tools, git)|system/base.sh
 system|System|Hostname|system/hostname.sh
-system|System|User groups (docker, dialout, plugdev...)|system/user-groups.sh
-system|System|Time sync (NTP)|system/ntp.sh
-system|System|DNS resolvers (systemd-resolved)|system/hosts-dns.sh
+system|System|User groups (wheel, docker, dialout, wireshark)|system/user-groups.sh
+system|System|Chrony time synchronization|system/ntp.sh
+system|System|DNS resolvers (active systemd-resolved only)|system/hosts-dns.sh
 system|System|Sudo timestamp timeout (opt-in)|system/sudoers.sh
 system|System|Keyboard remapping (keyd macOS-style)|system/keyboard.sh
 system|System|GPG key + git signing|system/gpg.sh

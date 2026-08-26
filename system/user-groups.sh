@@ -12,9 +12,13 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
-# $USER isn't reliably set outside a login shell (e.g. under `docker run`), so
-# ask the OS directly.
-CURRENT_USER="$(whoami)"
+# When the whole script is invoked with sudo, modify the invoking account rather
+# than root. Normal setup.sh runs still resolve directly through id(1).
+if (( EUID == 0 )) && [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+    CURRENT_USER="$SUDO_USER"
+else
+    CURRENT_USER="$(id -un)"
+fi
 
 echo "🚀 Adding $CURRENT_USER to common developer groups..."
 
@@ -25,11 +29,25 @@ echo "🚀 Adding $CURRENT_USER to common developer groups..."
 # Note: deliberately not named GROUPS — that's a bash builtin array (the
 # current user's group IDs); assigning to it is a no-op that returns exit
 # status 1, which set -e would treat as a hard failure.
-read -ra TARGET_GROUPS <<< "${EXTRA_USER_GROUPS:-docker dialout plugdev wireshark}"
+read -ra TARGET_GROUPS <<< "${EXTRA_USER_GROUPS:-wheel docker dialout wireshark}"
 
 ADDED=()
 for GROUP in "${TARGET_GROUPS[@]}"; do
     [ -n "$GROUP" ] || continue
+
+    # Translate the Debian administrative group for existing user configs and
+    # ignore plugdev, which Fedora does not use for device-access policy.
+    if [[ "$GROUP" == "sudo" ]]; then
+        GROUP="wheel"
+    elif [[ "$GROUP" == "plugdev" ]]; then
+        echo "⏭️  Group 'plugdev' is not used on Fedora — skipping"
+        continue
+    fi
+
+    if ! [[ "$GROUP" =~ ^[A-Za-z_][A-Za-z0-9_.-]*\$?$ ]]; then
+        echo "❌ Invalid group name: $GROUP" >&2
+        exit 1
+    fi
 
     if ! getent group "$GROUP" &>/dev/null; then
         echo "⏭️  Group '$GROUP' doesn't exist yet — skipping (created when its package is installed)"

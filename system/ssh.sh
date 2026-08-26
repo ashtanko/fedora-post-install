@@ -8,20 +8,24 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Setting up SSH key..."
 
-# Install openssh-client if ssh-keygen is missing (minimal Ubuntu containers)
+# Fedora's client package is plural: openssh-clients.
 if ! command -v ssh-keygen &>/dev/null; then
-    echo "📦 Installing openssh-client..."
-    sudo apt update
-    sudo apt install -y openssh-client
+    echo "📦 Installing openssh-clients..."
+    dnf_install openssh-clients
 fi
 
 KEY_FILE="$HOME/.ssh/id_ed25519"
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
 
 # Resolve email: arg → env var → prompt
 if [ -n "${1:-}" ]; then
@@ -44,6 +48,10 @@ if [ -f "$KEY_FILE" ]; then
 else
     echo "🔑 Generating ed25519 SSH key for $EMAIL..."
     ssh-keygen -t ed25519 -C "$EMAIL" -f "$KEY_FILE"
+fi
+
+if command -v restorecon &>/dev/null; then
+    restorecon -R "$HOME/.ssh" 2>/dev/null || true
 fi
 
 # Persist ssh-agent autostart in shell configs.

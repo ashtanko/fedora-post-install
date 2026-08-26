@@ -110,7 +110,7 @@ Browse [docs/SCRIPTS.md](docs/SCRIPTS.md) for the complete inventory. Categories
 | Folder | Purpose |
 |---|---|
 | [essentials/](essentials/) | OS bootstrap: zram-aware optional disk swap, firewalld, fail2ban, Lynis audit, DNF auto-updates, locale/TZ, GNOME tweaks, journal size cap, fstrim, inotify/nofile limits, system info |
-| [system/](system/) | Foundations: apt upgrade + build tools, hostname, user groups, NTP, DNS, sudo timeout, keyboard remap (keyd), GPG key, SSH key |
+| [system/](system/) | Foundations: DNF upgrade + development tools, hostname, Fedora groups, chrony, DNS, sudo timeout, keyboard remap (keyd), GPG key, SSH key |
 | [apps/](apps/) | GUI apps + CLIs: Chrome, Guake, Warp, VS Code, Postman, Bitwarden CLI, Flameshot |
 | [dev/](dev/) | Runtimes + cloud: Java, Docker (rootful + rootless), Podman, Flutter, Node (NVM), Deno, Bun, Python (pyenv), Rust, Go, .NET, Ruby (rbenv), PHP, C/C++, AWS/GCP/Azure CLIs, Kubernetes, Terraform, databases |
 | [tools/](tools/) | Shell + CLI: Zsh/Oh My Zsh, Fish/Fisher, Starship, bat/fzf/rg/eza/jq/yq, tmux config, Nerd Fonts, git config, pre-commit, gitleaks, backup + restic, maintenance, Wireshark, network tools, chezmoi, rclone, container tooling (lazydocker, ctop, dive, hadolint, Trivy), just, Atuin |

@@ -26,15 +26,15 @@ Foundations — git, build tools, keys.
 
 | Script | Purpose |
 |---|---|
-| [base.sh](../system/base.sh) | apt upgrade + build-essential, git, curl, wget, GNOME tweaks |
-| [hostname.sh](../system/hostname.sh) | Sets hostname (from `$NEW_HOSTNAME` or prompt) and syncs the 127.0.1.1 line in `/etc/hosts` |
-| [user-groups.sh](../system/user-groups.sh) | Adds `$USER` to common dev groups (`$EXTRA_USER_GROUPS`, default docker/dialout/plugdev/wireshark); skips groups that don't exist yet |
-| [ntp.sh](../system/ntp.sh) | Ensures the clock is time-synced — `timedatectl set-ntp` on systemd, chrony fallback otherwise |
-| [hosts-dns.sh](../system/hosts-dns.sh) | Configures systemd-resolved DNS/FallbackDNS via drop-in (`$DNS_SERVERS`, `$DNS_FALLBACK_SERVERS`); no-ops if systemd-resolved isn't in use |
+| [base.sh](../system/base.sh) | Runs `dnf upgrade --refresh`, installs the development-tools group, and adds git/curl/wget/GNOME Tweaks |
+| [hostname.sh](../system/hostname.sh) | Sets the Fedora hostname from `$NEW_HOSTNAME` or a prompt; does not add Debian-style `/etc/hosts` entries |
+| [user-groups.sh](../system/user-groups.sh) | Adds the invoking user to Fedora groups (`$EXTRA_USER_GROUPS`, default wheel/docker/dialout/wireshark); skips groups not installed yet |
+| [ntp.sh](../system/ntp.sh) | Installs chrony and enables the Fedora `chronyd` service when systemd is active |
+| [hosts-dns.sh](../system/hosts-dns.sh) | Configures an already-active systemd-resolved instance; leaves Fedora NetworkManager connection DNS unchanged |
 | [sudoers.sh](../system/sudoers.sh) | Opt-in only (`$SUDO_TIMESTAMP_TIMEOUT_MINUTES`): extends the sudo timestamp timeout via a `visudo -cf`-validated drop-in. Never configures passwordless sudo |
-| [keyboard.sh](../system/keyboard.sh) | keyd daemon — Left Alt → Ctrl, Left Ctrl → Meta (macOS-style) |
-| [gpg.sh](../system/gpg.sh) | GPG key generation, auto-extracts key ID, configures git signing |
-| [ssh.sh](../system/ssh.sh) | ed25519 SSH key + installs ssh-agent autostart block in shell rc files |
+| [keyboard.sh](../system/keyboard.sh) | keyd from the `alternateved/keyd` COPR; validates `/dev/uinput`, restores SELinux labels, and applies macOS-style modifiers |
+| [gpg.sh](../system/gpg.sh) | Fedora `gnupg2` prerequisite, GPG key generation/selection, and git signing configuration |
+| [ssh.sh](../system/ssh.sh) | Fedora `openssh-clients` prerequisite, ed25519 SSH key, and shell ssh-agent autostart block |
 
 ## apps/
 

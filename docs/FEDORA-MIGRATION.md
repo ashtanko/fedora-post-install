@@ -12,7 +12,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/` category is ported; the other categories remain pending |
+| 3 — installer ports | In progress | The complete `essentials/` and `system/` categories are ported; the other categories remain pending |
 | 4 — updater ports | Not started | Updater ownership and DNF-managed skip decisions still require audit |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -144,15 +144,15 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `system/base.sh` | port | Pending; use DNF upgrade and the development-tools group |
-| `system/gpg.sh` | port | Pending; install Fedora GnuPG prerequisites |
-| `system/hostname.sh` | port | Pending; remove the Ubuntu-specific assumption that every host needs a `127.0.1.1` entry |
-| `system/hosts-dns.sh` | neutral | Audit pending; systemd-resolved drop-in with a clean NetworkManager fallback/skip |
-| `system/keyboard.sh` | port | Pending; use Fedora keyd package and validate `/dev/uinput`/SELinux behavior |
-| `system/ntp.sh` | port | Pending; use Fedora chrony package checks and RPM verification |
-| `system/ssh.sh` | port | Pending; translate OpenSSH client prerequisites |
-| `system/sudoers.sh` | neutral | Audit pending; validated sudoers drop-in is distro-independent |
-| `system/user-groups.sh` | port | Pending; default to `docker dialout wireshark`, use `wheel`, and drop `plugdev` |
+| `system/base.sh` | port | Complete; refreshes/upgrades through DNF, installs the development-tools group, and uses Fedora workstation package names |
+| `system/gpg.sh` | port | Complete; installs Fedora's `gnupg2` package when the `gpg` command is absent |
+| `system/hostname.sh` | port | Complete; uses hostnamectl or `/etc/hostname` without adding Debian's `127.0.1.1` hosts entry |
+| `system/hosts-dns.sh` | neutral | Complete; configures only an already-active systemd-resolved stack and otherwise preserves NetworkManager DNS |
+| `system/keyboard.sh` | port | Complete; uses the maintained `alternateved/keyd` COPR because keyd is absent from Fedora's main repositories, validates `/dev/uinput`, and restores SELinux labels |
+| `system/ntp.sh` | port | Complete; installs Fedora's chrony package and enables the `chronyd` service under systemd |
+| `system/ssh.sh` | port | Complete; uses Fedora's `openssh-clients` prerequisite and restores labels on the SSH directory |
+| `system/sudoers.sh` | neutral | Complete; retains pre-install validation and restores the SELinux label on the installed drop-in |
+| `system/user-groups.sh` | port | Complete; defaults to `wheel docker dialout wireshark`, maps `sudo` to `wheel`, and ignores `plugdev` |
 
 ### `tools/`
 

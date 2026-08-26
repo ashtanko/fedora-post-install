@@ -45,22 +45,13 @@ else
         echo "$DESIRED_HOSTNAME" | sudo tee /etc/hostname >/dev/null
         sudo hostname "$DESIRED_HOSTNAME"
     fi
+    if command -v restorecon &>/dev/null && [ -e /etc/hostname ]; then
+        sudo restorecon /etc/hostname
+    fi
     echo "✅ Hostname set to $DESIRED_HOSTNAME"
 fi
 
-# Keep the 127.0.1.1 loopback entry (used to resolve the local hostname) in sync
-if grep -qE '^127\.0\.1\.1[[:space:]]' /etc/hosts; then
-    if grep -qE "^127\.0\.1\.1[[:space:]]+$DESIRED_HOSTNAME([[:space:]]|\$)" /etc/hosts; then
-        echo "✅ /etc/hosts already maps 127.0.1.1 → $DESIRED_HOSTNAME"
-    else
-        echo "🔧 Updating 127.0.1.1 entry in /etc/hosts..."
-        sudo sed -i "s/^127\.0\.1\.1[[:space:]].*/127.0.1.1\t$DESIRED_HOSTNAME/" /etc/hosts
-        echo "✅ /etc/hosts updated"
-    fi
-else
-    echo "🔧 Adding 127.0.1.1 entry to /etc/hosts..."
-    printf '127.0.1.1\t%s\n' "$DESIRED_HOSTNAME" | sudo tee -a /etc/hosts >/dev/null
-    echo "✅ /etc/hosts updated"
-fi
+# Fedora resolves the local hostname through systemd/nss-myhostname. The
+# Debian-style 127.0.1.1 hosts entry is neither required nor added here.
 
 echo "💡 Some apps only pick up the new hostname after a re-login or reboot."

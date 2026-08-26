@@ -56,9 +56,9 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `INOTIFY_MAX_INSTANCES` | [essentials/sysctl-limits.sh](../essentials/sysctl-limits.sh) | `1024` | `fs.inotify.max_user_instances` |
 | `NOFILE_LIMIT` | [essentials/sysctl-limits.sh](../essentials/sysctl-limits.sh) | `1048576` | Soft/hard `nofile` ulimit via pam_limits; needs a new login session |
 | `NEW_HOSTNAME` | [system/hostname.sh](../system/hostname.sh) | — | Prompts if unset and interactive; skipped otherwise |
-| `EXTRA_USER_GROUPS` | [system/user-groups.sh](../system/user-groups.sh) | `docker dialout plugdev wireshark` | Space-separated; missing groups are skipped, not created |
-| `DNS_SERVERS` | [system/hosts-dns.sh](../system/hosts-dns.sh) | `1.1.1.1 9.9.9.9` | Space-separated resolvers written to systemd-resolved `DNS=` |
-| `DNS_FALLBACK_SERVERS` | [system/hosts-dns.sh](../system/hosts-dns.sh) | `1.0.0.1 149.112.112.112` | Written to systemd-resolved `FallbackDNS=` |
+| `EXTRA_USER_GROUPS` | [system/user-groups.sh](../system/user-groups.sh) | `wheel docker dialout wireshark` | Space-separated; `sudo` maps to `wheel`, `plugdev` is ignored, and missing groups are skipped |
+| `DNS_SERVERS` | [system/hosts-dns.sh](../system/hosts-dns.sh) | `1.1.1.1 9.9.9.9` | Space-separated IPs written only when systemd-resolved is already active |
+| `DNS_FALLBACK_SERVERS` | [system/hosts-dns.sh](../system/hosts-dns.sh) | `1.0.0.1 149.112.112.112` | Fallback IPs for an already-active systemd-resolved instance |
 | `SUDO_TIMESTAMP_TIMEOUT_MINUTES` | [system/sudoers.sh](../system/sudoers.sh) | — | Opt-in only: unset = script skips. Minutes; `-1` = never expire |
 | `VSCODE_EXTENSIONS` | [ide/vscode-extensions.sh](../ide/vscode-extensions.sh), [updates/update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | empty | Whitespace-separated extension IDs; the updater refreshes all installed extensions |
 | `JETBRAINS_TOOLBOX_DIR` | [ide/jetbrains-toolbox.sh](../ide/jetbrains-toolbox.sh) | `$HOME/.local/share/JetBrains/Toolbox` | Toolbox install dir |

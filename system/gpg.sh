@@ -8,17 +8,19 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Setting up GPG key for git signing..."
 
-# Install gnupg if needed
+# Fedora names the package gnupg2 while retaining the standard `gpg` command.
 if ! command -v gpg &>/dev/null; then
-    echo "📦 Installing gnupg..."
-    sudo apt update
-    sudo apt install -y gnupg
+    echo "📦 Installing gnupg2..."
+    dnf_install gnupg2
 fi
 
 KEY_INVENTORY=""

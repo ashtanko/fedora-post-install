@@ -8,36 +8,28 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Starting base system setup..."
 
-# Update and upgrade
-echo "📦 Updating package lists and upgrading system..."
-sudo apt update
-sudo apt upgrade -y
+echo "📦 Refreshing Fedora metadata and upgrading the system..."
+sudo dnf -q upgrade -y --refresh
 
-# Install essential packages
-PACKAGES=(gnome-tweaks build-essential git curl wget ca-certificates)
-MISSING=()
+# Fedora's development-tools group is the equivalent of Debian's
+# build-essential and includes the compiler/make toolchain used by later scripts.
+echo "📦 Ensuring the development toolchain is installed..."
+dnf_group_install development-tools
 
-for pkg in "${PACKAGES[@]}"; do
-    if ! dpkg -s "$pkg" &>/dev/null; then
-        MISSING+=("$pkg")
-    else
-        echo "✅ $pkg already installed"
-    fi
-done
-
-if [ ${#MISSING[@]} -gt 0 ]; then
-    echo "📦 Installing: ${MISSING[*]}..."
-    sudo apt install -y "${MISSING[@]}"
-fi
+echo "📦 Ensuring core workstation tools are installed..."
+dnf_install gnome-tweaks git curl wget ca-certificates
 
 # Verify key tools
-for tool in git curl wget; do
+for tool in gcc make git curl wget; do
     if command -v "$tool" &>/dev/null; then
         echo "✅ $tool: $($tool --version 2>&1 | head -1)"
     else
@@ -62,14 +54,6 @@ fi
 if [ -n "${GIT_EDITOR:-}" ]; then
     git config --global core.editor "$GIT_EDITOR"
     echo "✅ git core.editor = $GIT_EDITOR"
-fi
-
-# GNOME click-to-minimize (only works in a GNOME session)
-if command -v gsettings &>/dev/null; then
-    echo "🖱️  Enabling click-to-minimize on Dash to Dock..."
-    gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews' 2>/dev/null \
-        && echo "✅ Click-to-minimize enabled" \
-        || echo "⚠️  Could not set dash-to-dock (extension may not be active)"
 fi
 
 echo "✅ Base system setup complete!"

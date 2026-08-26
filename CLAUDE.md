@@ -24,7 +24,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 | Folder | Purpose |
 |---|---|
 | `essentials/` | Core OS bootstrap: swap, firewall, fail2ban, Lynis audit, auto-updates, locale/TZ, GNOME tweaks, system info |
-| `system/` | OS foundations: apt upgrade, keyboard remapping, GPG key, SSH key |
+| `system/` | OS foundations: DNF upgrade/development tools, chrony, keyboard remapping, GPG key, SSH key |
 | `apps/` | GUI applications + CLIs: Chrome, Guake, Warp, VS Code, Postman, Bitwarden CLI, Flameshot |
 | `dev/` | Development runtimes + cloud CLIs: Java, Docker (rootful + rootless), Podman, Flutter, Node, Deno, Bun, Python, Rust, Go, .NET, Ruby, PHP, C/C++, AWS/GCP/Azure |
 | `tools/` | Shell, CLI, and dev helpers: Zsh, CLI tools, tmux config, fonts, git config, pre-commit, gitleaks, backup + restic, maintenance, Wireshark, network tools, chezmoi, rclone, container tooling (lazydocker, ctop, dive, hadolint, Trivy), yq, just, Atuin |
@@ -56,15 +56,15 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### system/
 | Script | Purpose |
 |---|---|
-| `base.sh` | apt upgrade + build-essential, git, curl, wget, GNOME tweaks |
-| `hostname.sh` | Sets hostname (from `$NEW_HOSTNAME` or prompt) and syncs the 127.0.1.1 line in `/etc/hosts` |
-| `user-groups.sh` | Adds `$USER` to common dev groups (`$EXTRA_USER_GROUPS`, default docker/dialout/plugdev/wireshark); skips groups that don't exist yet |
-| `ntp.sh` | Ensures the clock is time-synced — `timedatectl set-ntp` on systemd, chrony fallback otherwise |
-| `hosts-dns.sh` | Configures systemd-resolved DNS/FallbackDNS via drop-in (`$DNS_SERVERS`, `$DNS_FALLBACK_SERVERS`); no-ops if systemd-resolved isn't in use |
+| `base.sh` | DNF refresh/upgrade, development-tools group, git, curl, wget, and GNOME Tweaks |
+| `hostname.sh` | Sets Fedora hostname from `$NEW_HOSTNAME` or a prompt without adding Debian-style hosts entries |
+| `user-groups.sh` | Adds the invoking user to Fedora groups (`$EXTRA_USER_GROUPS`, default wheel/docker/dialout/wireshark) |
+| `ntp.sh` | Installs chrony and enables Fedora's `chronyd` service when systemd is active |
+| `hosts-dns.sh` | Configures an already-active systemd-resolved instance; leaves NetworkManager DNS unchanged |
 | `sudoers.sh` | Opt-in only (`$SUDO_TIMESTAMP_TIMEOUT_MINUTES`): extends the sudo timestamp timeout via a `visudo -cf`-validated drop-in. Never configures passwordless sudo |
-| `keyboard.sh` | keyd daemon — Left Alt → Ctrl, Left Ctrl → Meta (macOS-style) |
-| `gpg.sh` | GPG key generation, auto-extracts key ID, configures git signing |
-| `ssh.sh` | ed25519 SSH key + installs ssh-agent autostart block in shell rc files |
+| `keyboard.sh` | keyd from the `alternateved/keyd` COPR with `/dev/uinput` and SELinux checks; macOS-style modifiers |
+| `gpg.sh` | Fedora `gnupg2`, GPG key generation/selection, and git signing configuration |
+| `ssh.sh` | Fedora `openssh-clients`, ed25519 SSH key, and shell ssh-agent autostart block |
 
 ### apps/
 | Script | Purpose |
@@ -264,7 +264,7 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `INOTIFY_MAX_INSTANCES` | essentials/sysctl-limits.sh | `1024` |
 | `NOFILE_LIMIT` | essentials/sysctl-limits.sh | `1048576` |
 | `NEW_HOSTNAME` | system/hostname.sh | — prompts if unset (interactive) |
-| `EXTRA_USER_GROUPS` | system/user-groups.sh | `docker dialout plugdev wireshark` |
+| `EXTRA_USER_GROUPS` | system/user-groups.sh | `wheel docker dialout wireshark` |
 | `DNS_SERVERS` | system/hosts-dns.sh | `1.1.1.1 9.9.9.9` |
 | `DNS_FALLBACK_SERVERS` | system/hosts-dns.sh | `1.0.0.1 149.112.112.112` |
 | `SUDO_TIMESTAMP_TIMEOUT_MINUTES` | system/sudoers.sh | — unset = skip (opt-in only) |
