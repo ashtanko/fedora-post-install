@@ -6,13 +6,40 @@ These scripts are designed for a **single-user developer workstation**, not a ha
 
 ## Sudo
 
-Every install script uses `sudo` for system-level changes (DNF, writing to `/etc/`, `/usr/local/`, etc.). The repo itself is read-only on disk under `$HOME` until you actually invoke a script — so always **review the script before running it**, especially if you cloned from a fork.
+Install scripts use `sudo` when they make system-level changes (DNF, writing to
+`/etc/`, `/usr/local/`, etc.); user-local installers do not need it for their
+normal paths. Merely cloning the repository makes no system configuration
+changes, so always **review a script before running it**, especially from a
+fork.
 
 Scripts assume your user has standard interactive sudo. Long runs benefit from priming the cache first:
 
 ```bash
 sudo -v && bash setup.sh
 ```
+
+## SELinux
+
+Fedora's SELinux policy is expected to remain enforcing. Scripts that write
+managed system files or unusual executable locations restore their expected
+contexts when `restorecon` is available; examples include the journald,
+fail2ban, sysctl, sudoers, keyd, SSH, and Ollama paths. The scripts do not call
+`setenforce 0`, edit the global policy mode, or synthesize broad local allow
+rules.
+
+If an operation is denied, inspect the recent AVC records and the target label
+before changing policy:
+
+```bash
+getenforce
+sudo ausearch -m AVC,USER_AVC -ts recent
+ls -lZ /path/to/the/target
+sudo restorecon -Rv /path/to/the/target
+```
+
+An AVC is evidence to investigate, not by itself proof that a new allow rule is
+safe. Avoid blindly converting arbitrary denials with `audit2allow`; first
+confirm that the script wrote the file to a policy-supported location.
 
 ## Firewall ([essentials/firewall.sh](../essentials/firewall.sh))
 
@@ -63,7 +90,9 @@ The script also writes `export GPG_TTY=$(tty)` to `~/.zshrc` and `~/.bashrc` so 
 - The key is generated with `ssh-keygen` defaults — passphrase prompt comes from `ssh-keygen` itself; press Enter for an unprotected key, or set one.
 - Installs an idempotent `ssh-agent` autostart block in `~/.zshrc` and `~/.bashrc`. The agent socket is at `~/.ssh/agent.sock`; on shell start the block re-uses an existing live agent or spawns a new one and `ssh-add`s the key.
 
-The autostart block is the only piece this repo persists into your shell rc files — the key generation itself is standard `ssh-keygen`.
+The autostart block is the only piece `system/ssh.sh` persists into shell rc
+files; the key generation itself is standard `ssh-keygen`. Other installers'
+rc-file changes are inventoried below.
 
 ## Auto-updates ([essentials/auto-updates.sh](../essentials/auto-updates.sh))
 
@@ -103,12 +132,39 @@ file under `/etc/pki/rpm-gpg/`; a mismatched or multi-primary key is rejected
 before repository state changes.
 
 The audited metadata-signature exceptions are Google Cloud CLI, Trivy,
-NodeSource, and Antigravity. Their official RPM channels do not publish a
-usable `repomd.xml` signature for DNF, so those definitions explicitly set
-`repo_gpgcheck=0`. RPM package signature checking remains enabled with
-`gpgcheck=1`, and every package key is fingerprint-pinned. The shared helper
-accepts only a literal `0` or `1` for this policy, and regression tests preserve
-the secure default for every other repository.
+NodeSource, Antigravity, and RPM Fusion. Their official RPM definitions do not
+publish or enable a usable `repomd.xml` signature for these paths, so those
+definitions explicitly set `repo_gpgcheck=0`. RPM package signature checking
+remains enabled with `gpgcheck=1`, and every package key is
+fingerprint-pinned. The shared helper accepts only a literal `0` or `1` for
+this policy, and regression tests preserve the secure default for every other
+repository.
+
+Never bypass a failure with `--nogpgcheck` or by changing `gpgcheck=0`. A
+fingerprint mismatch is a fail-closed event: verify a suspected vendor key
+rotation against the vendor's primary documentation, then update the script,
+tests, and migration ledger together.
+
+## Secure Boot and out-of-tree kernel modules
+
+[software/virtualbox.sh](../software/virtualbox.sh) installs RPM Fusion's
+`akmod-VirtualBox`. On a Secure Boot host, the resulting module will not load
+until the akmods certificate at `/etc/pki/akmods/certs/public_key.der` is
+enrolled through `mokutil` and the **Enroll MOK** firmware screen after reboot.
+The script detects this state and stops before pretending the installation is
+usable. MOK enrollment changes the machine's boot trust database; review the
+certificate and protect the temporary enrollment password.
+
+[software/vmware.sh](../software/vmware.sh) installs build and signing
+prerequisites only. VMware's `vmmon` and `vmnet` modules come from the manually
+downloaded Broadcom bundle, so you are responsible for signing rebuilt modules
+with an enrolled key after kernel or VMware upgrades. Neither script disables
+Secure Boot. GNOME Boxes/libvirt is the Fedora-native alternative when
+third-party kernel modules are an unacceptable trust or maintenance cost.
+
+The optional Oracle VirtualBox Extension Pack is separately checksum-verified
+but remains proprietary software under Oracle's PUEL; installation is opt-in
+and requires explicit license acceptance.
 
 ## Backup ([tools/backup-home.sh](../tools/backup-home.sh))
 
@@ -128,13 +184,18 @@ the secure default for every other repository.
 
 ## Shell frameworks and prompts
 
-- [tools/zsh.sh](../tools/zsh.sh), [tools/fish.sh](../tools/fish.sh), and [tools/starship.sh](../tools/starship.sh) download the official Oh My Zsh, Fisher, and Starship bootstrap scripts over TLS into temporary files before executing them. These upstream scripts are not independently signed by this repository.
+- [tools/zsh.sh](../tools/zsh.sh) and [tools/fish.sh](../tools/fish.sh) save the official Oh My Zsh and Fisher bootstrap scripts to temporary files before executing them; those upstream scripts are not independently signed by this repository. [tools/starship.sh](../tools/starship.sh) instead verifies the checksum published for its release archive.
 - The shell installers edit the selected user's login shell and/or shell startup files. Review `~/.zshrc`, `~/.config/fish`, and the Starship init blocks if you later switch frameworks or prompts.
 
 ## Telemetry
 
-These scripts don't phone home. Upstream installers do whatever they do — Google Chrome, Docker Desktop, JetBrains Toolbox, VS Code, and the vendor AI CLIs each have their own opt-out paths in their own settings. Review them after install if that matters to you. The timezone script contacts ipapi.co only when `TZ` is unset, as described above.
+This repository does not add its own analytics or telemetry. Installation and
+update scripts necessarily contact Fedora, Flathub, GitHub, and selected vendor
+services; upstream applications such as Google Chrome, Docker Desktop,
+JetBrains Toolbox, VS Code, and the vendor AI CLIs have their own telemetry
+policies and settings. The timezone script also contacts ipapi.co when `TZ` is
+unset, as described above.
 
 ## Threat model in one sentence
 
-**These scripts trust your network, the upstream package repositories, and you running them with sudo.** They don't defend against a compromised mirror, a hostile `.env`, or a malicious script in your fork. Read what you run.
+**These scripts trust the selected upstreams, their signing keys or published checksums, and you running them with sudo.** They don't defend against a compromised upstream/signing key, a hostile `.env`, or a malicious script in your fork. Read what you run.

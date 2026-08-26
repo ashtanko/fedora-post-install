@@ -41,7 +41,7 @@ git push origin "$TAG"
 That's it. Within ~5–15 minutes (depending on the Docker matrix), the workflow will:
 
 1. Run `make check`: shellcheck, manifest validation, and all local regressions.
-2. Run the smoke stage on Ubuntu 22.04, 24.04, and 26.04 in parallel.
+2. Run the smoke stage on Fedora 43 and 44 in parallel.
 3. Stage `dist/fedora-post-install-<semver>/`, `sed`-replace `VERSION="dev"` in `setup.sh` with the tag, write a `VERSION` file.
 4. Build `dist/fedora-post-install-<semver>.tar.gz`, copy `install.sh` into `dist/`, and generate `dist/SHA256SUMS`.
 5. Verify checksums, archive paths, required runtime files, shell syntax, and both extracted and installed launcher behavior.

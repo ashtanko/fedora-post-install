@@ -201,7 +201,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 - Never pipe a download into a shell (`curl … | bash`). Fetch to a file, verify the digest where upstream publishes one, then run or install it — see [tools/just.sh](tools/just.sh) for the shape
 - Never end a script with a bare `[[ cond ]] && cmd`: as the last line it exits 1 whenever the condition is false, so setup.sh reports a successful run as FAILED and writes no marker. Use an `if` block
 
-The last three are enforced by [tests/script-contract-regression.sh](tests/script-contract-regression.sh), which runs against every script — including the ~30 that no Docker stage executes.
+The Fedora-only package/architecture rules and the final two safety rules are enforced by [tests/script-contract-regression.sh](tests/script-contract-regression.sh), which runs against every script — including entries that no Docker stage executes.
 
 ## setup.sh Behaviour
 
@@ -213,10 +213,14 @@ The last three are enforced by [tests/script-contract-regression.sh](tests/scrip
 
 ## .env Configuration
 
-Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Every script sources it automatically at startup via:
+Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored.
+Scripts load configuration through `lib/config.bash` with precedence
+`environment > repo .env > ~/.env-fedora-post-install`; values that were not
+already exported are not automatically exposed to child processes:
 
 ```bash
-[[ -f "$REPO_ROOT/.env" ]] && { set -a; source "$REPO_ROOT/.env"; set +a; }
+source "$REPO_ROOT/lib/config.bash"
+load_config "$REPO_ROOT"
 ```
 
 | Variable | Used by | Default |
@@ -288,7 +292,7 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `JETBRAINS_TOOLBOX_DIR` | ide/jetbrains-toolbox.sh | `$HOME/.local/share/JetBrains/Toolbox` |
 | `POSTMAN_INSTALL_DIR` | apps/postman.sh | `$HOME/.local/share/Postman` |
 | `ENABLE_GIT_COMMIT_SIGNING` | tools/git-config.sh | `no` |
-| `GPG_KEY_ID` | system/gpg.sh, tools/git-config.sh | — unique `GIT_EMAIL` match |
+| `GPG_KEY_ID` | system/gpg.sh | — unique `GIT_EMAIL` match |
 | `TMUX_PLUGIN_DIR` | tools/tmux-config.sh | `$HOME/.tmux/plugins/tpm` |
 | `BACKUP_DIR` | tools/backup-home.sh | `$HOME/backups` |
 | `BACKUP_ENCRYPT` | tools/backup-home.sh | `no` |

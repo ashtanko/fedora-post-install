@@ -1,6 +1,6 @@
 # fedora-post-install
 
-Automated shell scripts to provision a fresh Ubuntu installation with a developer's preferred toolchain — runtimes, editors, CLI tools, AI tooling, and OS hardening — through a single interactive installer.
+Automated shell scripts to provision a fresh Fedora Workstation installation with a developer's preferred toolchain — runtimes, editors, CLI tools, AI tooling, and OS hardening — through a single interactive installer.
 
 [![Lint](https://github.com/ashtanko/fedora-post-install/actions/workflows/lint.yml/badge.svg)](https://github.com/ashtanko/fedora-post-install/actions/workflows/lint.yml)
 [![Docker tests](https://github.com/ashtanko/fedora-post-install/actions/workflows/docker-tests.yml/badge.svg)](https://github.com/ashtanko/fedora-post-install/actions/workflows/docker-tests.yml)
@@ -12,15 +12,15 @@ Automated shell scripts to provision a fresh Ubuntu installation with a develope
 - **Re-run tested** — runnable container-compatible scripts execute twice and must preserve configured state snapshots.
 - **Configurable** — inherited environment variables override repo `.env`, which overrides `~/.env-fedora-post-install`.
 - **Resumable** — completed steps are tracked under `~/.cache/fedora-setup/`; full timestamped log at `~/fedora-setup.log`.
-- **Tested** — Docker smoke and idempotency jobs cover Ubuntu 22.04, 24.04, and 26.04 where scripts are container-compatible.
+- **Tested** — Docker smoke and idempotency jobs cover Fedora 43 and 44 where scripts are container-compatible.
 
 ## Requirements
 
-- Ubuntu 22.04, 24.04, or 26.04 (other Debian derivatives may work but are not tested)
+- Fedora Workstation 43 or 44; other Fedora editions and derivatives are not tested
 - `bash` (every script auto-re-execs under bash if invoked via `sh`)
 - `sudo` privileges (you'll be prompted as needed)
 - Network access for package downloads
-- `x86_64` for Google Chrome and the native Bitwarden CLI; those scripts reject other architectures before changing package or repository state. Warp and Postman support both `x86_64` and `aarch64`
+- `x86_64` or `aarch64` for most installers. Google Chrome, the native Bitwarden CLI, Android Studio, and VirtualBox reject unsupported hosts before architecture-specific changes; optional Docker Desktop is skipped on aarch64 while Docker Engine remains available
 - Go 1.25+ only when building the terminal UI from source; published releases include prebuilt binaries
 
 ## Quick install
@@ -154,9 +154,9 @@ rm -rf ~/.cache/fedora-setup/                # reset everything
 The repo ships with an isolated Docker harness. It compares deterministic package/file metadata, while network-backed installer availability can still vary upstream.
 
 ```bash
-bash tests/run-in-docker.sh                          # default: Ubuntu 24.04, smoke
-bash tests/run-in-docker.sh 22.04 idempotency        # idempotency stage on 22.04
-bash tests/run-in-docker.sh 24.04 smoke dev/node.sh  # single script
+bash tests/run-in-docker.sh                       # default: Fedora 44, smoke
+bash tests/run-in-docker.sh 43 idempotency        # idempotency stage on Fedora 43
+bash tests/run-in-docker.sh 44 smoke dev/node.sh  # single script
 bash tests/lint.sh                                   # shellcheck on every .sh/.bash file
 ```
 
@@ -164,7 +164,7 @@ Or via the [Makefile](Makefile) (`make help` for the full list):
 
 ```bash
 make check                      # lint + manifest validation + local regressions
-make smoke UBUNTU=22.04         # smoke stage on a specific Ubuntu version
+make smoke FEDORA=43            # smoke stage on a specific Fedora version
 make smoke SCRIPT=dev/node.sh   # scope to one script
 make idempotency-all            # idempotency across every supported version
 make release-dry-run            # full checks + build and verify release artifacts
@@ -187,6 +187,7 @@ Full testing guide: [docs/TESTING.md](docs/TESTING.md).
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Adding a new script: shape, manifest row, local checks, CI gates |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures and recovery steps |
 | [docs/SECURITY.md](docs/SECURITY.md) | Trade-offs the scripts make: firewalld policy, GPG passphrase, rc-file edits, telemetry |
+| [docs/FEDORA-MIGRATION-PROMPT.md](docs/FEDORA-MIGRATION-PROMPT.md) | Historical working brief used to convert the original Ubuntu/apt tree to Fedora/DNF |
 
 ## Conventions
 
@@ -197,7 +198,8 @@ Every script follows the same shape:
 - Repeat-safe guards (`command -v`, marker, file existence) where the operation supports them
 - Temp files cleaned via `trap 'rm -f "$TMP"' EXIT`
 - Shell config additions written to **both** `~/.zshrc` and `~/.bashrc`, guarded by `grep -q`
-- `apt-get update` before installing any repository package; downloads land in a file and are checksum-verified rather than piped into a shell
+- Fedora packages go through `dnf_install`/`dnf_group_install`; third-party RPM repositories go through the fingerprint-pinning `repo_add` helper with package signature checks enabled
+- Debian/Ubuntu package paths and ad-hoc architecture probes are rejected; downloads land in a file and are checksum-verified where upstream publishes a digest rather than piped into a shell
 - Emoji legend: 🚀 start · 📦 installing · ✅ success · ❌ error · ⚠️ warning · 💡 tip · 🔧 configuring · 🔍 detecting
 
 The mechanical parts of these conventions are enforced by [tests/script-contract-regression.sh](tests/script-contract-regression.sh), which checks every script — including the ones no Docker stage can execute.

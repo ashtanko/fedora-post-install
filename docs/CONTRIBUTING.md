@@ -93,7 +93,7 @@ Format:
 | Column | What goes here |
 |---|---|
 | `path` | Repo-relative path, e.g. `dev/mytool.sh` |
-| `compat` | `yes` if it works in a plain Ubuntu container, `partial` if it half-works (note why in `skip_reason`), `no` if it can't run in CI at all |
+| `compat` | `yes` if it works in a plain Fedora container, `partial` if only its container-safe portion works (note why in `skip_reason`), `no` if it can't run in CI at all |
 | `env_vars` | Comma-separated `KEY=VALUE` pairs to seed before the script runs |
 | `verify_cmd` | A shell one-liner that exits 0 on success — **or** the literal `FILE` |
 | `skip_reason` | Required when `compat` is `no` or `partial` |
@@ -128,11 +128,11 @@ bash tests/lint.sh                                          # shellcheck
 bash tests/check-manifest-coverage.sh                       # manifest coverage
 bash tests/script-contract-regression.sh                    # script contracts
 bash tests/regression.sh                                    # local behavior regressions
-bash tests/run-in-docker.sh 24.04 smoke dev/mytool.sh       # smoke
-bash tests/run-in-docker.sh 24.04 idempotency dev/mytool.sh # idempotency
+bash tests/run-in-docker.sh 44 smoke dev/mytool.sh       # smoke
+bash tests/run-in-docker.sh 44 idempotency dev/mytool.sh # idempotency
 ```
 
-If a targeted script is `compat=no`, the runner reports the skip and exits non-zero because no runnable work occurred. Validate that script manually on a suitable host and keep the manifest reason specific. `compat=no` scripts still have to satisfy the [script contracts](TESTING.md#script-contracts) — that check is the only automated coverage they get, so it is deliberately strict about `apt-get update` ordering, trailing bare conditionals, and piping downloads into a shell.
+If a targeted script is `compat=no`, the runner reports the skip and exits non-zero because no runnable work occurred. Validate that script manually on a suitable host and keep the manifest reason specific. `compat=no` scripts still have to satisfy the [script contracts](TESTING.md#script-contracts) — that check is the only automated coverage they get, so it is deliberately strict about Fedora-only package paths, shared architecture/repository helpers, trailing bare conditionals, and piping downloads into a shell.
 
 ## CI gates
 
@@ -140,7 +140,7 @@ If a targeted script is `compat=no`, the runner reports the skip and exits non-z
 |---|---|
 | ShellCheck on every `.sh` / `.bash` file | [lint.yml](../.github/workflows/lint.yml) |
 | Manifest schema/coverage + local regressions | [lint.yml](../.github/workflows/lint.yml) |
-| Smoke + idempotency × Ubuntu 22.04 / 24.04 / 26.04 | [docker-tests.yml](../.github/workflows/docker-tests.yml) |
+| Smoke + idempotency × Fedora 43 / 44 | [docker-tests.yml](../.github/workflows/docker-tests.yml) |
 
 [.shellcheckrc](../.shellcheckrc) silences `SC1091` for dynamic shared-helper paths. Other shellcheck warnings should be fixed, not silenced.
 

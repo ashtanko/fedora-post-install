@@ -11,6 +11,14 @@ load_config "$REPO_ROOT"
 
 For a source checkout, `.env` is gitignored and is a convenient repo-local config. Release installs advertise the stable user config path `~/.env-fedora-post-install` (override it with `FEDORA_POST_INSTALL_CONFIG`). Copy [.env.example](../.env.example) to either location and edit. **No value is required** — scripts fall back to interactive prompts or sensible defaults.
 
+### Migrating an earlier config
+
+The Fedora fork does not read the former project identity's config path or
+override variable. Existing users should follow the one-time rename in the
+[migration ledger](FEDORA-MIGRATION.md#identity-migration-notes). Old logs and
+completion markers remain untouched; Fedora uses `~/fedora-setup.log` and
+`~/.cache/fedora-setup/`, so its first run starts with a separate marker set.
+
 ## Variables
 
 | Variable | Used by | Default | Notes |

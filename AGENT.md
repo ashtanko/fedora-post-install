@@ -1,70 +1,72 @@
-# Gemini CLI Project Context: fedora-post-install
+# Agent project context: fedora-post-install
 
-This repository contains automated, idempotent Bash scripts to provision a fresh Ubuntu installation with a developer-preferred toolchain. It uses an interactive menu system (`setup.sh`) and is designed to be safe to re-run.
+This repository contains automated, repeat-safe Bash scripts for provisioning
+Fedora Workstation 43 and 44. The full-screen terminal installer and classic
+Bash fallback both use `config/catalog.txt`; every installer can also run
+standalone.
 
-## Project Overview
+## Project overview
 
-- **Purpose:** Automate the setup of Ubuntu development environments.
-- **Architecture:** Modular scripts organized by category (essentials, system, apps, dev, tools, ide, ai, software), plus maintenance wrappers under `updates/`.
-- **Core Technologies:** Bash (4.0+), Ubuntu (22.04+), Docker (for testing).
-- **Configuration:** Environment variables defined in a `.env` file (copied from `.env.example`).
-- **Idempotency:** Scripts detect existing installations and skip already-completed steps using marker files in `~/.cache/fedora-setup/`.
-- **Logging:** All actions are logged to `~/fedora-setup.log`.
+- **Target:** Fedora Workstation only. Debian/Ubuntu package paths are migration
+  regressions, not fallbacks.
+- **Architecture:** independent scripts grouped under `essentials/`, `system/`,
+  `apps/`, `dev/`, `tools/`, `ide/`, `ai/`, `software/`, `vpn/`, and the manual
+  `mobile/` directory. Maintenance wrappers live under `updates/`.
+- **Entry points:** `fedora-post-install` for release installs, `bash setup.sh`
+  from source, or `bash <category>/<script>.sh` for one component.
+- **Configuration:** `lib/config.bash` loads inherited environment variables,
+  then repo `.env`, then `~/.env-fedora-post-install`. The path can be changed
+  through `FEDORA_POST_INSTALL_CONFIG`.
+- **State:** successful menu runs create markers in
+  `~/.cache/fedora-setup/`; output is appended to `~/fedora-setup.log` by
+  default.
 
-## Building and Running
+## Building and validation
 
-### Main Entry Point
-- **Interactive Setup:** `bash setup.sh` - Walk through categories and select components to install.
-- **Individual Scripts:** Run any script directly, e.g., `bash dev/node.sh`.
-- **Supported Updates:** Run one updater such as `bash updates/update-claude.sh`, or `bash updates/update-all.sh` for every installed tool with a documented updater.
+```bash
+bash setup.sh
+make tui-build
+make check
+bash tests/run-in-docker.sh 44 smoke
+bash tests/run-in-docker.sh 44 idempotency
+make release-dry-run
+```
 
-### Configuration
-- **Initial Setup:** `cp .env.example .env` and edit the variables as needed.
-- **Key Variables:** `GIT_NAME`, `GIT_EMAIL`, `SWAP_SIZE_GB`, `INSTALL_OH_MY_ZSH`, `VSCODE_EXTENSIONS`, etc.
+The supported Docker matrix is Fedora 43 and 44, with Fedora 44 as the local
+default. `tests/manifest.sh` is the test inventory; `config/catalog.txt` is the
+installer inventory; `updates/catalog.txt` plus `updates/skipped.txt` record
+update ownership.
 
-### Testing and Validation
-- **Docker Tests:** `bash tests/run-in-docker.sh [version] [smoke|idempotency] [script_path]`
-- **Linting:** `bash tests/lint.sh` (runs ShellCheck on all scripts).
-- **Manifest Check:** `bash tests/check-manifest-coverage.sh` (ensures every script has a test manifest entry).
-- **Manifest:** `tests/manifest.sh` is the single source of truth for testing configurations and verification.
+## Development conventions
 
-## Development Conventions
+- Start scripts with `#!/bin/bash`, `set -euo pipefail`, and the Bash re-exec
+  shim used by neighboring scripts.
+- Load settings through `lib/config.bash`. Use `lib/pkg.bash` for Fedora
+  packages, groups, architectures, COPRs, Flatpak, and third-party repositories.
+- Use `dnf_install`/`dnf_group_install` for Fedora packages. Add third-party RPM
+  repositories only through `repo_add`, with an exact vendor-published primary
+  fingerprint and package signature checking enabled.
+- Use `release_arch` for upstream assets and `rpm_arch` for RPM repository
+  paths. Do not add ad-hoc `uname -m` probes.
+- Download installers to a temporary file instead of piping a network response
+  into a shell. Verify the vendor digest or signature when one is published.
+- Preserve idempotency. Guard rc-file edits with `grep -q`, clean temporary
+  files with traps, and never end a script with a bare conditional command.
+- Restore SELinux contexts after writing system files where neighboring scripts
+  do so. Do not disable SELinux to make an installer pass.
+- Use the existing output legend: 🚀 start · 📦 install · ✅ success · ❌ error
+  · ⚠️ warning · 💡 tip · 🔧 configure · 🔍 detect.
 
-### Script Standards
-- **Header:** Every script must start with:
-  ```bash
-  #!/bin/bash
-  set -euo pipefail
-  # Bash re-exec shim (for sh invocation compatibility)
-  if [ -z "${BASH_VERSION:-}" ]; then exec /bin/bash "$0" "$@"; fi
-  ```
-- **Configuration:** Source `.env` from the repo root before performing work.
-- **Idempotency:** Check if the tool is already installed/configured before executing installation logic.
-- **Shell Integration:** Additions to `PATH` or environment variables should be written to both `~/.zshrc` and `~/.bashrc`, guarded by `grep -q` to prevent duplicates.
-- **Cleanup:** Use traps for temporary file cleanup: `trap 'rm -f "$TMP"' EXIT`.
+## Adding or changing an installer
 
-### UI and Feedback
-- Use the following emoji legend for output:
-  - 🚀: Start
-  - 📦: Installing
-  - ✅: Success
-  - ❌: Error
-  - ⚠️: Warning
-  - 💡: Tip
-  - 🔧: Configuring
-  - 🔍: Detecting
+1. Update `config/catalog.txt` when the selectable inventory changes.
+2. Update `tests/manifest.sh` and add a verifier under `tests/verify/` when a
+   one-line assertion is insufficient.
+3. Add updater ownership to `updates/catalog.txt`, or an audited omission to
+   `updates/skipped.txt`.
+4. Keep `docs/SCRIPTS.md`, `docs/CONFIG.md`, and `.env.example` synchronized.
+5. Run `bash tests/catalog-regression.sh` and `make check`; run targeted Fedora
+   smoke/idempotency tests when the script is container-compatible.
 
-### Contribution Workflow
-1. Follow the script standards above.
-2. Add a manifest entry in `tests/manifest.sh`.
-3. (Optional) Create a verification script in `tests/verify/<category>_<name>.sh`.
-4. Run `bash tests/lint.sh` and `bash tests/check-manifest-coverage.sh`.
-5. Verify changes with `bash tests/run-in-docker.sh`.
-
-## Key Files
-- `setup.sh`: Interactive installer orchestrator.
-- `.env.example`: Template for project configuration.
-- `tests/manifest.sh`: Single source of truth for test coverage and verification commands.
-- `docs/SCRIPTS.md`: Inventory of all available scripts and their purposes.
-- `docs/CONFIG.md`: Detailed documentation of all configuration variables.
-- `CLAUDE.md`: Related guidance for Claude-specific interactions.
+See `CLAUDE.md` for the detailed script inventory and `docs/CONTRIBUTING.md` for
+the complete contributor workflow.

@@ -62,7 +62,8 @@ bash setup.sh         # answer the prompt promptly when asked
 [system/gpg.sh](../system/gpg.sh) uses `gpg --batch --generate-key` when `GIT_NAME` and `GIT_EMAIL` are set. On low-entropy systems (containers, freshly booted VMs), this can stall. Install an entropy daemon and retry:
 
 ```bash
-sudo apt install -y rng-tools-debian   # or: haveged
+sudo dnf install -y rng-tools
+sudo systemctl enable --now rngd
 bash system/gpg.sh
 ```
 
@@ -76,21 +77,108 @@ source ~/.zshrc        # or ~/.bashrc
 
 …or open a new terminal. Group changes (e.g. `docker` group from [dev/docker.sh](../dev/docker.sh)) need a full **log out and log back in**.
 
-## `apt` lock contention
+## DNF is busy or reports lock contention
 
-If you see `Could not get lock /var/lib/dpkg/lock-frontend`, another process is using `apt`. Most often it's `unattended-upgrades`:
+DNF, PackageKit (GNOME Software), or the automatic update service may already
+be running a transaction. Identify the owner and let it finish:
 
 ```bash
-sudo systemctl status unattended-upgrades
-# wait for it to finish, then re-run
+pgrep -af 'dnf|packagekitd'
+sudo systemctl status packagekit.service dnf5-automatic.service
+sudo journalctl -u packagekit.service -u dnf5-automatic.service --since '-10 min'
 ```
+
+Do not delete DNF database/lock files or kill a transaction that is actively
+writing RPM state. Once the other process exits, rerun the failed script.
+
+## An RPM repository or signing-key check fails
+
+Repository installers stop if a downloaded key does not have the exact pinned
+primary fingerprint, if a repo URL is not HTTPS, or if DNF cannot validate an
+RPM signature. Inspect the generated state without weakening the checks:
+
+```bash
+sudo dnf repolist --all
+sudo sed -n '1,120p' /etc/yum.repos.d/<name>.repo
+gpg --show-keys --fingerprint /etc/pki/rpm-gpg/RPM-GPG-KEY-<name>
+```
+
+Never work around this with `--nogpgcheck`, `gpgcheck=0`, or a key copied from
+an unverified forum post. A vendor may have rotated its key or repository; check
+the vendor's current official instructions and update the pinned fingerprint in
+the script and migration ledger together.
+
+## A script is blocked by SELinux
+
+Keep SELinux enforcing and inspect the denial first:
+
+```bash
+getenforce
+sudo ausearch -m AVC,USER_AVC -ts recent
+sudo journalctl --since '-10 min' | grep -i 'avc:.*denied'
+```
+
+If the script wrote a normal system path with the wrong label, restore the
+distribution policy label and retry:
+
+```bash
+sudo restorecon -Rv /path/written/by/the/script
+```
+
+Do not use `setenforce 0` as a permanent fix and do not feed arbitrary denials
+straight into `audit2allow`. Confirm the expected file location and label first;
+the relevant script should call `restorecon` when it owns a system path.
+
+## firewalld is active but a service is unreachable
+
+Check which zone the network interface actually uses and whether the required
+service is present in that zone:
+
+```bash
+sudo systemctl status firewalld
+sudo firewall-cmd --get-active-zones
+sudo firewall-cmd --get-default-zone
+sudo firewall-cmd --zone=public --list-all
+sudo firewall-cmd --zone=public --query-service=ssh
+```
+
+Replace `public` with the active zone. `essentials/firewall.sh` preserves the
+existing policy and enables only the standard `ssh` service; it does not open
+custom application ports. Add any required port or service deliberately with
+`firewall-cmd --permanent`, then reload firewalld.
+
+## VirtualBox or VMware modules will not load under Secure Boot
+
+Confirm Secure Boot state and the running kernel first:
+
+```bash
+mokutil --sb-state
+uname -r
+```
+
+For the RPM Fusion VirtualBox path, enroll the akmods certificate exactly as
+printed by `software/virtualbox.sh`, reboot, and complete **Enroll MOK** in the
+firmware dialog:
+
+```bash
+sudo mokutil --import /etc/pki/akmods/certs/public_key.der
+# reboot and enroll the key, then:
+mokutil --test-key /etc/pki/akmods/certs/public_key.der
+sudo akmods --force --rebuild --kernels "$(uname -r)"
+sudo modprobe vboxdrv
+```
+
+VMware's `vmmon` and `vmnet` modules are built outside Fedora/RPM Fusion and
+must be signed after each rebuild with a key enrolled through MOK. Follow the
+signing commands printed by `software/vmware.sh`; disabling Secure Boot is not
+the repository's recovery path.
 
 ## A test verification fails
 
 When `tests/run-script.sh` reports `❌ VERIFY FAILED`, the install ran but the post-check (manifest column or `tests/verify/<file>.sh`) didn't pass. Reproduce in isolation to read the full output:
 
 ```bash
-bash tests/run-in-docker.sh 24.04 smoke <category>/<name>.sh
+bash tests/run-in-docker.sh 44 smoke <category>/<name>.sh
 ```
 
 For idempotency-stage failures (`❌ STATE CHANGED ON RE-RUN`), the script wrote something different on the second invocation — usually a missing `grep -q` guard before appending to an rc file, or a duplicated install step.

@@ -14,17 +14,18 @@ Each script runs in its **own** container for isolation — a failure in `dev/no
 ## Quick run
 
 ```bash
-# Default: Ubuntu 24.04, smoke stage, every script in the manifest
+# Default: Fedora 44, smoke stage, every script in the manifest
 bash tests/run-in-docker.sh
 
-# Idempotency stage on Ubuntu 22.04
-bash tests/run-in-docker.sh 22.04 idempotency
+# Idempotency stage on Fedora 43
+bash tests/run-in-docker.sh 43 idempotency
 
 # Run a single script (faster while iterating)
-bash tests/run-in-docker.sh 24.04 smoke dev/node.sh
+bash tests/run-in-docker.sh 44 smoke dev/node.sh
 ```
 
-Arguments: `[ubuntu_version] [smoke|idempotency] [script_path]`. All optional; sensible defaults apply.
+Arguments: `[fedora_version] [smoke|idempotency] [script_path]`. Supported
+versions are `43` and `44`; all arguments are optional.
 
 ## Lint locally
 
@@ -41,9 +42,8 @@ releases contain prebuilt binaries and do not require Go on the target machine.
 
 ### Script contracts
 
-About a third of the catalog is `compat=no` — GUI apps, systemd units, block
-devices — so no Docker stage ever executes those scripts, and runtime bugs in
-them reach users unnoticed.
+GUI apps, systemd units, block-device operations, host networking, and updater
+wrappers are marked `compat=no`, so no Docker stage executes them directly.
 [script-contract-regression.sh](../tests/script-contract-regression.sh) closes
 that gap for the classes that are detectable without running anything. Every
 script, `compat=no` included, must:
@@ -52,11 +52,13 @@ script, `compat=no` included, must:
 |---|---|
 | parse under `bash -n` | the only syntax check a `compat=no` script gets |
 | not end in a bare `[[ … ]] && cmd` | as the last line it exits 1 when false, so a successful run is reported as FAILED and writes no completion marker |
-| run `apt-get update` before installing a repo package | `/var/lib/apt/lists` is empty on a fresh system and stale on an idle one; the install dies with `Unable to locate package` |
+| contain no Debian/Ubuntu package path | Fedora is the only supported target; `apt`, `dpkg`, Snap, `.deb`, and `/etc/apt` paths are migration regressions |
+| use shared architecture helpers and signed-repository setup | `release_arch`/`rpm_arch` keep vendor and RPM names distinct; `repo_add` pins an exact key fingerprint and enforces `gpgcheck=1` |
 | never pipe a network fetch into a shell | a truncated transfer must not half-execute; download to a file and verify the digest where upstream publishes one |
 
-Installing an already-downloaded local `.deb` is exempt from the `apt-get update`
-rule, since that path needs no package index.
+The project-level portion of the contract also verifies that `repo_add` always
+writes `gpgcheck=1`. A narrowly documented upstream may use
+`repo_gpgcheck=0`, but RPM package signature checking is never optional.
 
 [.shellcheckrc](../.shellcheckrc) disables `SC1091` for dynamic shared-helper and verifier paths.
 
@@ -96,8 +98,8 @@ Three GitHub Actions workflows in [.github/workflows/](../.github/workflows/):
 | Workflow | Triggers | What it runs |
 |---|---|---|
 | [lint.yml](../.github/workflows/lint.yml) | push, pull_request | complete `make check` gate: shellcheck, manifest validation, and regressions |
-| [docker-tests.yml](../.github/workflows/docker-tests.yml) | push (main), pull_request, manual | Matrix: Ubuntu 22.04 / 24.04 / 26.04 × smoke / idempotency |
-| [nightly-health.yml](../.github/workflows/nightly-health.yml) | nightly, manual | Fast regressions plus a current-LTS Ubuntu 24.04 smoke run |
+| [docker-tests.yml](../.github/workflows/docker-tests.yml) | push (main), pull_request, manual | Matrix: Fedora 43 / 44 × smoke / idempotency |
+| [nightly-health.yml](../.github/workflows/nightly-health.yml) | nightly, manual | Fast regressions plus a Fedora 44 smoke run |
 
 ## Adding a new script
 
@@ -110,8 +112,8 @@ Three GitHub Actions workflows in [.github/workflows/](../.github/workflows/):
    ```bash
    bash tests/lint.sh
    bash tests/check-manifest-coverage.sh
-   bash tests/run-in-docker.sh 24.04 smoke <category>/<name>.sh
-   bash tests/run-in-docker.sh 24.04 idempotency <category>/<name>.sh
+   bash tests/run-in-docker.sh 44 smoke <category>/<name>.sh
+   bash tests/run-in-docker.sh 44 idempotency <category>/<name>.sh
    ```
 7. **Open a PR** — CI rejects new selectable scripts that lack catalog, updater/skip coverage, or manifest entries.
 

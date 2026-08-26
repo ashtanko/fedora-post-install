@@ -19,3 +19,12 @@ For every selectable script under `ai/`, `apps/`, `dev/`, `essentials/`, `ide/`,
 
 Scripts intentionally excluded from the installer must be documented as manual
 utilities and must still have an appropriate `tests/manifest.sh` entry.
+
+## Keep Fedora support claims synchronized
+
+Fedora is the only production target. User-facing commands, package names,
+service names, groups, security guidance, and Docker examples must match the
+currently supported Fedora matrix in `tests/run-in-docker.sh` and the Makefile.
+When a setting changes, update `.env.example`, `docs/CONFIG.md`, and the agent
+guidance in the same change. Historical Ubuntu/Debian terms belong only in the
+Fedora migration brief and ledger, where they explain the completed conversion.

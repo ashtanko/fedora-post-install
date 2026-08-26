@@ -15,7 +15,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 3 — installer ports | Complete | All ten installer/manual-script categories are ported and audited for Fedora |
 | 4 — updater ports | Complete | All 37 retained updaters are audited; RPM-owned tools use targeted DNF updates, while standalone and source-owned tools verify provenance before native or verified replacement updates |
 | 5 — Fedora tests and CI | Complete | Fedora 43/44 DNF5 containers, workflow matrices, RPM state snapshots, and Fedora script contracts are active; Fedora 44 full smoke and idempotency pass all 77 runnable entries, and Fedora 43 passes a representative package smoke test |
-| 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
+| 6 — documentation | Complete | User, contributor, agent, configuration, testing, release, security, and troubleshooting guidance now describes Fedora 43/44, DNF/RPM trust, firewalld, SELinux, and Secure Boot; local checks and an isolated release dry-run pass |
 
 ## Dispositions
 
@@ -369,12 +369,40 @@ Phase 5 test and CI references (checked 2026-08-26):
   provide the `cmp` and `diff` commands used by guarded writes and state
   comparisons.
 
+## Phase 6 documentation results
+
+- `README.md`, the operational guides under `docs/`, `CLAUDE.md`, `AGENT.md`,
+  `.ai/rules.md`, and `.env.example` now use Fedora 43/44 commands, package and
+  service terminology, supported architectures, test matrices, and
+  configuration precedence.
+- The security and recovery guidance documents firewalld zones, SELinux AVC
+  investigation and relabeling, exact RPM-key trust, metadata-signature
+  exceptions, and the MOK workflow for Secure Boot kernel modules. It does not
+  recommend disabling SELinux, Secure Boot, or RPM signature verification.
+- The stable configuration rename is documented below. The original migration
+  prompt is retained with a historical-status banner because its Ubuntu/Debian
+  references describe the audited source state and acceptance criteria, not a
+  supported fallback.
+- `GOCACHE=/tmp/fpi-phase6-go-cache make check` passed: ShellCheck covered 192
+  shell files, manifest coverage matched all 148 entries, the installer catalog
+  matched all 108 selectable items in nine categories, and every local
+  regression plus the Go TUI test/vet/build gate passed.
+- `make release-dry-run` passed in an isolated copy so existing ignored build
+  artifacts were not overwritten. It produced and verified
+  `fedora-post-install-0.2.0.tar.gz` with both TUI architectures, valid
+  checksums, safe archive paths, configuration precedence, launcher behavior,
+  and 248 archive entries.
+
+Phase 6 changed documentation and the example configuration only, so it did not
+invalidate the Fedora container results recorded for Phase 5 above.
+
 The current signed `repomd.xml` files used by repositories with metadata
 checking enabled were also verified successfully with `gpgv` against the
-downloaded pinned keys. NodeSource and Antigravity do not publish usable DNF
-metadata signatures, so they use the narrowly documented `repo_gpgcheck=0`
-exception while retaining `gpgcheck=1`; every key file was inspected locally
-with GnuPG rather than trusting search snippets.
+downloaded pinned keys. NodeSource, Antigravity, Google Cloud CLI, Trivy, and
+RPM Fusion do not publish or enable usable DNF metadata signatures for the
+configured paths, so they use narrowly documented `repo_gpgcheck=0` exceptions
+while retaining `gpgcheck=1`; every key file was inspected locally with GnuPG
+rather than trusting search snippets.
 
 No third-party RPM repository URL or fingerprint is accepted into the ledger
 until it is verified against that vendor's current primary documentation.
