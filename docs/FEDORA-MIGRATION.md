@@ -12,7 +12,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, `tools/`, `ide/`, and `mobile/` categories are ported; the other categories remain pending |
+| 3 — installer ports | Complete | All ten installer/manual-script categories are ported and audited for Fedora |
 | 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -37,27 +37,27 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `ai/aider.sh` | neutral | Audit pending; user-local installer |
-| `ai/antigravity.sh` | replace | Pending; replace signed APT channel with a verified RPM or official standalone channel |
-| `ai/claude.sh` | replace | Pending; replace signed APT channel with Anthropic's Fedora-supported channel or standalone installer |
-| `ai/cline.sh` | port | Pending; replace Debian/Node prerequisites with Fedora packages |
-| `ai/codex.sh` | neutral | Audit pending; official standalone installer |
-| `ai/cursor-agent.sh` | neutral | Audit pending; user-local upstream installer |
-| `ai/fabric.sh` | neutral | Audit pending; Go/user-local installation |
-| `ai/gemini.sh` | port | Pending; replace NodeSource APT bootstrap with its RPM equivalent |
-| `ai/github-copilot.sh` | neutral | Audit pending; user-local upstream installer |
-| `ai/goose.sh` | neutral | Audit pending; user-local upstream installer |
-| `ai/huggingface-cli.sh` | port | Pending; translate Python/pipx prerequisites |
-| `ai/litellm.sh` | port | Pending; translate Python/pipx prerequisites |
-| `ai/llama-cpp.sh` | port | Pending; use Fedora build tool and library package names |
-| `ai/llm-cli.sh` | port | Pending; translate Python/pipx prerequisites |
-| `ai/mcp-inspector.sh` | port | Pending; replace Debian/Node prerequisites with Fedora packages |
-| `ai/mistral-vibe.sh` | neutral | Audit pending; Python user-local installation |
-| `ai/ollama-models.sh` | neutral | Audit pending; talks to an existing Ollama service |
-| `ai/ollama.sh` | port | Pending; audit installer prerequisites, systemd, and SELinux labels |
-| `ai/opencode.sh` | neutral | Audit pending; user-local upstream installer |
-| `ai/prompt-runner.sh` | port | Pending; translate packaged CLI prerequisites |
-| `ai/qwen-code.sh` | neutral | Audit pending; user-local package-manager installation |
+| `ai/aider.sh` | neutral | Complete; retains the official user-local installer after Fedora audit |
+| `ai/antigravity.sh` | replace | Complete; uses Google's Artifact Registry RPM channel with the Google Linux package-key fingerprint pinned and package signature checking enabled |
+| `ai/claude.sh` | replace | Complete; uses Anthropic's signed Fedora-compatible RPM channel with the published key fingerprint pinned |
+| `ai/cline.sh` | port | Complete; uses a shared Node.js runtime selector with a signed NodeSource RPM fallback |
+| `ai/codex.sh` | neutral | Complete; retains the official user-local standalone installer after Fedora audit |
+| `ai/cursor-agent.sh` | neutral | Complete; retains the official user-local upstream installer after Fedora audit |
+| `ai/fabric.sh` | neutral | Complete; retains its user-local upstream installation after Fedora audit |
+| `ai/gemini.sh` | port | Complete; uses a shared Node.js runtime selector with a signed NodeSource RPM fallback |
+| `ai/github-copilot.sh` | neutral | Complete; retains the official user-local upstream installer after Fedora audit |
+| `ai/goose.sh` | neutral | Complete; retains the official user-local upstream installer after Fedora audit |
+| `ai/huggingface-cli.sh` | port | Complete; installs missing Fedora `curl`/`python3` prerequisites before the saved official installer |
+| `ai/litellm.sh` | port | Complete; installs Fedora's `python3` and `pipx` packages when pipx is absent |
+| `ai/llama-cpp.sh` | port | Complete; uses Fedora's development-tools group and native CMake, pkg-config, ccache, and libcurl development packages |
+| `ai/llm-cli.sh` | port | Complete; installs Fedora's `python3` and `pipx` packages when pipx is absent |
+| `ai/mcp-inspector.sh` | port | Complete; uses a shared Node.js runtime selector with a signed NodeSource RPM fallback |
+| `ai/mistral-vibe.sh` | neutral | Complete; retains the official user-local Python installer after Fedora audit |
+| `ai/ollama-models.sh` | neutral | Complete; remains a distribution-neutral client of an existing Ollama service |
+| `ai/ollama.sh` | port | Complete; validates RPM architecture before the official installer, supplies Fedora prerequisites, restores SELinux contexts, and manages the systemd unit when available |
+| `ai/opencode.sh` | neutral | Complete; retains the official user-local upstream installer after Fedora audit |
+| `ai/prompt-runner.sh` | port | Complete; installs missing Fedora `curl` and `jq` packages before writing the local wrapper |
+| `ai/qwen-code.sh` | neutral | Complete; retains the official user-local standalone installer after Fedora audit |
 
 ### `apps/`
 
@@ -202,40 +202,40 @@ can update them in lockstep with their installers.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `updates/update-aider.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-aider.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-all.sh` | port | Pending; orchestration, output, and Fedora ownership audit |
 | `updates/update-android-studio.sh` | replace | Complete; delegates a managed installation to the checksum-verifying transactional tarball installer |
-| `updates/update-antigravity.sh` | replace | Pending; remove APT ownership path |
+| `updates/update-antigravity.sh` | replace | Complete; verifies RPM ownership and performs a targeted DNF refresh/upgrade |
 | `updates/update-atuin.sh` | port | Complete; delegates only user-owned Atuin binaries to the checksum-verifying installer |
 | `updates/update-aws-cli.sh` | port | Pending; replace Debian package ownership checks |
 | `updates/update-bun.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-chezmoi.sh` | delete | Complete; removed because Fedora's package and DNF now own chezmoi updates |
-| `updates/update-claude.sh` | replace | Pending; remove APT ownership path and match the selected installer |
-| `updates/update-cline.sh` | neutral | Audit pending; npm-owned updater |
-| `updates/update-codex.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-claude.sh` | replace | Complete; upgrades the owning `claude-code` RPM or verified global npm installation |
+| `updates/update-cline.sh` | neutral | Complete; npm-owned updater has no distribution package path |
+| `updates/update-codex.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-composer.sh` | port | Pending; translate packaged prerequisites/ownership checks |
 | `updates/update-ctop.sh` | port | Complete; validates standalone ownership and uses shared Fedora release architecture mapping |
-| `updates/update-cursor-agent.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-cursor-agent.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-deno.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-dive.sh` | replace | Complete; validates RPM ownership and installs the checksum-verified official RPM release |
 | `updates/update-fisher.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-flutter.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-gemini.sh` | neutral | Audit pending; npm ownership logic |
-| `updates/update-github-copilot.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-gemini.sh` | neutral | Complete; verifies npm ownership before updating the active global prefix |
+| `updates/update-github-copilot.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-gitleaks.sh` | delete | Complete; removed because Fedora's package and DNF now own gitleaks updates |
 | `updates/update-go.sh` | port | Pending; replace Debian architecture detection |
-| `updates/update-goose.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-huggingface-cli.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-goose.sh` | neutral | Complete; tool-owned updater has no distribution package path |
+| `updates/update-huggingface-cli.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-just.sh` | delete | Complete; removed because Fedora's package and DNF now own just updates |
 | `updates/update-lazydocker.sh` | port | Complete; uses RPM ownership checks and delegates to the verified Fedora-aware installer |
-| `updates/update-llama-cpp.sh` | neutral | Audit pending; source update/build path |
-| `updates/update-mcp-inspector.sh` | neutral | Audit pending; npm ownership logic |
-| `updates/update-mistral-vibe.sh` | neutral | Audit pending; Python-owned updater |
+| `updates/update-llama-cpp.sh` | neutral | Complete; source-owned update/build path has no distribution package operation |
+| `updates/update-mcp-inspector.sh` | neutral | Complete; verifies npm ownership before updating the active global prefix |
+| `updates/update-mistral-vibe.sh` | neutral | Complete; Python tool ownership is verified before upgrade |
 | `updates/update-node.sh` | neutral | Audit pending; NVM-owned updater |
 | `updates/update-nvim.sh` | delete | Complete; removed because Fedora's current Neovim package and DNF now own updates |
 | `updates/update-oh-my-zsh.sh` | neutral | Complete; tool-owned updater has no distribution package path |
-| `updates/update-opencode.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-pipx-tools.sh` | neutral | Audit pending; pipx-owned updater |
+| `updates/update-opencode.sh` | neutral | Complete; tool-owned updater has no distribution package path |
+| `updates/update-pipx-tools.sh` | neutral | Complete; upgrades only configured applications already owned by pipx |
 | `updates/update-pyenv.sh` | neutral | Audit pending; Git-owned updater |
 | `updates/update-rbenv.sh` | neutral | Audit pending; Git-owned updater |
 | `updates/update-rclone.sh` | delete | Complete; removed because Fedora's package and DNF now own rclone updates |
@@ -304,12 +304,35 @@ Phase 3 application references (checked 2026-08-26):
 - Fedora currently publishes both `guake` and `flameshot`:
   <https://packages.fedoraproject.org/pkgs/guake/guake/> and
   <https://packages.fedoraproject.org/pkgs/flameshot/flameshot/>.
+- Anthropic documents signed DNF repositories for Claude Code's stable and
+  latest channels on Fedora/RHEL, and publishes signing-key fingerprint
+  `31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE`:
+  <https://code.claude.com/docs/en/getting-started>.
+- Google publishes Antigravity's RPM repository at
+  <https://antigravity.google/download/linux>. Its RPMs are signed by
+  a subkey of Google's Linux package key, whose active primary fingerprint is
+  `EB4C1BFD4F042F6DDDCCEC917721F63BD38B4796`:
+  <https://www.google.com/linuxrepositories/>. Artifact Registry explicitly
+  does not support DNF repository-metadata signature verification:
+  <https://docs.cloud.google.com/artifact-registry/docs/os-packages/rpm/configure>.
+- NodeSource's RPM setup publishes the Node.js 22 nodistro repository and
+  package key; the downloaded primary fingerprint is
+  `242B813831AF09562B6C46F76B88DA4E3AF28A14`:
+  <https://github.com/nodesource/distributions>.
+- Fedora publishes `pipx` and `libcurl-devel` for the Python CLI and llama.cpp
+  dependency paths: <https://packages.fedoraproject.org/pkgs/pipx/pipx/> and
+  <https://packages.fedoraproject.org/pkgs/curl/libcurl-devel/>.
+- Ollama documents x86_64/aarch64 Linux installation and systemd service setup:
+  <https://docs.ollama.com/linux>. Hugging Face documents its standalone CLI
+  installer and `hf` update behavior:
+  <https://huggingface.co/docs/huggingface_hub/installation>.
 
-The current signed `repomd.xml` files used by these completed categories were
-also verified successfully with
-`gpgv` against the downloaded pinned keys before enabling `repo_gpgcheck=1`;
-the key files were inspected locally with GnuPG rather than trusting search
-snippets.
+The current signed `repomd.xml` files used by repositories with metadata
+checking enabled were also verified successfully with `gpgv` against the
+downloaded pinned keys. NodeSource and Antigravity do not publish usable DNF
+metadata signatures, so they use the narrowly documented `repo_gpgcheck=0`
+exception while retaining `gpgcheck=1`; every key file was inspected locally
+with GnuPG rather than trusting search snippets.
 
 No third-party RPM repository URL or fingerprint is accepted into the ledger
 until it is verified against that vendor's current primary documentation.

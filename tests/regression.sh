@@ -15,6 +15,7 @@ bash tests/ide-regression.sh
 bash tests/mobile-regression.sh
 bash tests/software-regression.sh
 bash tests/vpn-regression.sh
+bash tests/ai-regression.sh
 bash tests/identity-regression.sh
 bash tests/catalog-regression.sh
 bash tests/script-contract-regression.sh

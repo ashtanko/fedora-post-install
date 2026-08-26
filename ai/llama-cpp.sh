@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Building llama.cpp from source..."
@@ -25,8 +28,8 @@ if command -v llama-cli &>/dev/null && [ -d "$LLAMA_CPP_DIR" ]; then
 fi
 
 echo "📦 Installing build dependencies..."
-sudo apt update
-sudo apt install -y build-essential cmake git ccache pkg-config libcurl4-openssl-dev
+dnf_group_install development-tools
+dnf_install cmake git ccache pkgconf-pkg-config libcurl-devel
 
 # Clone or update
 mkdir -p "$(dirname "$LLAMA_CPP_DIR")"

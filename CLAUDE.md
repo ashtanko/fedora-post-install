@@ -147,12 +147,12 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### ai/
 | Script | Purpose |
 |---|---|
-| `ollama.sh` | Ollama via official installer; ensures systemd service is up |
+| `ollama.sh` | Ollama via the official x86_64/aarch64 installer with Fedora prerequisites, SELinux relabeling, and systemd service handling |
 | `ollama-models.sh` | Pulls the explicitly configured `$OLLAMA_MODELS` list |
-| `llama-cpp.sh` | Build llama.cpp from source (CMake, Release); symlinks main binaries to `~/.local/bin` |
-| `claude.sh` | Claude Code CLI from Anthropic's signed APT repository |
+| `llama-cpp.sh` | Build llama.cpp with Fedora build dependencies; symlinks main binaries to `~/.local/bin` |
+| `claude.sh` | Claude Code CLI from Anthropic's signed RPM repository |
 | `codex.sh` | OpenAI Codex CLI via the official standalone installer |
-| `gemini.sh` | Google Gemini CLI (installs Node via verified NodeSource repo if missing) |
+| `gemini.sh` | Google Gemini CLI (installs Node via the fingerprint-pinned NodeSource RPM repo if needed) |
 | `github-copilot.sh` | GitHub Copilot CLI via its official user-local installer |
 | `huggingface-cli.sh` | Standalone Hugging Face `hf` CLI |
 | `aider.sh` | Aider coding CLI via its isolated installer |
@@ -160,12 +160,12 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 | `qwen-code.sh` | Qwen Code terminal agent |
 | `cursor-agent.sh` | Cursor Agent CLI |
 | `mistral-vibe.sh` | Mistral Vibe coding agent and ACP command |
-| `cline.sh` | Cline terminal coding agent via npm |
+| `cline.sh` | Cline terminal coding agent via npm with the verified NodeSource RPM fallback |
 | `fabric.sh` | Reusable prompt-pattern and content workflow CLI |
 | `llm-cli.sh` | Provider-neutral LLM CLI via pipx |
 | `litellm.sh` | OpenAI-compatible LiteLLM proxy CLI via pipx |
-| `mcp-inspector.sh` | MCP server debugger via npm |
-| `antigravity.sh` | Google Antigravity IDE via Google's signed APT repo (key fingerprint pinned); self-updates through apt |
+| `mcp-inspector.sh` | MCP server debugger via npm with the verified NodeSource RPM fallback |
+| `antigravity.sh` | Google Antigravity IDE via its Artifact Registry RPM repo with Google's package-key fingerprint pinned |
 | `opencode.sh` | opencode CLI via official installer |
 | `prompt-runner.sh` | Installs `prompt` command — runs text/.prompt files against ollama / openai / anthropic |
 
@@ -194,10 +194,10 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 - Temp files: cleaned via `trap 'rm -f "$TMP"' EXIT`
 - Shell config additions (`PATH`, env vars): written to both `~/.zshrc` and `~/.bashrc` with a `grep -q` guard to prevent duplicates
 - Emojis: 🚀 start · 📦 installing · ✅ success · ❌ error · ⚠️ warning · 💡 tip · 🔧 configuring · 🔍 detecting
-- GPG repo keys: added via `gpg --dearmor` to `/etc/apt/keyrings/` and pinned with `signed-by=` in the apt source
+- RPM repository keys: downloaded and fingerprint-verified through `repo_add`, then stored separately under `/etc/pki/rpm-gpg/`
 - Latest GitHub release lookups: use the `latest_github_tag` helper (follows the `github.com/<owner>/<repo>/releases/latest` redirect), never `api.github.com` — unauthenticated API calls are rate-limited per IP and start returning 403 in CI
 - Network fetches: `curl --retry 3 --retry-all-errors`, so one dropped connection doesn't fail the whole script under `set -e`
-- `apt-get update` before every `apt-get install` of a repository package — `/var/lib/apt/lists` is empty on a fresh system and stale on an idle one. Installing a local `.deb` you already downloaded needs no index
+- Fedora packages: use `dnf_install`/`dnf_group_install`; use `repo_add` for third-party RPM repositories and keep package signature checking enabled
 - Never pipe a download into a shell (`curl … | bash`). Fetch to a file, verify the digest where upstream publishes one, then run or install it — see [tools/just.sh](tools/just.sh) for the shape
 - Never end a script with a bare `[[ cond ]] && cmd`: as the last line it exits 1 whenever the condition is false, so setup.sh reports a successful run as FAILED and writes no marker. Use an `if` block
 

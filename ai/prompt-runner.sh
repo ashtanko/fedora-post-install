@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 # This installer drops a `prompt` command into ~/.local/bin that runs a text
@@ -23,6 +26,11 @@ load_config "$REPO_ROOT"
 #   echo "hi" | prompt                         # read from stdin
 
 echo "🚀 Installing prompt-runner..."
+
+if ! command -v curl &>/dev/null || ! command -v jq &>/dev/null; then
+    echo "📦 Installing Fedora prompt-runner dependencies..."
+    dnf_install curl jq
+fi
 
 BIN_DIR="$HOME/.local/bin"
 BIN="$BIN_DIR/prompt"
@@ -122,19 +130,6 @@ chmod +x "$BIN"
 # Substitute the repo path placeholder so the runner can find .env
 # without hardcoding (use | as delimiter — REPO_ROOT may contain /)
 sed -i "s|__REPO_ROOT__|$REPO_ROOT|" "$BIN"
-
-# Sanity-check dependencies the runner needs
-NEEDS_APT_UPDATE=1
-for dep in curl jq; do
-    if ! command -v "$dep" &>/dev/null; then
-        if [ "$NEEDS_APT_UPDATE" = "1" ]; then
-            sudo apt-get update
-            NEEDS_APT_UPDATE=0
-        fi
-        echo "📦 Installing missing dep: $dep"
-        sudo apt-get install -y "$dep"
-    fi
-done
 
 # Ensure ~/.local/bin is on PATH (idempotent).
 # Single quotes are intentional — `$HOME` / `$PATH` must be literal in the rc file.

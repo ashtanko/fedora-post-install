@@ -714,36 +714,38 @@ grep -Fq 'starship new-version' <(
 grep -Fq '.tar.gz.sha256' "$starship_case/invocations.log" \
     || fail "update-starship did not download the release checksum"
 
-# Claude is installed from Anthropic's APT repository in this project. Verify
+# Claude is installed from Anthropic's RPM repository in this project. Verify
 # that its updater refreshes package metadata and targets only claude-code.
-claude_case="$TMP/mock-claude-apt"
+claude_case="$TMP/mock-claude-rpm"
 mkdir -p "$claude_case/home" "$claude_case/bin"
 for command_name in dirname grep; do
     ln -s "$(command -v "$command_name")" "$claude_case/bin/$command_name"
 done
 make_logging_tool claude "$claude_case/bin"
-cat >"$claude_case/bin/dpkg-query" <<'DPKG_STUB'
+cat >"$claude_case/bin/rpm" <<'RPM_STUB'
 #!/bin/bash
-case "${1:-}" in
-    -W) echo 'install ok installed' ;;
-    -S) echo "claude-code: ${2:-/usr/bin/claude}" ;;
-    *) exit 1 ;;
-esac
-DPKG_STUB
+if [[ "${1:-}" == -q && "${2:-}" == --quiet && "${3:-}" == claude-code ]]; then
+    exit 0
+fi
+if [[ "${1:-}" == -qf ]]; then
+    echo claude-code
+    exit 0
+fi
+exit 1
+RPM_STUB
 cat >"$claude_case/bin/sudo" <<'SUDO_STUB'
 #!/bin/bash
 printf 'sudo %s\n' "$*" >>"$UPDATE_TEST_LOG"
 SUDO_STUB
-chmod +x "$claude_case/bin/dpkg-query" "$claude_case/bin/sudo"
+chmod +x "$claude_case/bin/rpm" "$claude_case/bin/sudo"
 : >"$claude_case/invocations.log"
 /usr/bin/env -i HOME="$claude_case/home" PATH="$claude_case/bin" \
     UPDATE_TEST_LOG="$claude_case/invocations.log" \
     /bin/bash "$UPDATES_DIR/update-claude.sh" >"$claude_case/output.log" 2>&1 \
-    || fail "updates/update-claude.sh failed against isolated APT stubs"
-assert_log_line 'sudo apt-get update' "$claude_case/invocations.log"
-assert_log_line 'sudo apt-get install -y --only-upgrade claude-code' "$claude_case/invocations.log"
+    || fail "updates/update-claude.sh failed against isolated RPM stubs"
+assert_log_line 'sudo dnf -q upgrade -y --refresh claude-code' "$claude_case/invocations.log"
 
-# Claude Code also ships as a global npm package. With no APT package owning
+# Claude Code also ships as a global npm package. With no RPM package owning
 # the executable, the updater must fall through to npm provenance and select
 # the release matching the configured channel rather than skipping outright.
 claude_npm_case="$TMP/mock-claude-npm"
@@ -755,6 +757,10 @@ for command_name in dirname readlink grep; do
     ln -s "$(command -v "$command_name")" "$claude_npm_case/bin/$command_name"
 done
 make_logging_tool claude "$claude_npm_prefix/bin"
+cat >"$claude_npm_case/bin/rpm" <<'RPM_STUB'
+#!/bin/bash
+exit 1
+RPM_STUB
 cat >"$claude_npm_case/bin/npm" <<NPM_STUB
 #!/bin/bash
 printf 'npm %s\n' "\$*" >>"\$UPDATE_TEST_LOG"
@@ -763,7 +769,7 @@ case "\$*" in
     'root -g') printf '%s\n' '$claude_npm_root' ;;
 esac
 NPM_STUB
-chmod +x "$claude_npm_case/bin/npm"
+chmod +x "$claude_npm_case/bin/rpm" "$claude_npm_case/bin/npm"
 
 : >"$claude_npm_case/invocations.log"
 /usr/bin/env -i HOME="$claude_npm_case/home" \
@@ -773,11 +779,11 @@ chmod +x "$claude_npm_case/bin/npm"
     || fail "updates/update-claude.sh failed against the owned npm fixture"
 assert_log_line 'npm install -g @anthropic-ai/claude-code@stable' \
     "$claude_npm_case/invocations.log"
-if grep -Fq 'apt-get' "$claude_npm_case/invocations.log"; then
-    fail "update-claude reached the APT path for an npm-owned installation"
+if grep -Fq 'dnf ' "$claude_npm_case/invocations.log"; then
+    fail "update-claude reached the RPM path for an npm-owned installation"
 fi
 
-# The channel knob that picks ai/claude.sh's APT repo picks the npm dist-tag.
+# The channel knob that picks ai/claude.sh's RPM repo picks the npm dist-tag.
 : >"$claude_npm_case/invocations.log"
 /usr/bin/env -i HOME="$claude_npm_case/home" \
     PATH="$claude_npm_prefix/bin:$claude_npm_case/bin" \
@@ -796,6 +802,10 @@ for command_name in dirname readlink grep; do
     ln -s "$(command -v "$command_name")" "$claude_foreign_case/bin/$command_name"
 done
 make_logging_tool claude "$claude_foreign_case/bin"
+cat >"$claude_foreign_case/bin/rpm" <<'RPM_STUB'
+#!/bin/bash
+exit 1
+RPM_STUB
 cat >"$claude_foreign_case/bin/npm" <<NPM_STUB
 #!/bin/bash
 printf 'npm %s\n' "\$*" >>"\$UPDATE_TEST_LOG"
@@ -804,7 +814,7 @@ case "\$*" in
     'root -g') printf '%s\n' '$claude_foreign_root' ;;
 esac
 NPM_STUB
-chmod +x "$claude_foreign_case/bin/npm"
+chmod +x "$claude_foreign_case/bin/rpm" "$claude_foreign_case/bin/npm"
 : >"$claude_foreign_case/invocations.log"
 /usr/bin/env -i HOME="$claude_foreign_case/home" \
     PATH="$claude_foreign_case/bin" \
@@ -817,42 +827,37 @@ fi
 grep -Eqi 'skip' "$claude_foreign_case/output.log" \
     || fail "update-claude did not explain why it skipped an unowned installation"
 
-# Antigravity comes from Google's Artifact Registry APT repository. Its updater
+# Antigravity comes from Google's Artifact Registry RPM repository. Its updater
 # must target only that package and must read versions from the package
-# database instead of launching the GUI binary. Ownership is proven by package
-# status alone: /usr/bin/antigravity is a postinst symlink that dpkg does not
-# track, so a `dpkg-query -S` guard would skip a genuine installation.
-antigravity_case="$TMP/mock-antigravity-apt"
+# database instead of launching the GUI binary.
+antigravity_case="$TMP/mock-antigravity-rpm"
 mkdir -p "$antigravity_case/home" "$antigravity_case/bin"
 for command_name in dirname grep; do
     ln -s "$(command -v "$command_name")" "$antigravity_case/bin/$command_name"
 done
 make_logging_tool antigravity "$antigravity_case/bin"
-cat >"$antigravity_case/bin/dpkg-query" <<'DPKG_STUB'
+cat >"$antigravity_case/bin/rpm" <<'RPM_STUB'
 #!/bin/bash
-case "${1:-}" in
-    -W)
-        case "${2:-}" in
-            *Status*) echo 'install ok installed' ;;
-            *Version*) echo '1.0.0-1763466940' ;;
-            *) exit 1 ;;
-        esac
-        ;;
-    *) exit 1 ;;
-esac
-DPKG_STUB
+if [[ "${1:-}" == -q && "${2:-}" == --quiet && "${3:-}" == antigravity ]]; then
+    exit 0
+fi
+if [[ "${1:-}" == -q && "${2:-}" == --queryformat ]]; then
+    echo '1.0.0-1763466940'
+    exit 0
+fi
+exit 1
+RPM_STUB
 cat >"$antigravity_case/bin/sudo" <<'SUDO_STUB'
 #!/bin/bash
 printf 'sudo %s\n' "$*" >>"$UPDATE_TEST_LOG"
 SUDO_STUB
-chmod +x "$antigravity_case/bin/dpkg-query" "$antigravity_case/bin/sudo"
+chmod +x "$antigravity_case/bin/rpm" "$antigravity_case/bin/sudo"
 : >"$antigravity_case/invocations.log"
 /usr/bin/env -i HOME="$antigravity_case/home" PATH="$antigravity_case/bin" \
     UPDATE_TEST_LOG="$antigravity_case/invocations.log" \
     /bin/bash "$UPDATES_DIR/update-antigravity.sh" >"$antigravity_case/output.log" 2>&1 \
-    || fail "updates/update-antigravity.sh failed against isolated APT stubs"
-assert_log_line 'sudo apt-get update' "$antigravity_case/invocations.log"
-assert_log_line 'sudo apt-get install -y --only-upgrade antigravity' "$antigravity_case/invocations.log"
+    || fail "updates/update-antigravity.sh failed against isolated RPM stubs"
+assert_log_line 'sudo dnf -q upgrade -y --refresh antigravity' "$antigravity_case/invocations.log"
 grep -Fq '1.0.0-1763466940' "$antigravity_case/output.log" \
     || fail "update-antigravity did not report the packaged version"
 if grep -Fqx 'antigravity --version' "$antigravity_case/invocations.log"; then

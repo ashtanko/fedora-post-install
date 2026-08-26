@@ -2,11 +2,11 @@
 update-aider.sh|ai/aider.sh|aider --upgrade
 update-all.sh|updates/catalog.txt|aggregate every updater in this catalog
 update-android-studio.sh|ide/android-studio.sh|install the checksum-verified current official tarball
-update-antigravity.sh|ai/antigravity.sh|targeted APT package upgrade
+update-antigravity.sh|ai/antigravity.sh|targeted RPM package upgrade
 update-atuin.sh|tools/atuin.sh|install the checksum-verified latest official release asset
 update-aws-cli.sh|dev/aws-cli.sh|signature-verified AWS CLI v2 installer --update
 update-bun.sh|dev/bun.sh|bun upgrade
-update-claude.sh|ai/claude.sh|targeted APT package or npm global upgrade, whichever owns the executable
+update-claude.sh|ai/claude.sh|targeted RPM package or npm global upgrade, whichever owns the executable
 update-cline.sh|ai/cline.sh|cline update
 update-codex.sh|ai/codex.sh|codex update
 update-composer.sh|dev/php.sh|composer self-update

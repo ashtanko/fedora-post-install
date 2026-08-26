@@ -7,8 +7,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing LiteLLM proxy CLI..."
@@ -70,9 +73,8 @@ if [ -x "$LITELLM_BIN" ]; then
 fi
 
 if ! command -v pipx &>/dev/null; then
-    echo "📦 Installing pipx and Python venv support..."
-    sudo apt-get update
-    sudo apt-get install -y python3 python3-venv pipx
+    echo "📦 Installing Fedora's Python and pipx packages..."
+    dnf_install python3 pipx
 fi
 
 LITELLM_PACKAGE="litellm[proxy]"

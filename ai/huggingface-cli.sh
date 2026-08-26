@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing Hugging Face CLI..."
@@ -29,10 +32,9 @@ if HF_BIN=$(find_hf); then
     exit 0
 fi
 
-if ! command -v python3 &>/dev/null || ! dpkg -s python3-venv &>/dev/null; then
-    echo "📦 Installing Python venv support required by the Hugging Face installer..."
-    sudo apt-get update
-    sudo apt-get install -y python3 python3-venv
+if ! command -v curl &>/dev/null || ! command -v python3 &>/dev/null; then
+    echo "📦 Installing Fedora prerequisites for the Hugging Face installer..."
+    dnf_install curl python3
 fi
 
 echo "📦 Downloading the official Hugging Face CLI installer..."

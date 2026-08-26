@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing Claude Code CLI..."
@@ -23,42 +26,23 @@ case "$CLAUDE_CHANNEL" in
         ;;
 esac
 
-if command -v claude &>/dev/null; then
+rpm_arch >/dev/null
+dnf_install curl gnupg2
+
+echo "📦 Configuring Anthropic's signed Claude Code RPM repository..."
+repo_add claude-code \
+    "https://downloads.claude.ai/claude-code/rpm/$CLAUDE_CHANNEL" \
+    'https://downloads.claude.ai/keys/claude-code.asc' \
+    '31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE'
+
+if dnf_installed claude-code && command -v claude &>/dev/null; then
     echo "✅ Claude Code already installed ($(claude --version 2>/dev/null || echo 'version unknown'))"
-    echo "💡 Run 'claude doctor' to check the installation and update status"
+    echo "💡 Update it later with: bash updates/update-claude.sh"
     exit 0
 fi
 
-echo "📦 Installing repository prerequisites..."
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-
-TMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TMP_DIR"' EXIT
-KEY_FILE="$TMP_DIR/claude-code.asc"
-GPG_HOME="$TMP_DIR/gnupg"
-EXPECTED_FINGERPRINT="31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE"
-
-echo "📥 Downloading and verifying the Anthropic signing key..."
-curl -fsSL --retry 3 --retry-all-errors \
-    -o "$KEY_FILE" https://downloads.claude.ai/keys/claude-code.asc
-mkdir -m 700 "$GPG_HOME"
-FINGERPRINT=$(GNUPGHOME="$GPG_HOME" gpg --batch --no-options --show-keys --with-colons \
-    "$KEY_FILE" 2>/dev/null | awk -F: '$1 == "fpr" { print $10; exit }')
-if [ "$FINGERPRINT" != "$EXPECTED_FINGERPRINT" ]; then
-    echo "❌ Anthropic signing key fingerprint mismatch" >&2
-    echo "   expected: $EXPECTED_FINGERPRINT" >&2
-    echo "   received: ${FINGERPRINT:-missing}" >&2
-    exit 1
-fi
-
-sudo install -D -o root -g root -m 644 "$KEY_FILE" /etc/apt/keyrings/claude-code.asc
-echo "deb [signed-by=/etc/apt/keyrings/claude-code.asc] https://downloads.claude.ai/claude-code/apt/${CLAUDE_CHANNEL} ${CLAUDE_CHANNEL} main" \
-    | sudo tee /etc/apt/sources.list.d/claude-code.list >/dev/null
-
 echo "📦 Installing Claude Code from the ${CLAUDE_CHANNEL} channel..."
-sudo apt-get update
-sudo apt-get install -y claude-code
+dnf_install claude-code
 
 if ! command -v claude &>/dev/null; then
     echo "❌ Claude Code installation failed or 'claude' is not in PATH" >&2

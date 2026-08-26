@@ -250,13 +250,28 @@ test_pipx_ai_installers() {
     done
 }
 
-test_claude_apt_installer() {
-    local bin="$TEST_TMP/claude-apt-bin"
-    local home="$TEST_TMP/claude-apt-home"
-    local log="$TEST_TMP/claude-apt.log"
-    local output="$TEST_TMP/claude-apt.out"
-    local curl_count
+test_claude_rpm_installer() {
+    local bin="$TEST_TMP/claude-rpm-bin"
+    local home="$TEST_TMP/claude-rpm-home"
+    local log="$TEST_TMP/claude-rpm.log"
+    local output="$TEST_TMP/claude-rpm.out"
+    local capture="$TEST_TMP/claude-rpm-capture"
+    local state="$TEST_TMP/claude-rpm-installed"
     mkdir -p "$bin" "$home"
+    cat > "$bin/rpm" <<'EOF'
+#!/bin/bash
+if [ "${1:-}" = --eval ]; then
+    echo x86_64
+    exit 0
+fi
+if [ "${1:-}" = -q ] && [ "${2:-}" = --quiet ]; then
+    case "${3:-}" in
+        curl|gnupg2) exit 0 ;;
+        claude-code) [ -f "$STUB_STATE" ]; exit ;;
+    esac
+fi
+exit 1
+EOF
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 out=""
@@ -273,17 +288,21 @@ printf 'test-key\n' > "$out"
 EOF
     cat > "$bin/gpg" <<'EOF'
 #!/bin/bash
+echo 'pub:-:4096:1:0000000000000000:0:0::::::'
 echo 'fpr:::::::::31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE:'
+EOF
+    cat > "$bin/dnf" <<'EOF'
+#!/bin/bash
+exit 99
 EOF
     cat > "$bin/sudo" <<'EOF'
 #!/bin/bash
 echo "sudo $*" >> "$STUB_LOG"
-if [ "${1:-}" = tee ]; then
-    input=$(cat)
-    echo "stdin $input" >> "$STUB_LOG"
-    exit 0
+if [ "${1:-}" = install ] && [[ "${*: -1}" == *.repo ]]; then
+    cp "${*: -2:1}" "$STUB_CAPTURE"
 fi
-if [[ "$*" == *"apt-get install -y claude-code"* ]]; then
+if [[ "$*" == *"dnf -q install -y --setopt=install_weak_deps=False claude-code"* ]]; then
+    touch "$STUB_STATE"
     cat > "$STUB_BIN/claude" <<'BIN'
 #!/bin/bash
 echo stub-version
@@ -292,20 +311,26 @@ BIN
 fi
 exit 0
 EOF
-    chmod +x "$bin/curl" "$bin/gpg" "$bin/sudo"
+    chmod +x "$bin/rpm" "$bin/curl" "$bin/gpg" "$bin/dnf" "$bin/sudo"
 
-    STUB_BIN="$bin" STUB_LOG="$log" HOME="$home" CLAUDE_CHANNEL=latest \
+    STUB_BIN="$bin" STUB_LOG="$log" STUB_CAPTURE="$capture" STUB_STATE="$state" \
+        HOME="$home" CLAUDE_CHANNEL=latest \
         PATH="$bin:/usr/bin:/bin" /bin/bash "$REPO_ROOT/ai/claude.sh" > "$output" 2>&1
     assert_contains "$log" "downloads.claude.ai/keys/claude-code.asc"
-    assert_contains "$log" "https://downloads.claude.ai/claude-code/apt/latest latest main"
-    [ -x "$bin/claude" ] || fail "Claude APT installer did not install the CLI"
+    assert_contains "$capture" "baseurl=https://downloads.claude.ai/claude-code/rpm/latest"
+    assert_contains "$capture" "gpgcheck=1"
+    assert_contains "$capture" "repo_gpgcheck=1"
+    assert_contains "$log" "sudo dnf -q install -y --setopt=install_weak_deps=False claude-code"
+    [ -x "$bin/claude" ] || fail "Claude RPM installer did not install the CLI"
 
-    STUB_BIN="$bin" STUB_LOG="$log" HOME="$home" CLAUDE_CHANNEL=latest \
+    STUB_BIN="$bin" STUB_LOG="$log" STUB_CAPTURE="$capture" STUB_STATE="$state" \
+        HOME="$home" CLAUDE_CHANNEL=latest \
         PATH="$bin:/usr/bin:/bin" /bin/bash "$REPO_ROOT/ai/claude.sh" >> "$output" 2>&1
-    curl_count=$(grep -c '^curl ' "$log")
-    [ "$curl_count" -eq 1 ] || fail "Claude installer downloaded its key again on the second run"
+    [ "$(grep -c 'dnf -q install .* claude-code' "$log")" -eq 1 ] \
+        || fail "Claude installer invoked DNF again on the second run"
 
-    if STUB_BIN="$bin" STUB_LOG="$log" HOME="$home" CLAUDE_CHANNEL=preview \
+    if STUB_BIN="$bin" STUB_LOG="$log" STUB_CAPTURE="$capture" STUB_STATE="$state" \
+        HOME="$home" CLAUDE_CHANNEL=preview \
         PATH="$bin:/usr/bin:/bin" /bin/bash "$REPO_ROOT/ai/claude.sh" \
         > "$TEST_TMP/claude-invalid.out" 2>&1; then
         fail "Claude installer accepted an unsupported channel"
@@ -659,7 +684,7 @@ EOF
 test_npm_installers
 test_remote_ai_installers
 test_pipx_ai_installers
-test_claude_apt_installer
+test_claude_rpm_installer
 test_architecture_guards
 test_system_info_optional_failure
 test_flutter_scope_and_status

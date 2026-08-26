@@ -132,12 +132,12 @@ LLM tooling and CLIs.
 
 | Script | Purpose |
 |---|---|
-| [ollama.sh](../ai/ollama.sh) | Ollama via official installer; ensures systemd service is up |
+| [ollama.sh](../ai/ollama.sh) | Ollama via the official x86_64/aarch64 installer with Fedora prerequisites, SELinux relabeling, and systemd service handling |
 | [ollama-models.sh](../ai/ollama-models.sh) | Pulls the whitespace-separated `$OLLAMA_MODELS` list; requires a running Ollama service and has no default downloads |
-| [llama-cpp.sh](../ai/llama-cpp.sh) | Build llama.cpp from source (CMake, Release); symlinks main binaries to `~/.local/bin` |
-| [claude.sh](../ai/claude.sh) | Claude Code CLI from Anthropic's signed Ubuntu APT repository (`$CLAUDE_CHANNEL`: stable/latest) |
+| [llama-cpp.sh](../ai/llama-cpp.sh) | Build llama.cpp from source with Fedora's development-tools group, CMake, and `libcurl-devel`; symlinks main binaries to `~/.local/bin` |
+| [claude.sh](../ai/claude.sh) | Claude Code CLI from Anthropic's signed Fedora-compatible RPM repository (`$CLAUDE_CHANNEL`: stable/latest) |
 | [codex.sh](../ai/codex.sh) | OpenAI Codex CLI via the official standalone installer; `$CODEX_RELEASE` can pin a release |
-| [gemini.sh](../ai/gemini.sh) | Google Gemini CLI (installs Node via verified NodeSource repo if missing) |
+| [gemini.sh](../ai/gemini.sh) | Google Gemini CLI via npm; installs Node.js 22 from the fingerprint-pinned NodeSource RPM repository when needed |
 | [github-copilot.sh](../ai/github-copilot.sh) | GitHub Copilot CLI via the official user-local installer; `$COPILOT_VERSION` can pin a release |
 | [huggingface-cli.sh](../ai/huggingface-cli.sh) | Standalone `hf` CLI for Hub authentication, model downloads, uploads, and cache management; skips the installer's optional agent skill |
 | [aider.sh](../ai/aider.sh) | Aider coding CLI via its official isolated installer |
@@ -145,12 +145,12 @@ LLM tooling and CLIs.
 | [qwen-code.sh](../ai/qwen-code.sh) | Qwen Code terminal agent via the official standalone installer |
 | [cursor-agent.sh](../ai/cursor-agent.sh) | Cursor Agent CLI via Cursor's official user-local installer |
 | [mistral-vibe.sh](../ai/mistral-vibe.sh) | Mistral Vibe coding agent, including its ACP command, via the official installer |
-| [cline.sh](../ai/cline.sh) | Cline terminal agent via npm; `$CLINE_VERSION` can pin a release |
+| [cline.sh](../ai/cline.sh) | Cline terminal agent via npm; uses the verified NodeSource RPM fallback and `$CLINE_VERSION` can pin a release |
 | [fabric.sh](../ai/fabric.sh) | Fabric CLI for reusable prompt patterns and content workflows |
 | [llm-cli.sh](../ai/llm-cli.sh) | Provider-neutral `llm` command installed in an isolated pipx environment; `$LLM_VERSION` can pin a release |
 | [litellm.sh](../ai/litellm.sh) | LiteLLM OpenAI-compatible proxy CLI in an isolated pipx environment; latest installs align FastAPI/Starlette with LiteLLM's current proxy constraints, while `$LITELLM_VERSION` can pin a release |
-| [mcp-inspector.sh](../ai/mcp-inspector.sh) | MCP Inspector web, TUI, and CLI debugger via npm; `$MCP_INSPECTOR_VERSION` can pin a release |
-| [antigravity.sh](../ai/antigravity.sh) | Google Antigravity IDE via Google's signed APT repo (key fingerprint pinned); self-updates through apt |
+| [mcp-inspector.sh](../ai/mcp-inspector.sh) | MCP Inspector web, TUI, and CLI debugger via npm; uses the verified NodeSource RPM fallback and `$MCP_INSPECTOR_VERSION` can pin a release |
+| [antigravity.sh](../ai/antigravity.sh) | Google Antigravity IDE from its Artifact Registry RPM repository with Google's package-signing key fingerprint pinned |
 | [opencode.sh](../ai/opencode.sh) | opencode CLI via official installer |
 | [prompt-runner.sh](../ai/prompt-runner.sh) | Installs `prompt` command — runs text/.prompt files against ollama / openai / anthropic |
 
@@ -163,11 +163,11 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-aider.sh](../updates/update-aider.sh) | Upgrade the repository-managed Aider CLI |
 | [update-all.sh](../updates/update-all.sh) | Run every supported updater, continue after individual failures, and return a combined result |
 | [update-android-studio.sh](../updates/update-android-studio.sh) | Install Google's checksum-verified current Android Studio tarball |
-| [update-antigravity.sh](../updates/update-antigravity.sh) | Upgrade the Antigravity package from Google's configured APT repository |
+| [update-antigravity.sh](../updates/update-antigravity.sh) | Upgrade the Antigravity RPM from Google's configured repository |
 | [update-atuin.sh](../updates/update-atuin.sh) | Install the checksum-verified latest Atuin release asset |
 | [update-aws-cli.sh](../updates/update-aws-cli.sh) | Verify AWS's detached signature, then update the repository-managed AWS CLI v2 installation |
 | [update-bun.sh](../updates/update-bun.sh) | Upgrade the Bun binary installed under `$BUN_INSTALL` |
-| [update-claude.sh](../updates/update-claude.sh) | Upgrade Claude Code from Anthropic's configured APT channel, or from npm when the active executable is npm-owned |
+| [update-claude.sh](../updates/update-claude.sh) | Upgrade Claude Code from Anthropic's configured RPM channel, or from npm when the active executable is npm-owned |
 | [update-cline.sh](../updates/update-cline.sh) | Update the active global npm installation of Cline CLI |
 | [update-codex.sh](../updates/update-codex.sh) | Run native `codex update` for the standalone CLI installed by this project |
 | [update-composer.sh](../updates/update-composer.sh) | Self-update the standalone Composer PHAR installed by this project |

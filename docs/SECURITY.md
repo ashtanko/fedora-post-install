@@ -102,24 +102,13 @@ signature checking (`repo_gpgcheck=1`). Each repository uses a separate key
 file under `/etc/pki/rpm-gpg/`; a mismatched or multi-primary key is rejected
 before repository state changes.
 
-Google's official Cloud SDK RPM configuration is the sole audited exception:
-it documents `repo_gpgcheck=0`, so that installer explicitly disables metadata
-signature checking while keeping package signature checking enabled and pinning
-Google's published package-key fingerprint. The shared helper accepts only a
-literal `0` or `1` for this policy, and regression tests preserve the secure
-default for every other repository.
-
-## APT keyring handling (pending categories)
-
-Scripts that add a third-party apt repository follow the modern keyring pattern — they do **not** trust keys globally:
-
-```bash
-wget -qO- <vendor-key-url> | sudo gpg --dearmor -o /etc/apt/keyrings/<name>.gpg
-echo "deb [arch=... signed-by=/etc/apt/keyrings/<name>.gpg] <repo-url> ..." \
-  | sudo tee /etc/apt/sources.list.d/<name>.list
-```
-
-Each repo's signature is pinned to its own keyring file via `signed-by=`. Removing the source list or the keyring is enough to unwire the repo.
+The audited metadata-signature exceptions are Google Cloud CLI, Trivy,
+NodeSource, and Antigravity. Their official RPM channels do not publish a
+usable `repomd.xml` signature for DNF, so those definitions explicitly set
+`repo_gpgcheck=0`. RPM package signature checking remains enabled with
+`gpgcheck=1`, and every package key is fingerprint-pinned. The shared helper
+accepts only a literal `0` or `1` for this policy, and regression tests preserve
+the secure default for every other repository.
 
 ## Backup ([tools/backup-home.sh](../tools/backup-home.sh))
 
@@ -132,9 +121,9 @@ Each repo's signature is pinned to its own keyring file via `signed-by=`. Removi
 
 - [ai/ollama.sh](../ai/ollama.sh), [ai/ollama-models.sh](../ai/ollama-models.sh), and [ai/llama-cpp.sh](../ai/llama-cpp.sh) perform inference locally. Model and installer downloads still contact their configured upstream services.
 - [ai/prompt-runner.sh](../ai/prompt-runner.sh) is multi-backend. With `-b openai` or `-b anthropic`, prompt content is sent to the respective vendor's API; `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` from `.env` are read at runtime. Local Ollama is the default backend.
-- [ai/claude.sh](../ai/claude.sh) and [ai/antigravity.sh](../ai/antigravity.sh) verify the published signing-key fingerprint (Anthropic's, and Google's Artifact Registry repository signer) before adding their APT repositories.
+- [ai/claude.sh](../ai/claude.sh) and [ai/antigravity.sh](../ai/antigravity.sh) verify the published RPM package-signing-key fingerprint before adding their repositories. Anthropic also signs repository metadata; Artifact Registry does not support DNF metadata verification, so Antigravity keeps `gpgcheck=1` with the documented `repo_gpgcheck=0` exception.
 - [ai/codex.sh](../ai/codex.sh), [ai/github-copilot.sh](../ai/github-copilot.sh), [ai/huggingface-cli.sh](../ai/huggingface-cli.sh), [ai/aider.sh](../ai/aider.sh), [ai/goose.sh](../ai/goose.sh), [ai/qwen-code.sh](../ai/qwen-code.sh), [ai/cursor-agent.sh](../ai/cursor-agent.sh), [ai/mistral-vibe.sh](../ai/mistral-vibe.sh), [ai/fabric.sh](../ai/fabric.sh), [ai/gemini.sh](../ai/gemini.sh), and [ai/opencode.sh](../ai/opencode.sh) install vendor CLIs that follow their own auth and telemetry policies. Remote shell installers are downloaded to a temporary file and must complete successfully before execution; the wrapper does not independently sign their contents.
-- [ai/cline.sh](../ai/cline.sh), [ai/llm-cli.sh](../ai/llm-cli.sh), [ai/litellm.sh](../ai/litellm.sh), and [ai/mcp-inspector.sh](../ai/mcp-inspector.sh) install third-party packages from npm or PyPI. The wrappers do not configure credentials; review each tool's provider, telemetry, and local-execution settings before use.
+- [ai/gemini.sh](../ai/gemini.sh), [ai/cline.sh](../ai/cline.sh), and [ai/mcp-inspector.sh](../ai/mcp-inspector.sh) install npm packages and share a Node.js 22 fallback from NodeSource's package-signed RPM channel. [ai/llm-cli.sh](../ai/llm-cli.sh) and [ai/litellm.sh](../ai/litellm.sh) install PyPI packages through Fedora's pipx. The wrappers do not configure credentials; review each tool's provider, telemetry, and local-execution settings before use.
 - Coding agents can read and modify files or execute commands after approval. MCP Inspector starts local services (ports 6274 and 6277 by default), while LiteLLM starts an API proxy (port 4000 by default); do not expose them to untrusted networks without authentication and access controls.
 
 ## Shell frameworks and prompts

@@ -19,11 +19,11 @@ bash updates/update-all.sh
 | `update-aider.sh` | `aider --upgrade` |
 | `update-all.sh` | Runs every other updater and reports a combined result |
 | `update-android-studio.sh` | Installs the checksum-verified current Android Studio tarball from Google |
-| `update-antigravity.sh` | Upgrades only the `antigravity` APT package |
+| `update-antigravity.sh` | Upgrades only the `antigravity` RPM package |
 | `update-atuin.sh` | Installs the checksum-verified latest official Atuin release asset |
 | `update-aws-cli.sh` | Verifies AWS's detached signature, then runs the v2 installer with `--update` |
 | `update-bun.sh` | `bun upgrade` |
-| `update-claude.sh` | Upgrades only the `claude-code` APT package, or the global `@anthropic-ai/claude-code` npm package when that owns `claude` |
+| `update-claude.sh` | Upgrades only the `claude-code` RPM package, or the global `@anthropic-ai/claude-code` npm package when that owns `claude` |
 | `update-cline.sh` | `cline update` for the active global npm installation |
 | `update-codex.sh` | `codex update` for the standalone CLI installed by this project |
 | `update-composer.sh` | `composer self-update --no-interaction` |

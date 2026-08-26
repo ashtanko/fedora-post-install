@@ -8,7 +8,7 @@ VERSION ?=
 export VERSION
 
 .DEFAULT_GOAL := help
-.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression tools-regression ide-regression mobile-regression software-regression vpn-regression identity-regression runtime-regression installer-regression \
+.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression tools-regression ide-regression mobile-regression software-regression vpn-regression ai-regression identity-regression runtime-regression installer-regression \
         contract-regression regressions check smoke smoke-all \
         idempotency idempotency-all setup version tui-test tui-build tag dist release-artifact \
         release-dry-run clean clean-markers
@@ -62,6 +62,9 @@ software-regression: ## Verify Fedora-native virtualization installers and Secur
 
 vpn-regression: ## Verify Fedora-native VPN repositories, services, and enrollment paths
 	bash tests/vpn-regression.sh
+
+ai-regression: ## Verify Fedora-native AI package, repository, and runtime paths
+	bash tests/ai-regression.sh
 
 identity-regression: ## Verify the Fedora project identity is used consistently
 	bash tests/identity-regression.sh

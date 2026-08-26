@@ -19,17 +19,15 @@ if ! CLAUDE_BIN=$(command -v claude); then
     exit 0
 fi
 
-# Claude Code ships both as Anthropic's APT package (what ai/claude.sh
-# installs) and as a global npm package. Update whichever one actually owns
-# the executable on PATH, and never guess: an unowned binary is left alone.
-if dpkg-query -W -f='${Status}' claude-code 2>/dev/null | grep -q 'ok installed' \
-    && dpkg-query -S "$CLAUDE_BIN" 2>/dev/null | grep -q '^claude-code:'; then
+# ai/claude.sh installs Anthropic's RPM package. Retain npm provenance support
+# for users who already have the separately supported global npm installation.
+if rpm -q --quiet claude-code \
+    && [ "$(rpm -qf --queryformat '%{NAME}\n' "$CLAUDE_BIN" 2>/dev/null || true)" = "claude-code" ]; then
     BEFORE_VERSION=$("$CLAUDE_BIN" --version 2>/dev/null || echo "version unknown")
-    echo "🚀 Updating Claude Code (APT package)..."
+    echo "🚀 Updating Claude Code (RPM package)..."
     echo "   Before: $BEFORE_VERSION"
 
-    sudo apt-get update
-    sudo apt-get install -y --only-upgrade claude-code
+    sudo dnf -q upgrade -y --refresh claude-code
 
     AFTER_VERSION=$("$CLAUDE_BIN" --version 2>/dev/null || echo "version unknown")
     echo "✅ Claude Code update complete"
@@ -38,7 +36,7 @@ if dpkg-query -W -f='${Status}' claude-code 2>/dev/null | grep -q 'ok installed'
 fi
 
 if ! command -v npm &>/dev/null; then
-    echo "⏭️  Claude Code is not managed by the APT package installed by this project, and the installation cannot be verified without npm; skipping update."
+    echo "⏭️  Claude Code is not managed by the RPM package installed by this project, and the installation cannot be verified without npm; skipping update."
     exit 0
 fi
 
@@ -58,7 +56,7 @@ fi
 CLAUDE_PACKAGE_DIR="$NPM_ROOT/$CLAUDE_PACKAGE"
 EXPECTED_CLAUDE_BIN="$NPM_PREFIX/bin/claude"
 if [ ! -d "$CLAUDE_PACKAGE_DIR" ] || [ ! -e "$EXPECTED_CLAUDE_BIN" ]; then
-    echo "⏭️  Claude Code is owned by neither the claude-code APT package nor the active npm global prefix; skipping update."
+    echo "⏭️  Claude Code is owned by neither the claude-code RPM package nor the active npm global prefix; skipping update."
     exit 0
 fi
 
@@ -68,7 +66,7 @@ if [ "$(readlink -f "$CLAUDE_BIN")" != "$(readlink -f "$EXPECTED_CLAUDE_BIN")" ]
 fi
 
 # The npm package publishes both channels as dist-tags, so the same knob that
-# selects ai/claude.sh's APT channel selects the npm release here.
+# selects ai/claude.sh's RPM channel selects the npm release here.
 CLAUDE_CHANNEL="${CLAUDE_CHANNEL:-stable}"
 case "$CLAUDE_CHANNEL" in
     stable|latest) ;;
