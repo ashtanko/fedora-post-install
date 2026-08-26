@@ -11,18 +11,22 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Setting up Python development environment..."
 
 PYENV_DIR="${PYENV_ROOT:-$HOME/.pyenv}"
 
 # 1. Install Python 3 base packages
-echo "📦 Installing python3, pip, and venv..."
-sudo apt update -y
-sudo apt install -y python3 python3-pip python3-venv python3-dev \
-    build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
-    libsqlite3-dev libncursesw5-dev xz-utils tk-dev libxml2-dev \
-    libxmlsec1-dev libffi-dev liblzma-dev
+echo "📦 Installing Python, pip, pipx, and pyenv build dependencies..."
+dnf_group_install development-tools
+dnf_install \
+    python3 python3-pip python3-devel pipx git gcc make patch \
+    openssl-devel zlib-devel bzip2 bzip2-devel readline-devel \
+    sqlite sqlite-devel ncurses-devel xz xz-devel tk-devel \
+    libxml2-devel xmlsec1-devel libffi-devel libuuid-devel gdbm-devel
 
 echo "✅ $(python3 --version)"
 echo "✅ pip $(pip3 --version | awk '{print $2}')"
@@ -65,7 +69,7 @@ if command -v pipx &>/dev/null; then
     echo "✅ pipx already installed"
 else
     echo "📦 Installing pipx..."
-    sudo apt install -y pipx
+    dnf_install pipx
     pipx ensurepath
 fi
 

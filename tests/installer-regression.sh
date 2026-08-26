@@ -379,6 +379,11 @@ test_flutter_scope_and_status() {
     ln -s /usr/bin/dirname "$bin/dirname"
     ln -s /usr/bin/grep "$bin/grep"
     ln -s /usr/bin/mkdir "$bin/mkdir"
+    cat > "$bin/rpm" <<'EOF'
+#!/bin/bash
+if [ "${1:-}" = -q ]; then exit 0; fi
+exit 1
+EOF
     cat > "$bin/sudo" <<'EOF'
 #!/bin/bash
 echo "sudo $*" >> "$STUB_LOG"
@@ -395,7 +400,7 @@ EOF
 echo "flutter $*" >> "$STUB_LOG"
 if [ "${1:-}" = doctor ]; then exit 1; fi
 EOF
-    chmod +x "$bin/sudo" "$bin/git" "$bin/flutter"
+    chmod +x "$bin/sudo" "$bin/git" "$bin/flutter" "$bin/rpm"
     STUB_LOG="$log" HOME="$home" PATH="$bin:/usr/bin:/bin" \
         /bin/bash "$REPO_ROOT/dev/flutter.sh" > "$output" 2>&1
     if grep -qE 'add-architecture|:i386' "$log"; then

@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Setting up Ruby development environment..."
 
@@ -18,9 +21,9 @@ RBENV_DIR="${RBENV_ROOT:-$HOME/.rbenv}"
 
 # 1. ruby-build's native extension toolchain
 echo "📦 Installing Ruby build dependencies..."
-sudo apt-get update
-sudo apt-get install -y build-essential libssl-dev libreadline-dev zlib1g-dev \
-    libyaml-dev libffi-dev libgdbm-dev libncurses5-dev autoconf bison
+dnf_group_install development-tools
+dnf_install git openssl-devel readline-devel zlib-devel libyaml-devel \
+    libffi-devel gdbm-devel ncurses-devel autoconf bison
 
 # 2. Install rbenv + ruby-build
 # Deliberately no `git pull` on re-run — see dev/python.sh for why: a fetch

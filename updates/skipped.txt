@@ -25,15 +25,16 @@ apps/postman.sh|the application manages its own updates
 apps/warp.sh|vendor RPM package is maintained through its configured repository and DNF
 apps/bitwarden-cli.sh|the standalone CLI has no documented in-place updater; bw update only checks availability
 apps/flameshot.sh|Fedora package is maintained through DNF
-dev/java.sh|configured OpenJDK packages are maintained through APT
-dev/docker.sh|Docker packages are maintained through the configured APT repository
+dev/java.sh|configured OpenJDK packages are maintained through DNF
+dev/docker.sh|Docker packages are maintained through its configured RPM repository and DNF
 dev/docker-rootless.sh|configures an existing Docker installation; it does not own a separately updated tool
 dev/kubernetes.sh|installs several package/release-managed tools with no single ownership-compatible updater
 dev/terraform.sh|HashiCorp and companion packages are maintained through their package/install provenance
-dev/dotnet.sh|Microsoft packages are maintained through the configured APT repository
-dev/gcloud.sh|Google Cloud packages are maintained through the configured APT repository
-dev/azure-cli.sh|Microsoft packages are maintained through the configured APT repository
-dev/cpp.sh|Ubuntu compiler and build-tool packages are maintained through APT
+dev/dotnet.sh|Fedora's .NET packages are maintained through DNF
+dev/gcloud.sh|Google Cloud packages are maintained through its configured RPM repository and DNF
+dev/azure-cli.sh|Microsoft packages are maintained through its configured RPM repository and DNF
+dev/cpp.sh|Fedora compiler and build-tool packages are maintained through DNF
+dev/podman.sh|Fedora's Podman and podman-compose packages are maintained through DNF
 tools/cli-tools.sh|bulk Ubuntu package set is maintained through APT
 tools/modern-cli.sh|mixed package set has no single ownership-compatible updater
 tools/btop.sh|Ubuntu package is maintained through APT

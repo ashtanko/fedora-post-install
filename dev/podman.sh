@@ -11,40 +11,22 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Podman (rootless container engine)..."
 
 CURRENT_USER="$(whoami)"
 
-if command -v podman &>/dev/null; then
-    echo "✅ podman already installed ($(podman --version 2>/dev/null))"
-else
-    echo "📦 Installing podman + uidmap..."
-    sudo apt-get update
-    sudo apt-get install -y podman uidmap
-    echo "✅ podman installed ($(podman --version 2>/dev/null))"
-fi
-
-if command -v podman-compose &>/dev/null; then
-    echo "✅ podman-compose already installed"
-else
-    echo "📦 Installing podman-compose..."
-    sudo apt-get update
-    if apt-cache show podman-compose &>/dev/null; then
-        sudo apt-get install -y podman-compose
-    else
-        # Not packaged on this release (e.g. Ubuntu 22.04/jammy) — fall back to pipx.
-        echo "⚠️  No podman-compose apt package on this release — installing via pipx instead"
-        if ! command -v pipx &>/dev/null; then
-            sudo apt-get install -y pipx
-            pipx ensurepath >/dev/null 2>&1 || true
-        fi
-        pipx install podman-compose
-    fi
-fi
+echo "📦 Installing Fedora's Podman stack and rootless dependencies..."
+dnf_install \
+    podman podman-compose shadow-utils slirp4netns fuse-overlayfs container-selinux
+echo "✅ podman installed ($(podman --version 2>/dev/null))"
+echo "✅ podman-compose installed"
 
 # Rootless Podman needs a subuid/subgid range for the current user. Modern
-# Ubuntu provisions this automatically for interactive users, but it's worth
+# Fedora provisions this automatically for interactive users, but it is worth
 # checking rather than assuming — and worth NOT silently rewriting
 # /etc/subuid or /etc/subgid, since that's system identity mapping, not
 # something to change without the user seeing it.
@@ -61,4 +43,4 @@ echo ""
 echo "✅ Podman ready!"
 echo "💡 Rootless by default: podman run --rm hello-world"
 echo "💡 Compose-style workflows: podman-compose up"
-echo "💡 Coexists fine with Docker (dev/docker.sh) — different socket, no conflict"
+echo "💡 Coexists with Docker Engine; avoid the podman-docker CLI compatibility package"

@@ -24,8 +24,8 @@ if [ -z "$ACTIVE_COMPOSER" ] || [ "$(readlink -f "$ACTIVE_COMPOSER")" != "$COMPO
     exit 0
 fi
 
-if dpkg-query -S "$COMPOSER_BIN" &>/dev/null; then
-    echo "⏭️  Skipping Composer update: $COMPOSER_BIN is owned by a Debian package."
+if rpm -qf "$COMPOSER_BIN" &>/dev/null; then
+    echo "⏭️  Skipping Composer update: $COMPOSER_BIN is owned by an RPM package."
     exit 0
 fi
 

@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Java (OpenJDK)..."
 
@@ -51,33 +54,27 @@ if [[ $valid -eq 0 ]]; then
     exit 1
 fi
 
-PKG="openjdk-${VERSION}-jdk"
+PKG="java-${VERSION}-openjdk-devel"
 
-if dpkg -s "$PKG" &>/dev/null; then
+if dnf_installed "$PKG"; then
     echo "✅ $PKG already installed"
     java -version
     exit 0
 fi
 
-echo "📦 Updating package lists..."
-sudo apt update -y
-
 echo "📦 Installing $PKG..."
-if ! sudo apt install -y "$PKG"; then
-    echo "❌ apt could not install $PKG"
-    echo "💡 Your Ubuntu release may not ship this version. Try: apt-cache search '^openjdk-[0-9]+-jdk\$'"
+if ! dnf_install "$PKG"; then
+    echo "❌ Fedora could not install $PKG"
+    echo "💡 This Fedora release may not ship it. Try: dnf list --available 'java-*-openjdk-devel'"
     exit 1
 fi
 
 if command -v java &>/dev/null; then
     echo "✅ $PKG installed successfully"
     java -version
-    if [[ $(update-alternatives --list java 2>/dev/null | wc -l) -gt 1 ]]; then
-        echo ""
-        echo "💡 Multiple JDKs detected. Switch the default with:"
-        echo "   sudo update-alternatives --config java"
-        echo "   sudo update-alternatives --config javac"
-    fi
+    echo "💡 If multiple JDKs are installed, switch defaults with:"
+    echo "   sudo alternatives --config java"
+    echo "   sudo alternatives --config javac"
 else
     echo "❌ Java installation failed"
     exit 1

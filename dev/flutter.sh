@@ -11,21 +11,23 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 FLUTTER_DEST="${FLUTTER_DIR:-$HOME/development}"
 FLUTTER_BIN="$FLUTTER_DEST/flutter/bin"
 
-echo "🚀 Setting up Flutter SDK and Linux desktop dependencies for Ubuntu..."
+echo "🚀 Setting up Flutter SDK and Linux desktop dependencies for Fedora..."
 
 # 1. Install Flutter SDK and Linux desktop dependencies. Android Studio, the
 # Android SDK, an emulator, and device tooling are intentionally out of scope.
 echo "📦 Installing Flutter/Linux desktop dependencies..."
-sudo apt update -y
-sudo apt install -y \
-    curl git unzip xz-utils zip \
-    libglu1-mesa libpulse0 libgl1 \
-    clang cmake ninja-build pkg-config \
-    libgtk-3-dev liblzma-dev libstdc++-12-dev mesa-utils
+dnf_install \
+    curl git unzip xz zip \
+    mesa-libGLU pulseaudio-libs libglvnd-glx \
+    clang cmake ninja-build pkgconf-pkg-config \
+    gtk3-devel xz-devel libstdc++-devel mesa-demos
 
 # 2. Clone Flutter SDK
 mkdir -p "$FLUTTER_DEST"

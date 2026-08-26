@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Personal Ubuntu development environment setup toolkit — a collection of independent bash scripts organized by category, designed to provision a fresh Ubuntu system with the developer's preferred toolchain. Run `setup.sh` for an interactive menu-driven installer.
+Personal Fedora development environment setup toolkit — a collection of independent bash scripts organized by category, designed to provision a fresh Fedora Workstation system with the developer's preferred toolchain. Run `setup.sh` for an interactive menu-driven installer.
 
 ## Running Scripts
 
@@ -80,7 +80,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### dev/
 | Script | Purpose |
 |---|---|
-| `java.sh` | OpenJDK 8/11/17/21/25 — interactive menu or `JAVA_VERSION` env; installs side-by-side, switch default via `update-alternatives` |
+| `java.sh` | Fedora OpenJDK 8/11/17/21/25 — interactive menu or `JAVA_VERSION` env; switch defaults via `alternatives` |
 | `docker.sh` | Docker Engine + Docker Desktop + user group |
 | `docker-rootless.sh` | Rootless Docker daemon for the current user (`dockerd-rootless-setuptool.sh`); reports missing subuid/subgid rather than rewriting them |
 | `flutter.sh` | Flutter SDK (stable), Android deps, Linux desktop deps |
@@ -88,18 +88,18 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 | `python.sh` | Python 3 + pyenv + pipx + poetry |
 | `rust.sh` | Rust toolchain via rustup |
 | `go.sh` | Latest Go SDK — version detection with fallback (VERSION endpoint → JSON) |
-| `databases.sh` | PostgreSQL/MySQL/Redis/SQLite/MongoDB CLI clients + pgcli/mycli/litecli (interactive shells via pipx) |
+| `databases.sh` | PostgreSQL/MariaDB/Valkey/SQLite/MongoDB CLI clients + pgcli/mycli/litecli via pipx |
 | `kubernetes.sh` | kubectl + helm + k9s + kind + kustomize |
-| `aws-cli.sh` | AWS CLI v2 (official zip) + Session Manager plugin |
-| `terraform.sh` | Terraform (HashiCorp apt repo) + tflint + tfsec |
-| `dotnet.sh` | .NET SDK via Microsoft's apt repo; `$DOTNET_VERSION` picks the major.minor (default `8.0`) |
+| `aws-cli.sh` | AWS CLI v2 + Session Manager plugin from signature-verified official downloads |
+| `terraform.sh` | Terraform (signed HashiCorp RPM repo) + checksum-verified tflint + signature-verified tfsec |
+| `dotnet.sh` | Fedora-native .NET SDK; `$DOTNET_VERSION` picks the major.minor (default `8.0`) |
 | `ruby.sh` | Ruby via rbenv + ruby-build + bundler; `$RUBY_VERSION` pins a version (default: latest stable) |
-| `gcloud.sh` | Google Cloud CLI via Google's apt repo + `gke-gcloud-auth-plugin` for kubectl/GKE |
-| `azure-cli.sh` | Azure CLI (`az`) via Microsoft's official installer |
+| `gcloud.sh` | Google Cloud CLI via Google's signed RPM repo + `gke-gcloud-auth-plugin` for kubectl/GKE |
+| `azure-cli.sh` | Azure CLI (`az`) via Microsoft's signed RPM repository |
 | `podman.sh` | Podman + podman-compose (rootless containers); reports missing subuid/subgid rather than rewriting them |
 | `deno.sh` | Deno runtime via official installer into `$DENO_INSTALL` |
 | `bun.sh` | Bun runtime/package manager via official installer into `$BUN_INSTALL` |
-| `php.sh` | PHP (`ondrej/php` PPA) + common extensions + Composer (signature-verified) |
+| `php.sh` | Fedora-native PHP + common extensions + Composer (signature-verified) |
 | `cpp.sh` | C/C++ toolchain: gcc/clang, cmake, ninja, ccache, gdb/lldb, clang-format/tidy, cppcheck, valgrind |
 
 ### tools/
@@ -235,7 +235,8 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `DOTNET_VERSION` | dev/dotnet.sh | `8.0` |
 | `RBENV_ROOT` | dev/ruby.sh | `$HOME/.rbenv` |
 | `RUBY_VERSION` | dev/ruby.sh | latest stable |
-| `PHP_VERSION` | dev/php.sh | `8.3` |
+| `PHP_VERSION` | dev/php.sh | unset (optional Fedora version assertion) |
+| `KUBERNETES_MINOR` | dev/kubernetes.sh | `v1.36` |
 | `DENO_INSTALL` | dev/deno.sh | `$HOME/.deno` |
 | `BUN_INSTALL` | dev/bun.sh | `$HOME/.bun` |
 | `INSTALL_OH_MY_ZSH` | tools/zsh.sh | `yes` |

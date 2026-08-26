@@ -11,27 +11,24 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Azure CLI..."
 
-if command -v az &>/dev/null; then
+if dnf_installed azure-cli && command -v az &>/dev/null; then
     echo "✅ Azure CLI already installed ($(az version --output tsv 2>/dev/null | head -1))"
     exit 0
 fi
 
-echo "📦 Ensuring curl is present..."
-sudo apt-get update
-sudo apt-get install -y curl
-
-# Microsoft's own installer handles key/repo/codename compatibility for us —
-# same reasoning as vpn/nord.sh and vpn/tailscale.sh for their vendor scripts.
-echo "📦 Downloading and running the official Azure CLI installer..."
-AZ_INSTALLER=$(mktemp)
-trap 'rm -f "$AZ_INSTALLER"' EXIT
-curl -fsSL --retry 3 --retry-all-errors -o "$AZ_INSTALLER" https://aka.ms/InstallAzureCLIDeb
-sudo bash "$AZ_INSTALLER"
-rm -f "$AZ_INSTALLER"
-trap - EXIT
+dnf_install curl gnupg2
+echo "📦 Adding Microsoft's signed Azure CLI repository..."
+repo_add azure-cli \
+    'https://packages.microsoft.com/rhel/9/prod/' \
+    'https://packages.microsoft.com/keys/microsoft.asc' \
+    'BC528686B50D79E339D3721CEB3E94ADBE1229CF'
+dnf_install azure-cli
 
 if ! command -v az &>/dev/null; then
     echo "❌ Azure CLI installation failed or 'az' is not in PATH"

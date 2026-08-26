@@ -288,13 +288,15 @@ chmod +x "$pipx_case/bin/pipx"
     /bin/bash "$UPDATES_DIR/update-pipx-tools.sh" >"$pipx_case/output.log" 2>&1 \
     || fail "updates/update-pipx-tools.sh failed against the pipx fixture"
 assert_log_line 'pipx upgrade poetry' "$pipx_case/invocations.log"
-assert_log_line 'pipx upgrade podman-compose' "$pipx_case/invocations.log"
 assert_log_line 'pipx upgrade llm' "$pipx_case/invocations.log"
 assert_log_line 'pipx upgrade litellm' "$pipx_case/invocations.log"
 assert_log_line 'pipx runpip litellm install --upgrade fastapi>=0.136.3,<1.0 starlette>=1.0.1,<2.0' \
     "$pipx_case/invocations.log"
 if grep -Fq 'pipx upgrade unrelated' "$pipx_case/invocations.log"; then
     fail "update-pipx-tools upgraded a package outside the managed allowlist"
+fi
+if grep -Fq 'pipx upgrade podman-compose' "$pipx_case/invocations.log"; then
+    fail "update-pipx-tools upgraded Fedora-owned podman-compose"
 fi
 
 # Fixed-version configuration must prevent each latest-release updater from
@@ -328,7 +330,9 @@ if grep -Eq '^pipx upgrade (llm|litellm)$' "$pipx_case/invocations.log"; then
     fail "update-pipx-tools upgraded a pinned LLM or LiteLLM installation"
 fi
 assert_log_line 'pipx upgrade poetry' "$pipx_case/invocations.log"
-assert_log_line 'pipx upgrade podman-compose' "$pipx_case/invocations.log"
+if grep -Fq 'pipx upgrade podman-compose' "$pipx_case/invocations.log"; then
+    fail "update-pipx-tools upgraded Fedora-owned podman-compose"
+fi
 grep -Fq 'llm=1.2.3' "$pipx_case/pinned-output.log" \
     || fail "update-pipx-tools did not report the pinned LLM version"
 grep -Fq 'litellm=1.2.3' "$pipx_case/pinned-output.log" \
@@ -368,10 +372,10 @@ for command_name in dirname realpath python3 tar gzip sha256sum mktemp rm awk mk
     ln -s "$(command -v "$command_name")" "$go_case/bin/$command_name"
 done
 ln -s /usr/bin/test "$go_case/bin/test"
-cat >"$go_case/bin/dpkg" <<'DPKG_STUB'
+cat >"$go_case/bin/rpm" <<'RPM_STUB'
 #!/bin/bash
-[[ "$*" == '--print-architecture' ]] && echo amd64
-DPKG_STUB
+[[ "$*" == "--eval %{_arch}" ]] && echo x86_64
+RPM_STUB
 cat >"$go_case/bin/curl" <<'CURL_STUB'
 #!/bin/bash
 output=''
@@ -389,7 +393,7 @@ case "$url" in
     *) exit 64 ;;
 esac
 CURL_STUB
-chmod +x "$go_case/bin/dpkg" "$go_case/bin/curl"
+chmod +x "$go_case/bin/rpm" "$go_case/bin/curl"
 /usr/bin/env -i HOME="$go_case/home" PATH="$go_case/bin" \
     GO_INSTALL_DIR="$go_install" \
     GO_TEST_METADATA="$go_case/releases.json" \

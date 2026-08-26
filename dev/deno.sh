@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Deno..."
 
@@ -23,11 +26,8 @@ if [ -x "$DENO_BIN" ]; then
     exit 0
 fi
 
-if ! command -v unzip &>/dev/null; then
-    echo "📦 Installing unzip (required by the Deno installer)..."
-    sudo apt-get update
-    sudo apt-get install -y unzip
-fi
+echo "📦 Ensuring Deno installer prerequisites are present..."
+dnf_install curl unzip
 
 echo "📥 Downloading and running the official Deno installer..."
 DENO_INSTALLER=$(mktemp)

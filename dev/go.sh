@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Go..."
 
@@ -26,6 +29,8 @@ if [ -e "$GO_INSTALL_DIR" ]; then
     echo "💡 Move or remove it, then re-run this script"
     exit 1
 fi
+
+dnf_install curl wget python3 tar gzip
 
 # Fetch latest stable version number.
 # Primary source: https://go.dev/VERSION?m=text (undocumented but historically stable).
@@ -65,8 +70,8 @@ if [[ ! "$GO_VERSION" =~ ^go[0-9] ]]; then
 fi
 echo "📥 Latest Go: $GO_VERSION"
 
-ARCH=$(dpkg --print-architecture)
-# dpkg uses 'amd64'/'arm64' which matches Go's naming
+ARCH=$(release_arch)
+# release_arch uses Go's amd64/arm64 naming.
 TARBALL="${GO_VERSION}.linux-${ARCH}.tar.gz"
 URL="${GO_ARCHIVE_URL:-https://go.dev/dl/${TARBALL}}"
 

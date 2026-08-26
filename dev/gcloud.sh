@@ -11,27 +11,28 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Google Cloud CLI..."
 
-if command -v gcloud &>/dev/null; then
+GCLOUD_ARCH=$(rpm_arch)
+GCLOUD_REPO="https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-${GCLOUD_ARCH}"
+
+dnf_install curl gnupg2 libxcrypt-compat
+
+# Google documents repo_gpgcheck=0 for this repository. Package signatures
+# remain mandatory (gpgcheck=1), and repo_add pins the published package key.
+repo_add google-cloud-sdk "$GCLOUD_REPO" \
+    'https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg' \
+    '3749E1BA95A86CE054546ED2F09C394C3E1BA8D5' 0
+
+if dnf_installed google-cloud-cli && command -v gcloud &>/dev/null; then
     echo "✅ gcloud already installed ($(gcloud --version 2>/dev/null | head -1))"
 else
-    echo "📦 Adding Google Cloud apt repository..."
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
-
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL --retry 3 --retry-all-errors https://packages.cloud.google.com/apt/doc/apt-key.gpg \
-        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/google-cloud.gpg
-    sudo chmod a+r /etc/apt/keyrings/google-cloud.gpg
-
-    echo "deb [signed-by=/etc/apt/keyrings/google-cloud.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
-        | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
-
     echo "📦 Installing google-cloud-cli..."
-    sudo apt-get update
-    sudo apt-get install -y google-cloud-cli
+    dnf_install google-cloud-cli
     echo "✅ gcloud installed ($(gcloud --version 2>/dev/null | head -1))"
 fi
 
@@ -41,7 +42,7 @@ if command -v gke-gcloud-auth-plugin &>/dev/null; then
     echo "✅ gke-gcloud-auth-plugin already installed"
 else
     echo "📦 Installing gke-gcloud-auth-plugin (for kubectl + GKE)..."
-    sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+    dnf_install google-cloud-cli-gke-gcloud-auth-plugin
 fi
 
 echo ""

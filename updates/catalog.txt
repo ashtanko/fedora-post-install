@@ -32,7 +32,7 @@ update-node.sh|dev/node.sh|update the official NVM checkout then install and sel
 update-nvim.sh|ide/nvim.sh|replace the managed installation only when the official release digest is verifiable
 update-oh-my-zsh.sh|tools/zsh.sh|Oh My Zsh automation upgrade script
 update-opencode.sh|ai/opencode.sh|opencode upgrade using its original curl install method
-update-pipx-tools.sh|dev/python.sh,dev/databases.sh,dev/podman.sh,tools/pre-commit-setup.sh,ai/llm-cli.sh,ai/litellm.sh|pipx upgrade each installed named application
+update-pipx-tools.sh|dev/python.sh,dev/databases.sh,tools/pre-commit-setup.sh,ai/llm-cli.sh,ai/litellm.sh|pipx upgrade each installed named application
 update-pyenv.sh|dev/python.sh|fast-forward the clean pyenv checkout
 update-rbenv.sh|dev/ruby.sh|fast-forward the clean rbenv and ruby-build checkouts
 update-rclone.sh|tools/rclone.sh|rclone selfupdate

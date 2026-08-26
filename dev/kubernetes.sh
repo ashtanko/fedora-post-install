@@ -11,47 +11,41 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Kubernetes toolchain (kubectl, helm, k9s, kind, kustomize)..."
 
-ARCH=$(dpkg --print-architecture)   # amd64 | arm64
-case "$ARCH" in
-    amd64) GO_ARCH="amd64" ;;
-    arm64) GO_ARCH="arm64" ;;
-    *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
-esac
+GO_ARCH=$(release_arch)
+KUBERNETES_MINOR="${KUBERNETES_MINOR:-v1.36}"
+if ! [[ "$KUBERNETES_MINOR" =~ ^v[0-9]+\.[0-9]+$ ]]; then
+    echo "❌ KUBERNETES_MINOR must look like v1.36" >&2
+    exit 2
+fi
 
 BIN_DIR="/usr/local/bin"
+dnf_install curl wget tar gzip gnupg2
 
-# --- kubectl (Kubernetes apt repo) ---
-if command -v kubectl &>/dev/null; then
+# --- kubectl (Kubernetes signed RPM repo) ---
+KUBERNETES_REPO="https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/"
+repo_add kubernetes "$KUBERNETES_REPO" \
+    "${KUBERNETES_REPO}repodata/repomd.xml.key" \
+    'DE15B14486CD377B9E876E1A234654DA9A296436'
+if dnf_installed kubectl && command -v kubectl &>/dev/null; then
     echo "✅ kubectl already installed ($(kubectl version --client --output=yaml 2>/dev/null | grep gitVersion | head -1 | awk '{print $2}'))"
 else
-    echo "📦 Adding Kubernetes apt repository..."
-    sudo apt-get update
-    sudo apt-get install -y ca-certificates curl gnupg
-
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL --retry 3 --retry-all-errors https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key \
-        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    sudo chmod a+r /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
-https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" \
-        | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
-
     echo "📦 Installing kubectl..."
-    sudo apt-get update
-    sudo apt-get install -y kubectl
+    dnf_install kubectl
     echo "✅ kubectl installed"
 fi
 
 # --- helm (official tarball from get.helm.sh) ---
-# The apt repo at baltocdn.com is not resolvable from every network (CI runners
-# included), so pull the release tarball straight from Helm's own CDN instead.
+# Pull the Helm release tarball from Helm's own CDN and verify its published
+# checksum, retaining the same provenance as the other standalone tools here.
 if command -v helm &>/dev/null; then
     echo "✅ helm already installed ($(helm version --short 2>/dev/null))"
 else

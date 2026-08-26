@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Setting up rootless Docker..."
 
@@ -41,24 +44,17 @@ if [ -f "$HOME/.config/systemd/user/docker.service" ] \
 fi
 
 # --- Prerequisites ---
-# uidmap supplies newuidmap/newgidmap (the setuid helpers that map the
-# subordinate ID range); dbus-user-session keeps the per-user systemd session
-# alive so the daemon has something to be supervised by.
+# shadow-utils supplies newuidmap/newgidmap. Fedora's rootless networking,
+# storage, and SELinux integration come from the remaining native packages.
 echo "📦 Installing rootless prerequisites..."
-sudo apt-get update
-sudo apt-get install -y uidmap dbus-user-session
+dnf_install shadow-utils fuse-overlayfs slirp4netns container-selinux docker-ce-rootless-extras
 
 # dockerd-rootless-setuptool.sh ships in docker-ce-rootless-extras, which comes
-# from Docker's own apt repo — the one dev/docker.sh configures.
+# from Docker's own RPM repo — the one dev/docker.sh configures.
 if ! command -v dockerd-rootless-setuptool.sh &>/dev/null; then
-    if apt-cache policy docker-ce-rootless-extras 2>/dev/null | grep -q 'Candidate: [^(]'; then
-        echo "📦 Installing docker-ce-rootless-extras..."
-        sudo apt-get install -y docker-ce-rootless-extras
-    else
-        echo "❌ docker-ce-rootless-extras is not available from the configured apt repos"
-        echo "💡 Run 'bash dev/docker.sh' first — it adds Docker's official repository"
-        exit 1
-    fi
+    echo "❌ docker-ce-rootless-extras installed but dockerd-rootless-setuptool.sh is unavailable"
+    echo "💡 Run 'bash dev/docker.sh' first to refresh Docker's official repository"
+    exit 1
 fi
 
 # --- Subordinate UID/GID range ---

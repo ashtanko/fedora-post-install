@@ -11,33 +11,37 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 AWS_INSTALL_DIR="/usr/local/aws-cli"
 AWS_BIN="/usr/local/bin/aws"
 AWS_CLI_KEY_FINGERPRINT="FB5DB77FD5C118B80511ADA8A6310ACC4672475C"
 
-if [ ! -d "$AWS_INSTALL_DIR" ] || [ ! -x "$AWS_BIN" ]; then
+INSTALL_MODE="${FPI_AWS_INSTALL:-0}"
+if [[ "$INSTALL_MODE" != 0 && "$INSTALL_MODE" != 1 ]]; then
+    echo "❌ FPI_AWS_INSTALL must be 0 or 1" >&2
+    exit 2
+fi
+
+if [ "$INSTALL_MODE" = 0 ] && { [ ! -d "$AWS_INSTALL_DIR" ] || [ ! -x "$AWS_BIN" ]; }; then
     echo "⏭️  Skipping AWS CLI update: the repository-managed installation was not found under $AWS_INSTALL_DIR."
     exit 0
 fi
 
-AWS_BIN_TARGET=$(readlink -f "$AWS_BIN" 2>/dev/null || true)
-case "$AWS_BIN_TARGET" in
-    "$AWS_INSTALL_DIR"/*) ;;
-    *)
-        echo "⏭️  Skipping AWS CLI update: $AWS_BIN is not linked to $AWS_INSTALL_DIR."
-        exit 0
-        ;;
-esac
+if [ "$INSTALL_MODE" = 0 ]; then
+    AWS_BIN_TARGET=$(readlink -f "$AWS_BIN" 2>/dev/null || true)
+    case "$AWS_BIN_TARGET" in
+        "$AWS_INSTALL_DIR"/*) ;;
+        *)
+            echo "⏭️  Skipping AWS CLI update: $AWS_BIN is not linked to $AWS_INSTALL_DIR."
+            exit 0
+            ;;
+    esac
+fi
 
-case "$(dpkg --print-architecture)" in
-    amd64) AWS_ARCH="x86_64" ;;
-    arm64) AWS_ARCH="aarch64" ;;
-    *)
-        echo "❌ Unsupported AWS CLI architecture: $(dpkg --print-architecture)" >&2
-        exit 1
-        ;;
-esac
+AWS_ARCH=$(rpm_arch)
 
 for REQUIRED_COMMAND in curl gpg unzip; do
     if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
@@ -46,9 +50,13 @@ for REQUIRED_COMMAND in curl gpg unzip; do
     fi
 done
 
-BEFORE_VERSION=$("$AWS_BIN" --version 2>&1 || echo "version unknown")
-echo "🚀 Updating AWS CLI v2..."
-echo "   Before: $BEFORE_VERSION"
+BEFORE_VERSION=$("$AWS_BIN" --version 2>&1 || echo "not installed")
+if [ "$INSTALL_MODE" = 1 ]; then
+    echo "🚀 Installing AWS CLI v2..."
+else
+    echo "🚀 Updating AWS CLI v2..."
+    echo "   Before: $BEFORE_VERSION"
+fi
 
 AWS_TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$AWS_TMP_DIR"' EXIT
@@ -106,11 +114,13 @@ curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
     -o "$AWS_SIGNATURE" "${AWS_DOWNLOAD_URL}.sig"
 gpg --batch --homedir "$AWS_GNUPGHOME" --verify "$AWS_SIGNATURE" "$AWS_ZIP"
 unzip -q "$AWS_ZIP" -d "$AWS_TMP_DIR"
-sudo "$AWS_TMP_DIR/aws/install" \
-    --bin-dir /usr/local/bin \
-    --install-dir /usr/local/aws-cli \
-    --update
+declare -a AWS_INSTALL_ARGS=(
+    --bin-dir /usr/local/bin
+    --install-dir /usr/local/aws-cli
+)
+[ "$INSTALL_MODE" = 0 ] && AWS_INSTALL_ARGS+=(--update)
+sudo "$AWS_TMP_DIR/aws/install" "${AWS_INSTALL_ARGS[@]}"
 
 AFTER_VERSION=$("$AWS_BIN" --version 2>&1 || echo "version unknown")
-echo "✅ AWS CLI update complete"
-echo "   After:  $AFTER_VERSION"
+echo "✅ AWS CLI installation complete"
+echo "   After: $AFTER_VERSION"

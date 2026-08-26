@@ -203,6 +203,22 @@ grep -Fqx "baseurl=$repo_baseurl" "$repo_capture" \
     || fail "repo_add did not preserve DNF URL variables"
 
 : >"$CALL_LOG"
+PKG_TEST_FINGERPRINTS="$fingerprint" repo_add metadata-opt-out \
+    'https://packages.example.test/repo' \
+    'https://packages.example.test/key.asc' "$fingerprint" 0
+grep -Fqx 'gpgcheck=1' "$CAPTURE_ROOT/etc/yum.repos.d/metadata-opt-out.repo" \
+    || fail "repo_add disabled package signature checking"
+grep -Fqx 'repo_gpgcheck=0' "$CAPTURE_ROOT/etc/yum.repos.d/metadata-opt-out.repo" \
+    || fail "repo_add did not honor an explicit metadata signature opt-out"
+
+: >"$CALL_LOG"
+PKG_TEST_FINGERPRINTS="$fingerprint" \
+    repo_add invalid-policy https://packages.example.test/repo \
+        https://packages.example.test/key.asc "$fingerprint" no >/dev/null 2>&1 \
+    && fail "repo_add accepted an invalid repository metadata policy"
+assert_no_sudo_calls
+
+: >"$CALL_LOG"
 PKG_TEST_FINGERPRINTS='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' \
     repo_add mismatch https://packages.example.test/repo \
         https://packages.example.test/key.asc "$fingerprint" >/dev/null 2>&1 \

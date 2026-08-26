@@ -12,8 +12,8 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/`, `system/`, and `apps/` categories are ported; the other categories remain pending |
-| 4 — updater ports | In progress | VS Code package and extension updater ownership now uses RPM/DNF; the remaining updater audit is pending |
+| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, and `dev/` categories are ported; the other categories remain pending |
+| 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
 
@@ -75,27 +75,27 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `dev/aws-cli.sh` | port | Pending; retain verified upstream archives and replace Session Manager APT path |
-| `dev/azure-cli.sh` | port | Pending; replace Ubuntu installer/repository path with Microsoft's RPM channel |
-| `dev/bun.sh` | port | Pending; retain upstream installer and translate prerequisites |
-| `dev/cpp.sh` | port | Pending; map compiler, debugger, and development group package names |
-| `dev/databases.sh` | replace | Pending; map Fedora database clients and resolve Redis-to-Valkey behavior |
-| `dev/deno.sh` | port | Pending; retain upstream installer and translate prerequisites |
-| `dev/docker-rootless.sh` | port | Pending; translate rootless dependencies and validate SELinux/subuid behavior |
-| `dev/docker.sh` | port | Pending; use Docker's Fedora yum repository and Desktop RPM; document Podman coexistence |
-| `dev/dotnet.sh` | replace | Pending; prefer Fedora's native `dotnet-sdk-*` packages |
-| `dev/flutter.sh` | port | Pending; translate Linux desktop and Android prerequisite packages |
-| `dev/gcloud.sh` | port | Pending; use Google's yum repository with a pinned key fingerprint |
-| `dev/go.sh` | port | Pending; retain verified archive and replace `dpkg` architecture lookup |
-| `dev/java.sh` | replace | Pending; use `java-*-openjdk-devel` packages and Fedora `alternatives` |
-| `dev/kubernetes.sh` | port | Pending; use upstream yum repositories and shared architecture helpers |
-| `dev/node.sh` | neutral | Audit pending; NVM user-local install has no distro package path |
-| `dev/php.sh` | replace | Pending; remove PPA/suite probing and select Fedora native PHP or verified Remi repositories |
-| `dev/podman.sh` | port | Pending; use Fedora packages and validate rootless SELinux/subuid behavior |
-| `dev/python.sh` | port | Pending; replace `build-essential` and Debian development package names |
-| `dev/ruby.sh` | port | Pending; replace `build-essential` and Debian development package names |
-| `dev/rust.sh` | neutral | Audit pending; rustup user-local install has no distro package path |
-| `dev/terraform.sh` | port | Pending; use HashiCorp's RPM repository and Fedora package names |
+| `dev/aws-cli.sh` | port | Complete; verifies AWS CLI and Session Manager detached signatures against embedded, fingerprint-pinned vendor keys and selects RPM architecture |
+| `dev/azure-cli.sh` | port | Complete; uses Microsoft's signed EL9 RPM channel through the shared repository helper |
+| `dev/bun.sh` | port | Complete; retains the user-local upstream installer with Fedora-managed prerequisites |
+| `dev/cpp.sh` | port | Complete; uses Fedora's development-tools group and native compiler, debugger, formatter, analyzer, and profiler packages |
+| `dev/databases.sh` | replace | Complete; uses Fedora PostgreSQL/MariaDB/SQLite/Valkey clients, MongoDB's signed EL9 RPM channel, and pipx interactive shells |
+| `dev/deno.sh` | port | Complete; retains the user-local upstream installer with Fedora-managed prerequisites |
+| `dev/docker-rootless.sh` | port | Complete; installs Fedora rootless networking/storage and SELinux dependencies while retaining explicit subuid/subgid and user-session checks |
+| `dev/docker.sh` | port | Complete; uses Docker's signed Fedora RPM channel, starts the systemd service when available, detects `podman-docker` conflicts, and limits Desktop to x86_64 |
+| `dev/dotnet.sh` | replace | Complete; uses Fedora's native `dotnet-sdk-*` packages and verifies the requested SDK major.minor |
+| `dev/flutter.sh` | port | Complete; translates the Linux desktop toolchain and runtime libraries to Fedora packages while leaving Android SDK setup separate |
+| `dev/gcloud.sh` | port | Complete; uses Google's architecture-specific EL9 RPM channel with a pinned package-key fingerprint and documented metadata-check exception |
+| `dev/go.sh` | port | Complete; retains checksum-verified upstream archives and uses shared RPM/release architecture mapping in both installer and updater |
+| `dev/java.sh` | replace | Complete; installs `java-*-openjdk-devel` through DNF and documents Fedora's `alternatives` command |
+| `dev/kubernetes.sh` | port | Complete; installs kubectl from the signed v1.36 RPM channel and uses shared release architecture for checksum-verified companion tools |
+| `dev/node.sh` | neutral | Complete; NVM remains user-local, with curl and git prerequisites owned by DNF |
+| `dev/php.sh` | replace | Complete; uses Fedora-native PHP and extensions; `PHP_VERSION` is an assertion rather than a third-party repository selector |
+| `dev/podman.sh` | port | Complete; uses Fedora Podman, podman-compose, rootless, and SELinux packages with explicit subuid/subgid reporting |
+| `dev/python.sh` | port | Complete; uses Fedora's development-tools group and pyenv build dependencies while retaining user-local pyenv/Poetry ownership |
+| `dev/ruby.sh` | port | Complete; uses Fedora's development-tools group and ruby-build dependencies while retaining user-local rbenv ownership |
+| `dev/rust.sh` | neutral | Complete; rustup remains user-local and curl is supplied through DNF |
+| `dev/terraform.sh` | port | Complete; uses HashiCorp's signed Fedora RPM channel, retains checksum-verified tflint, and verifies tfsec's detached signature |
 
 ### `essentials/`
 

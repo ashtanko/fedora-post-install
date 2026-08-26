@@ -6,7 +6,7 @@ These scripts are designed for a **single-user developer workstation**, not a ha
 
 ## Sudo
 
-Every install script uses `sudo` for system-level changes (apt, writing to `/etc/`, `/usr/local/`, etc.). The repo itself is read-only on disk under `$HOME` until you actually invoke a script — so always **review the script before running it**, especially if you cloned from a fork.
+Every install script uses `sudo` for system-level changes (DNF, writing to `/etc/`, `/usr/local/`, etc.). The repo itself is read-only on disk under `$HOME` until you actually invoke a script — so always **review the script before running it**, especially if you cloned from a fork.
 
 Scripts assume your user has standard interactive sudo. Long runs benefit from priming the cache first:
 
@@ -97,10 +97,17 @@ grep -nE 'NVM_DIR|PYENV|cargo|GPG_TTY|ssh-agent|GO_INSTALL_DIR|/usr/local/go' ~/
 Fedora repository installers use `lib/pkg.bash` to download each vendor key,
 require an exact pinned primary-key fingerprint, and only then install/import
 the key. Generated repository files use HTTPS and enable both RPM package
-signature checking (`gpgcheck=1`) and repository metadata signature checking
-(`repo_gpgcheck=1`). Google Chrome, VS Code, and Warp each use a separate key
+signature checking (`gpgcheck=1`) and, by default, repository metadata
+signature checking (`repo_gpgcheck=1`). Each repository uses a separate key
 file under `/etc/pki/rpm-gpg/`; a mismatched or multi-primary key is rejected
 before repository state changes.
+
+Google's official Cloud SDK RPM configuration is the sole audited exception:
+it documents `repo_gpgcheck=0`, so that installer explicitly disables metadata
+signature checking while keeping package signature checking enabled and pinning
+Google's published package-key fingerprint. The shared helper accepts only a
+literal `0` or `1` for this policy, and regression tests preserve the secure
+default for every other repository.
 
 ## APT keyring handling (pending categories)
 

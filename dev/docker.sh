@@ -11,42 +11,46 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Docker Engine and Docker Desktop..."
 
-ARCH=$(dpkg --print-architecture)
+ARCH=$(rpm_arch)
 USERNAME="${USER:-$(id -un)}"
+SYSTEMD_RUNTIME_DIR="${_FPI_SYSTEMD_RUNTIME_DIR:-/run/systemd/system}"
 
 # --- Docker Engine ---
-if command -v docker &>/dev/null; then
+if dnf_installed podman-docker; then
+    echo "❌ podman-docker owns the Docker-compatible CLI and conflicts with Docker CE" >&2
+    echo "💡 Remove only that compatibility package first: sudo dnf remove podman-docker" >&2
+    echo "   The Podman engine itself can remain installed alongside Docker." >&2
+    exit 1
+fi
+
+dnf_install curl gnupg2
+echo "📦 Configuring Docker's signed Fedora repository..."
+repo_add docker-ce \
+    "https://download.docker.com/linux/fedora/\$releasever/\$basearch/stable" \
+    'https://download.docker.com/linux/fedora/gpg' \
+    '060A61C51B558A7F742B77AAC52FEB6B621E9F35'
+
+if dnf_installed docker-ce && command -v docker &>/dev/null; then
     echo "✅ Docker Engine already installed ($(docker --version))"
 else
-    echo "📦 Adding Docker GPG key and repository..."
-    sudo apt-get update
-    sudo apt-get install -y ca-certificates curl gnupg lsb-release
-
-    sudo install -m 0755 -d /etc/apt/keyrings
-    DOCKER_KEY=$(mktemp)
-    trap 'rm -f "$DOCKER_KEY"' EXIT
-    curl -fsSL --retry 3 --retry-all-errors -o "$DOCKER_KEY" \
-        https://download.docker.com/linux/ubuntu/gpg
-    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg "$DOCKER_KEY"
-    rm -f "$DOCKER_KEY"
-    trap - EXIT
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-    echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu \
-$(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
     echo "📦 Installing Docker Engine..."
-    sudo apt-get update
-    sudo apt-get install -y \
+    dnf_install \
         docker-ce docker-ce-cli containerd.io \
-        docker-buildx-plugin docker-compose-plugin
+        docker-buildx-plugin docker-compose-plugin container-selinux
 
     echo "✅ Docker Engine installed ($(docker --version))"
+fi
+
+if [ -d "$SYSTEMD_RUNTIME_DIR" ]; then
+    sudo systemctl enable --now docker >/dev/null
+else
+    echo "⚠️  systemd is not running; Docker was installed but its service was not started"
 fi
 
 # Add current user to docker group
@@ -61,19 +65,23 @@ fi
 # --- Docker Desktop ---
 if [[ "${INSTALL_DOCKER_DESKTOP:-yes}" == "no" ]]; then
     echo "⏭️  Skipping Docker Desktop (INSTALL_DOCKER_DESKTOP=no)"
-elif dpkg -s docker-desktop &>/dev/null 2>&1; then
+elif dnf_installed docker-desktop; then
     echo "✅ Docker Desktop already installed"
+elif [ "$ARCH" != x86_64 ]; then
+    echo "⚠️  Docker Desktop does not publish a Fedora aarch64 RPM; skipping Desktop"
+    echo "   Docker Engine remains installed and usable."
 else
     echo "📦 Downloading Docker Desktop..."
-    DEB=$(mktemp --suffix=.deb)
-    trap 'rm -f "$DEB"' EXIT
+    RPM=$(mktemp --suffix=.rpm)
+    trap 'rm -f "$RPM"' EXIT
 
-    wget --tries=3 --waitretry=2 -nv --show-progress \
-        -O "$DEB" \
-        "https://desktop.docker.com/linux/main/${ARCH}/docker-desktop-${ARCH}.deb"
+    curl --proto '=https' --tlsv1.2 -fL --retry 3 --retry-all-errors \
+        -o "$RPM" \
+        'https://desktop.docker.com/linux/main/amd64/docker-desktop-x86_64.rpm'
 
     echo "🛠️  Installing Docker Desktop..."
-    sudo apt-get install -y "$DEB"
+    sudo dnf -q install -y --setopt=install_weak_deps=False \
+        --setopt=localpkg_gpgcheck=True "$RPM"
     echo "✅ Docker Desktop installed"
 fi  # end INSTALL_DOCKER_DESKTOP
 

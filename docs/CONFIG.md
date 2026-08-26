@@ -29,7 +29,8 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `DOTNET_VERSION` | [dev/dotnet.sh](../dev/dotnet.sh) | `8.0` | .NET SDK major.minor to install |
 | `RBENV_ROOT` | [dev/ruby.sh](../dev/ruby.sh), [updates/update-rbenv.sh](../updates/update-rbenv.sh) | `$HOME/.rbenv` | rbenv installation directory |
 | `RUBY_VERSION` | [dev/ruby.sh](../dev/ruby.sh) | latest stable | Pins a version; resolved from `rbenv install -l` when empty |
-| `PHP_VERSION` | [dev/php.sh](../dev/php.sh) | `8.3` | PHP major.minor installed from the `ondrej/php` PPA |
+| `PHP_VERSION` | [dev/php.sh](../dev/php.sh) | unset | Optional assertion for the Fedora-provided PHP major.minor; no third-party PHP repository is enabled |
+| `KUBERNETES_MINOR` | [dev/kubernetes.sh](../dev/kubernetes.sh) | `v1.36` | Kubernetes RPM repository minor channel, in `vMAJOR.MINOR` form |
 | `DENO_INSTALL` | [dev/deno.sh](../dev/deno.sh), [updates/update-deno.sh](../updates/update-deno.sh) | `$HOME/.deno` | Deno installation directory |
 | `BUN_INSTALL` | [dev/bun.sh](../dev/bun.sh), [updates/update-bun.sh](../updates/update-bun.sh) | `$HOME/.bun` | Bun installation directory |
 | `INSTALL_OH_MY_ZSH` | [tools/zsh.sh](../tools/zsh.sh) | `yes` | Set `no` to install plain Zsh only |

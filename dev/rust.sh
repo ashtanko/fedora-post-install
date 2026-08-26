@@ -11,8 +11,13 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Rust via rustup..."
+
+dnf_install curl
 
 RUSTC_VERSION=$("$HOME/.cargo/bin/rustc" --version 2>/dev/null || true)
 if echo "$RUSTC_VERSION" | grep -q "^rustc "; then

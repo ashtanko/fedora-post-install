@@ -20,7 +20,7 @@ fi
 PIPX_BEFORE=$("$PIPX_BIN" list --short 2>/dev/null || true)
 declare -a INSTALLED_TOOLS=()
 declare -a PINNED_TOOLS=()
-for TOOL in poetry pre-commit pgcli mycli litecli podman-compose llm litellm; do
+for TOOL in poetry pre-commit pgcli mycli litecli llm litellm; do
     awk -v tool="$TOOL" '$1 == tool { found = 1 } END { exit !found }' <<< "$PIPX_BEFORE" \
         || continue
 

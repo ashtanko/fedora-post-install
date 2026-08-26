@@ -109,6 +109,7 @@ repo_add() (
     local baseurl="${2:?repo_add requires a base URL}"
     local gpgkey_url="${3:?repo_add requires a GPG key URL}"
     local expected_fingerprint="${4:?repo_add requires a GPG fingerprint}"
+    local repo_gpgcheck="${5:-1}"
     local repo_dir="/etc/yum.repos.d"
     local key_dir="/etc/pki/rpm-gpg"
     local repo_file key_file actual_fingerprint
@@ -124,6 +125,10 @@ repo_add() (
     fi
     if [[ "$gpgkey_url" != https://* || "$gpgkey_url" == *$'\n'* || "$gpgkey_url" == *$'\r'* ]]; then
         _pkg_error "Repository GPG key URL must be a single HTTPS URL"
+        return 2
+    fi
+    if [[ "$repo_gpgcheck" != 0 && "$repo_gpgcheck" != 1 ]]; then
+        _pkg_error "Repository metadata GPG checking must be 0 or 1"
         return 2
     fi
 
@@ -151,7 +156,7 @@ name=$name
 baseurl=$baseurl
 enabled=1
 gpgcheck=1
-repo_gpgcheck=1
+repo_gpgcheck=$repo_gpgcheck
 gpgkey=file://$key_file
 EOF
 

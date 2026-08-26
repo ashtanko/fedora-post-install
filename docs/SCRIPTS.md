@@ -56,7 +56,7 @@ Language runtimes and SDKs.
 
 | Script | Purpose |
 |---|---|
-| [java.sh](../dev/java.sh) | OpenJDK 8/11/17/21/25 — interactive menu or `JAVA_VERSION` env (installs side-by-side; switch default via `update-alternatives`) |
+| [java.sh](../dev/java.sh) | Fedora OpenJDK 8/11/17/21/25 — interactive menu or `JAVA_VERSION` env (switch defaults via `alternatives`) |
 | [docker.sh](../dev/docker.sh) | Docker Engine + Docker Desktop + user group |
 | [docker-rootless.sh](../dev/docker-rootless.sh) | Rootless Docker daemon for the current user (`dockerd-rootless-setuptool.sh`); reports missing subuid/subgid rather than rewriting them |
 | [flutter.sh](../dev/flutter.sh) | Flutter SDK (stable) + Linux desktop dependencies; Android SDK setup remains separate |
@@ -64,18 +64,18 @@ Language runtimes and SDKs.
 | [python.sh](../dev/python.sh) | Python 3 + pyenv + pipx + poetry |
 | [rust.sh](../dev/rust.sh) | Rust toolchain via rustup |
 | [go.sh](../dev/go.sh) | Latest Go SDK — version detection with fallback (VERSION endpoint → JSON) |
-| [databases.sh](../dev/databases.sh) | PostgreSQL, MySQL, Redis, SQLite, MongoDB (`mongosh` + database tools) CLI clients + pgcli/mycli/litecli (interactive shells via pipx) |
+| [databases.sh](../dev/databases.sh) | PostgreSQL, MariaDB/MySQL, Valkey, SQLite, and MongoDB CLI clients + pgcli/mycli/litecli via pipx |
 | [kubernetes.sh](../dev/kubernetes.sh) | kubectl + helm + k9s + kind + kustomize |
-| [aws-cli.sh](../dev/aws-cli.sh) | AWS CLI v2 (official zip) + Session Manager plugin |
-| [terraform.sh](../dev/terraform.sh) | Terraform (HashiCorp apt repo) + tflint + tfsec |
-| [dotnet.sh](../dev/dotnet.sh) | .NET SDK via Microsoft's apt repo; `$DOTNET_VERSION` picks the major.minor (default `8.0`) |
+| [aws-cli.sh](../dev/aws-cli.sh) | AWS CLI v2 + Session Manager plugin from signature-verified official downloads |
+| [terraform.sh](../dev/terraform.sh) | Terraform (signed HashiCorp RPM repo) + tflint (checksum-verified) + tfsec (signature-verified) |
+| [dotnet.sh](../dev/dotnet.sh) | Fedora-native .NET SDK; `$DOTNET_VERSION` picks the major.minor (default `8.0`) |
 | [ruby.sh](../dev/ruby.sh) | Ruby via rbenv + ruby-build + bundler; `$RUBY_VERSION` pins a version (default: latest stable) |
-| [gcloud.sh](../dev/gcloud.sh) | Google Cloud CLI via Google's apt repo + `gke-gcloud-auth-plugin` for kubectl/GKE |
-| [azure-cli.sh](../dev/azure-cli.sh) | Azure CLI (`az`) via Microsoft's official installer |
+| [gcloud.sh](../dev/gcloud.sh) | Google Cloud CLI via Google's signed RPM repo + `gke-gcloud-auth-plugin` for kubectl/GKE |
+| [azure-cli.sh](../dev/azure-cli.sh) | Azure CLI (`az`) via Microsoft's signed RPM repository |
 | [podman.sh](../dev/podman.sh) | Podman + podman-compose (rootless containers); reports missing subuid/subgid rather than rewriting them |
 | [deno.sh](../dev/deno.sh) | Deno runtime via official installer into `$DENO_INSTALL` |
 | [bun.sh](../dev/bun.sh) | Bun runtime/package manager via official installer into `$BUN_INSTALL` |
-| [php.sh](../dev/php.sh) | PHP (`ondrej/php` PPA) + common extensions + Composer (signature-verified) |
+| [php.sh](../dev/php.sh) | Fedora-native PHP + common extensions + Composer (signature-verified) |
 | [cpp.sh](../dev/cpp.sh) | C/C++ toolchain: gcc/clang, cmake, ninja, ccache, gdb/lldb, clang-format/tidy, cppcheck, valgrind |
 
 ## tools/
@@ -193,7 +193,7 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-nvim.sh](../updates/update-nvim.sh) | Replace the managed Neovim installation only when an official or configured digest is available |
 | [update-oh-my-zsh.sh](../updates/update-oh-my-zsh.sh) | Run Oh My Zsh's automation-safe upgrade script |
 | [update-opencode.sh](../updates/update-opencode.sh) | Update the curl-installed opencode CLI through its native updater |
-| [update-pipx-tools.sh](../updates/update-pipx-tools.sh) | Upgrade installed Poetry, pre-commit, database CLIs, podman-compose, LLM, and LiteLLM pipx applications |
+| [update-pipx-tools.sh](../updates/update-pipx-tools.sh) | Upgrade installed Poetry, pre-commit, database CLIs, LLM, and LiteLLM pipx applications |
 | [update-pyenv.sh](../updates/update-pyenv.sh) | Fast-forward the clean pyenv checkout |
 | [update-rbenv.sh](../updates/update-rbenv.sh) | Fast-forward the clean rbenv and ruby-build checkouts |
 | [update-rclone.sh](../updates/update-rclone.sh) | Self-update the standalone rclone binary installed by this project |

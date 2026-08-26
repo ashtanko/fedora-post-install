@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 GO_INSTALL_DIR="${GO_INSTALL_DIR:-/usr/local/go}"
 GO_BIN="$GO_INSTALL_DIR/bin/go"
@@ -46,18 +49,14 @@ if [ "$GO_INSTALL_DIR" = "/" ] || [ "$INSTALL_PARENT" = "/" ]; then
     exit 1
 fi
 
-for REQUIRED_COMMAND in curl python3 dpkg tar sha256sum mktemp; do
+for REQUIRED_COMMAND in curl python3 rpm tar sha256sum mktemp; do
     if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
         echo "❌ $REQUIRED_COMMAND is required to update Go" >&2
         exit 1
     fi
 done
 
-ARCH=$(dpkg --print-architecture)
-case "$ARCH" in
-    amd64|arm64) ;;
-    *) echo "❌ Unsupported Go architecture: $ARCH" >&2; exit 1 ;;
-esac
+ARCH=$(release_arch)
 
 TMP=$(mktemp -d)
 STAGE=""

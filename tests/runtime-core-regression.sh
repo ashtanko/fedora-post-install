@@ -85,6 +85,13 @@ test_go_install() {
     local root="$TEST_ROOT/go" home="$TEST_ROOT/go/home" fakebin="$TEST_ROOT/go/bin"
     local archive="$TEST_ROOT/go/go.tar.gz" checksum target output status
     mkdir -p "$home/sdk/go-incomplete" "$root/archive/go/bin" "$fakebin"
+    cat > "$fakebin/rpm" <<'EOF'
+#!/bin/bash
+if [[ "${1:-}" == --eval ]]; then echo x86_64; exit 0; fi
+if [[ "${1:-}" == -q ]]; then exit 0; fi
+exit 1
+EOF
+    chmod +x "$fakebin/rpm"
     set +e
     output=$(HOME="$home" GO_INSTALL_DIR="$home/sdk/go-incomplete" \
         /bin/bash "$REPO_ROOT/dev/go.sh" 2>&1)

@@ -11,63 +11,30 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Terraform + tflint + tfsec..."
 
-ARCH=$(dpkg --print-architecture)
+ARCH=$(release_arch)
 BIN_DIR="/usr/local/bin"
 
-# --- Terraform (HashiCorp apt repo) ---
-if command -v terraform &>/dev/null; then
+dnf_install curl wget unzip gnupg2
+
+# --- Terraform (HashiCorp Fedora RPM repo) ---
+repo_add hashicorp \
+    "https://rpm.releases.hashicorp.com/fedora/\$releasever/\$basearch/stable" \
+    'https://rpm.releases.hashicorp.com/gpg' \
+    '798AEC654E5C15428C8E42EEAA16FCBCA621E701'
+if dnf_installed terraform && command -v terraform &>/dev/null; then
     echo "✅ terraform already installed ($(terraform version | head -1))"
 else
-    echo "📦 Adding HashiCorp apt repository..."
-    sudo apt-get update
-    sudo apt-get install -y ca-certificates curl gnupg lsb-release
-
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL --retry 3 --retry-all-errors https://apt.releases.hashicorp.com/gpg \
-        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/hashicorp.gpg
-    sudo chmod a+r /etc/apt/keyrings/hashicorp.gpg
-
-    # HashiCorp ships an empty suite for some interim Ubuntu releases — 25.04
-    # (plucky) serves an InRelease but carries no packages — so pick the newest
-    # codename that actually publishes terraform, falling back to the LTSes.
-    CODENAME=$(lsb_release -cs)
-    HC_SUITE=""
-    # Note: no `curl | grep -q` here — grep exits at the first match, curl dies
-    # of SIGPIPE, and `set -o pipefail` would fail the check for every suite.
-    HC_INDEX=$(mktemp)
-    # shellcheck disable=SC2064
-    trap "rm -f '$HC_INDEX'" EXIT
-    for CANDIDATE in "$CODENAME" noble jammy; do
-        if curl -fsSL --retry 3 --retry-all-errors -o "$HC_INDEX" \
-            "https://apt.releases.hashicorp.com/dists/${CANDIDATE}/main/binary-${ARCH}/Packages" 2>/dev/null \
-            && grep -q '^Package: terraform$' "$HC_INDEX"; then
-            HC_SUITE="$CANDIDATE"
-            break
-        fi
-    done
-    rm -f "$HC_INDEX"
-    if [ -z "$HC_SUITE" ]; then
-        echo "❌ No HashiCorp apt suite publishes terraform for $CODENAME (${ARCH})"
-        exit 1
-    fi
-    if [ "$HC_SUITE" != "$CODENAME" ]; then
-        echo "⚠️  HashiCorp has no packages for $CODENAME — using the $HC_SUITE suite instead"
-    fi
-
-    echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/hashicorp.gpg] \
-https://apt.releases.hashicorp.com \
-${HC_SUITE} main" \
-        | sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
-
     echo "📦 Installing terraform..."
-    sudo apt-get update
-    sudo apt-get install -y terraform
+    dnf_install terraform
     echo "✅ terraform installed ($(terraform version | head -1))"
 fi
 
@@ -79,13 +46,6 @@ fi
 if command -v tflint &>/dev/null; then
     echo "✅ tflint already installed ($(tflint --version | head -1))"
 else
-    # The release ships a .zip, and unzip isn't on a stock Ubuntu install.
-    if ! command -v unzip &>/dev/null; then
-        echo "📦 Installing unzip (required to unpack the tflint release)..."
-        sudo apt-get update
-        sudo apt-get install -y unzip
-    fi
-
     echo "🔍 Resolving latest tflint release..."
     TFLINT_VERSION=$(latest_github_tag terraform-linters/tflint)
     case "$ARCH" in
@@ -116,7 +76,7 @@ else
     echo "✅ tflint installed → $BIN_DIR/tflint ($(tflint --version | head -1))"
 fi
 
-# --- tfsec (GitHub release; single binary) ---
+# --- tfsec (GitHub release; signature-verified single binary) ---
 if command -v tfsec &>/dev/null; then
     echo "✅ tfsec already installed ($(tfsec --version))"
 else
@@ -127,13 +87,83 @@ else
         arm64) TFSEC_ARCH="arm64" ;;
         *) echo "❌ Unsupported architecture for tfsec: $ARCH"; exit 1 ;;
     esac
-    TFSEC_URL="https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/tfsec-linux-${TFSEC_ARCH}"
+    TFSEC_ASSET="tfsec-linux-${TFSEC_ARCH}"
+    TFSEC_URL="https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/${TFSEC_ASSET}"
+    TFSEC_KEY_FINGERPRINT="D66B222A3EA4C25D5D1A097FC34ACEFB46EC39CE"
     echo "📦 Downloading tfsec $TFSEC_VERSION..."
-    TMP=$(mktemp)
-    # shellcheck disable=SC2064
-    trap "rm -f '$TMP'" EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP" "$TFSEC_URL"
-    sudo install -m 0755 "$TMP" "$BIN_DIR/tfsec"
+    TMP_TFSEC=$(mktemp -d)
+    trap 'rm -rf "$TMP_TFSEC"' EXIT
+    TFSEC_BIN="$TMP_TFSEC/$TFSEC_ASSET"
+    TFSEC_SIG="$TFSEC_BIN.${TFSEC_KEY_FINGERPRINT}.sig"
+    TFSEC_KEY="$TMP_TFSEC/tfsec-signing-key.asc"
+    TFSEC_GNUPGHOME="$TMP_TFSEC/gnupg"
+    mkdir -m 700 "$TFSEC_GNUPGHOME"
+    wget --tries=3 --waitretry=2 -nv --show-progress -O "$TFSEC_BIN" "$TFSEC_URL"
+    curl -fsSL --retry 3 --retry-all-errors -o "$TFSEC_SIG" \
+        "${TFSEC_URL}.${TFSEC_KEY_FINGERPRINT}.sig"
+    cat >"$TFSEC_KEY" <<'TFSEC_PUBLIC_KEY'
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBGCmSy4BEAC9IxH3DeV+xeORRypRZe28YYSvDvBZdfer0apm+p1kJFsXM6ns
+dng9PThUihEt11BMtLmlQyPMQ0TsONOjqFaqNEitzNe55MSHxTYkTrnctrF3IKS4
+G35RHcHUctx9j4Cg56eRxU1cb0B/JJdh9HjZtQG9CJB0+WU/UlXOgYn/17ZScS6Q
+tq56SKd+lW5BfTzl+aYdzbrlWh1Ukla7DvydQmxY7XHgfKbLrGJVQdL91opJvXKr
+D1vxDuMpZHSm9lp6G5GXsZIA080QKcD3nSjeeRTxuABDwHD/1OS03iZQtxwjUMRw
+FYFlrcSVap20SXMLAtKRDpWGhAyzI+JUhZQMuRj22jcicEs7CKGXteFMFlgh3RU1
+K4DfQwFT436ywuDCAuu/vAhVwZmLaUlf6YIWnGBYOjHXjas/f1z7ZTe2dHxQfNg4
+xsmefH++I4qRHF+e2ggMGF2JAv8Y7T3+QDkXDiQ/kTJaFvWqoe0A5V+CmdL01giW
+AkCfqtRIEKuF7NSYsekY0HVGwxDGG/gKWfWw0bq+KxsVwk9/KDVBZIRdimqcuJm1
+PIssx5v+V4BIkYWhKNX0rIu5bi9UAXHJJuCEdzHsiWUp+UA6MBv1FNNWdPJoEwkc
+BgmryUFYr7UVb0+9NkII0rYmnwHcuFO9tErqccN+Ru2f920R40J/jH3GMQARAQAB
+tDpUZnNlYyBTaWduaW5nIChDb2RlIHNpZ25pbmcgZm9yIHRmc2VjKSA8c2lnbmlu
+Z0B0ZnNlYy5kZXY+iQJOBBMBCgA4FiEE1msiKj6kwl1dGgl/w0rO+0bsOc4FAmCm
+Sy4CGwMFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQw0rO+0bsOc6zRA/+JZUV
+Q4ip9qGt6mMN+bkFm67218F5J/e1EKC9lbf4yuw56Jgz1+MdENUVROdqTxxXPWqX
+XaS0VD4obq/0G83dVgxuMFuW8LM+Uey6adGLn4QPoxt6Y0lRlQJmsP9aicw+rcvf
+drV34GwUPTEwbIW1AAhTi1hS+9/EsBqzMnIzL6xBsN29bHFiqQlC0bodDwVU7uYc
+tgh6D8W5FKeQkUiHJlZxGpcY7TEMmhcp26tdIWAfUFBDbwqoS/NZy3ZWJ3QLu1WQ
+72u7gD7tR4NoZwYiSGLZBp8Qz3g1a5RNdsN7U63bMhP8LWuvOYNe886DGAD4Olxa
+HkPowUJ3GVd1v7WE02Zu/72YEQB0XL2gy/QclX56gx0jXDBoyQrzdSHXYQzI3Y0Z
+W7T7ETxkvGsWEHkU+20KJKSTEWKVIQN7kKVT9RbMUvYBTex6oFnzDZvOBhbrWxjP
+4ojHHCkhTyffWZ2LKPDueFuzGLdf/F+Di2//Yc5ylYxPF2mBDp0ptUXPOFCN/5o/
+smBoDBzVU49Rnnw9qOUZ5PLs+HmPT4MMdGJKO1bD7JRA8zKtzIgNE568U5IjbOjV
+WXYhy9QFoQINjkiGBw0TQf7Yb8O0u0EnumXqYEPcyKgJaIhquduQllaoepJa27qR
+ZchuaBTiTJwaMIaz5m8MOQsVMfEgU3tDf0RbufG5Ag0EYKZLLgEQAMjL3IEmut/B
+k/FzcMGbvpf/dlIqnNDFsRLYexmhqfU7n5Nm0bWYhYArszBYfvYlZCXOsjmeRnSa
+fR85mw98ZMxR9n87NtgnNdEFnWceJ+3TkTIlcIZsGqCodWaxKW99q0w2z9MQ8Twn
+4ciioKvinw9FE2YdfnPe7gY3DfvvTWurhvssUh3YLIaGMt3KcRtEVsPOnsRNLeLD
+R9T5CGX8H47C/kBxGIPgh6xRf5yxErU7BwiS7BgSSAXwiM3IenuqgeJe4flBggTl
+7zcevsgvBrIPVemRl428fCTtBkykEobNXz/2JT/CzgCYJ27zlzdFe81ENoxR9Ieb
+KyA2EDw41xtjGiHkXsBdavQsikoXqt8PC7sFoIm/b2125fUmDafZ/DVDxLeSjglx
+izWMN1AG9CV7bEgC/f25UmiQb3V2TkM9Uo+Y5g1ZvJTM83mi2cINjQW5WTwV8fiu
+DFf2QTXY/4W0jtU5EvI7N3tH7laFBsXz32hnEGImsyBUApJK0s3FPdBjwEYtNSt9
+Fn5JFr0+48uIgvmS+CnKp+KzQ7YRWputbJWO3JFvlzMmCKXKU/ss+PkU6admTvnH
+rm+2qpGWfsmvStsqpgdbivLwujVC1ZyKnv8MkT7pq0iwlyqyAGlYoTkW1JSiCzmd
+s2kE+hqsIr+u8sd07zjoxtvLdUnF1c81ABEBAAGJAjYEGAEKACAWIQTWayIqPqTC
+XV0aCX/DSs77Ruw5zgUCYKZLLgIbDAAKCRDDSs77Ruw5znn2D/9scSun7N7UcXCD
+0WV4F0QNUU+cu6QeDkjFoolXQZeIBRgSpa1r9qfPzQqB03CF/E5kFQz6APpX9nZX
+gjCvBo2oeeSusUY3d4gkGUnhLC+rwiPaQrJFgh6pDli3A78KChADq+JzZaxcDb7m
+Li41jwmfqHdkC0c6LI9QstOcyV2n5u2/HX0tJLGw47w5eEsfhcI5xgw/adBjqpHM
+lEKTJcyJuIY++9PiNmG5algPwAa+0XrgCdLHyHXHHhoFV+5xj29iWpfPlqLLl1eT
+QqnbqpcOupcsFsASiM5zVGZHK6LYuDkk9Ey/TrqcAhxfyl8cXNpdRC7PanHtykvC
+DKa/6fXNJ3MtpQZ+Z+JjoN1PWQP3UqDYhXxizzT6TrT5N72M//bLm0hadPCt+8Wx
+CzlBBxuxlGEhdriYFUtQ/wN7cRR659qZARylfXI5j1mHBlPuIEoSCMkkz/Nj3Bxo
+iuzLVVrX0h16N7H2wclTsw2LDf2rPlTIcI5Ct41fOSyyagZhWoR05JbaY4+yfhjx
+FkM0ly4XGasTbjJpwbJKWtXwiLXNaCCzQJH1DBdh5O3lHIidqcdoi+iAcpgaJCXI
+p297ny/7PTHmTaZhdjGcBp2tAmd+J0zgsmNk3qUg5pPGKdUnCA5jjENfmTMP4ets
+nX5QmAEwF/nBYV3Du7TIvHtz91yL8A==
+=opqY
+-----END PGP PUBLIC KEY BLOCK-----
+TFSEC_PUBLIC_KEY
+    gpg --batch --homedir "$TFSEC_GNUPGHOME" --import "$TFSEC_KEY"
+    IMPORTED_FINGERPRINT=$(gpg --batch --homedir "$TFSEC_GNUPGHOME" --with-colons --fingerprint \
+        | awk -F: '$1 == "fpr" { print toupper($10); exit }' | tr -d '[:space:]')
+    if [ "$IMPORTED_FINGERPRINT" != "$TFSEC_KEY_FINGERPRINT" ]; then
+        echo "❌ tfsec signing key fingerprint mismatch: $IMPORTED_FINGERPRINT" >&2
+        exit 1
+    fi
+    gpg --batch --homedir "$TFSEC_GNUPGHOME" --verify "$TFSEC_SIG" "$TFSEC_BIN"
+    sudo install -m 0755 "$TFSEC_BIN" "$BIN_DIR/tfsec"
     echo "✅ tfsec installed → $BIN_DIR/tfsec"
 fi
 

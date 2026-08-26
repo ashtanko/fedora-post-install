@@ -9,6 +9,7 @@ bash tests/pkg-regression.sh
 bash tests/essentials-regression.sh
 bash tests/system-regression.sh
 bash tests/apps-regression.sh
+bash tests/dev-regression.sh
 bash tests/identity-regression.sh
 bash tests/catalog-regression.sh
 bash tests/script-contract-regression.sh
