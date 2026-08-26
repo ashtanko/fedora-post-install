@@ -49,8 +49,8 @@ snapshot_state() {
     local configured_path expanded_path packages package_listing
     local -a configured_paths=()
     {
-        echo "## dpkg"
-        if ! packages=$(dpkg-query -W -f='${Package} ${Version}\n' 2>&1); then
+        echo "## rpm"
+        if ! packages=$(rpm -qa --qf '%{NAME} %{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\n' 2>&1); then
             echo "❌ could not query installed package state" >&2
             return 1
         fi

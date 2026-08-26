@@ -8,7 +8,21 @@ source "$REPO_ROOT/tests/idempotency-lib.bash"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 export HOME="$TMP/home"
-mkdir -p "$HOME/.local/bin" "$HOME/owned-state"
+mkdir -p "$HOME/.local/bin" "$HOME/owned-state" "$TMP/failing-bin"
+cat > "$TMP/failing-bin/rpm" <<'EOF'
+#!/bin/bash
+if [[ "${RPM_QUERY_FAIL:-}" == yes ]]; then
+    echo 'simulated package-query failure' >&2
+    exit 2
+fi
+if [[ "${1:-}" == -qa ]]; then
+    printf '%s\n' 'bash 0:5.3.0-1.fc44.x86_64' 'rpm 0:6.0.1-1.fc44.x86_64'
+    exit 0
+fi
+exit 2
+EOF
+chmod +x "$TMP/failing-bin/rpm"
+export PATH="$TMP/failing-bin:$PATH"
 # Keep the HOME token literal so the same expansion path as the manifest is used.
 # shellcheck disable=SC2016
 STATE_PATHS='$HOME/owned-state'
@@ -38,7 +52,6 @@ if snapshot_state "$TMP/unsafe" 2>/dev/null; then
     exit 1
 fi
 
-mkdir -p "$TMP/failing-bin"
 cat > "$TMP/failing-bin/find" <<'EOF'
 #!/bin/bash
 if [[ "${2:-}" == "${FIND_FAIL_PATH:-}" ]]; then
@@ -46,14 +59,6 @@ if [[ "${2:-}" == "${FIND_FAIL_PATH:-}" ]]; then
     exit 2
 fi
 exec /usr/bin/find "$@"
-EOF
-cat > "$TMP/failing-bin/dpkg-query" <<'EOF'
-#!/bin/bash
-if [[ "${DPKG_QUERY_FAIL:-}" == yes ]]; then
-    echo 'simulated package-query failure' >&2
-    exit 2
-fi
-exec /usr/bin/dpkg-query "$@"
 EOF
 cat > "$TMP/failing-bin/sort" <<'EOF'
 #!/bin/bash
@@ -85,7 +90,7 @@ if PATH="$TMP/failing-bin:$PATH" snapshot_state "$TMP/unreadable" 2>/dev/null; t
     exit 1
 fi
 unset FIND_FAIL_PATH
-if DPKG_QUERY_FAIL=yes PATH="$TMP/failing-bin:$PATH" snapshot_state "$TMP/no-packages" 2>/dev/null; then
+if RPM_QUERY_FAIL=yes PATH="$TMP/failing-bin:$PATH" snapshot_state "$TMP/no-packages" 2>/dev/null; then
     echo "❌ package-query failure was ignored"
     exit 1
 fi

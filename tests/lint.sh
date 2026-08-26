@@ -9,7 +9,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 if ! command -v shellcheck >/dev/null 2>&1; then
-    echo "❌ shellcheck not installed. Install: sudo apt install shellcheck"
+    echo "❌ shellcheck not installed. Install: sudo dnf install shellcheck"
     exit 1
 fi
 

@@ -38,23 +38,25 @@ for script in "${scripts[@]}"; do
     $last"
     fi
 
-    # 3. `apt-get install` of a repository package must be preceded by an
-    #    `apt-get update`. On a fresh or long-idle system /var/lib/apt/lists is
-    #    empty or stale and the install dies with "Unable to locate package".
-    #    Installing a already-downloaded local .deb needs no index, so those are
-    #    exempt. Regression guard for apps/warp.sh, apps/postman.sh, vpn/nord.sh.
-    first_install="$(effective_lines "$script" \
-        | grep -nE 'apt(-get)? +(-[a-zA-Z-]+ +)*install' \
-        | grep -vE 'install +-y +"?\$' \
-        | head -1 | cut -d: -f1 || true)"
-    if [[ -n "$first_install" ]]; then
-        first_update="$(effective_lines "$script" \
-            | grep -nE 'apt(-get)? +update' | head -1 | cut -d: -f1 || true)"
-        if [[ -z "$first_update" ]]; then
-            report "$script: runs apt-get install with no apt-get update anywhere in the script"
-        elif (( first_update > first_install )); then
-            report "$script: runs apt-get install before its first apt-get update"
-        fi
+    # 3. Fedora is the only supported target. Production scripts must not keep
+    #    Debian package commands/assets, and architecture-sensitive paths must
+    #    use the shared RPM/release mappings instead of probing the host again.
+    effective="$(effective_lines "$script")"
+    if grep -Eq '(^|[^[:alnum:]_])(apt|apt-get|apt-cache|dpkg|dpkg-query|add-apt-repository|snap)([^[:alnum:]_-]|$)|\.deb([^[:alnum:]_]|$)|/etc/apt' \
+        <<< "$effective"; then
+        report "$script: retains a Debian/Ubuntu package path"
+    fi
+    if grep -Eq 'uname[[:space:]]+-m|dpkg[[:space:]]+--print-architecture' \
+        <<< "$effective"; then
+        report "$script: probes architecture outside the shared Fedora helpers"
+    fi
+    if grep -Eq '\b(x86_64|amd64|aarch64|arm64)\b' <<< "$effective" \
+        && ! grep -Eq '\b(rpm_arch|release_arch)\b' <<< "$effective"; then
+        report "$script: contains architecture-specific behavior without rpm_arch/release_arch"
+    fi
+    if grep -Eq '(^|[[:space:]])repo_add[[:space:]]' <<< "$effective" \
+        && ! grep -Fq "source \"\$PKG_HELPER\"" <<< "$effective"; then
+        report "$script: configures an RPM repository without the shared signed-repository helper"
     fi
 
     # 4. No piping a network fetch into a shell. Every such install must land in
@@ -67,6 +69,13 @@ for script in "${scripts[@]}"; do
         report "$script: pipes a network fetch directly into a shell"
     fi
 done
+
+# All project-written repository files flow through repo_add. Keep package
+# signature checking mandatory even when a vendor cannot sign repository
+# metadata and requires the narrowly scoped repo_gpgcheck=0 exception.
+if ! effective_lines lib/pkg.bash | grep -Fq 'gpgcheck=1'; then
+    report "lib/pkg.bash: repo_add does not require gpgcheck=1"
+fi
 
 if (( failures > 0 )); then
     echo "" >&2

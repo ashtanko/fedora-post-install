@@ -1,29 +1,29 @@
-ARG UBUNTU_VERSION=24.04
-FROM ubuntu:${UBUNTU_VERSION}
+ARG FEDORA_VERSION=44
+FROM fedora:${FEDORA_VERSION}
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
     TZ=Etc/UTC
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN dnf -y install --setopt=install_weak_deps=False \
         sudo \
         curl \
         wget \
         ca-certificates \
-        gnupg \
-        lsb-release \
-        software-properties-common \
-        locales \
+        gnupg2 \
+        glibc-langpack-en \
         tzdata \
         git \
-        build-essential \
         file \
-        rng-tools-debian \
-    && locale-gen en_US.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
+        findutils \
+        diffutils \
+        procps-ng \
+        shadow-utils \
+        util-linux \
+        @development-tools \
+    && dnf clean all
 
-RUN useradd -m -s /bin/bash -G sudo tester \
+RUN useradd -m -s /bin/bash -G wheel tester \
     && echo 'tester ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/tester \
     && chmod 0440 /etc/sudoers.d/tester
 

@@ -13,21 +13,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Verify runner tools
+        run: shellcheck --version
       - name: Run local regression gate
         run: make check
 
-  current-lts-smoke:
+  current-fedora-smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: Run Ubuntu 24.04 smoke suite
-        run: bash tests/run-in-docker.sh 24.04 smoke
+      - name: Run Fedora 44 smoke suite
+        run: bash tests/run-in-docker.sh 44 smoke
 
   report:
-    needs: [regressions, current-lts-smoke]
+    needs: [regressions, current-fedora-smoke]
     if: always()
     runs-on: ubuntu-latest
     permissions:

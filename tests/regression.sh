@@ -27,9 +27,9 @@ bash tests/idempotency-regression.sh
 bash tests/update-scripts-regression.sh
 
 for docker_args in \
-    '25.04 smoke' \
-    '24.04 invalid' \
-    '24.04 smoke does/not-exist.sh'; do
+    '42 smoke' \
+    '44 invalid' \
+    '44 smoke does/not-exist.sh'; do
     read -r -a parsed_docker_args <<< "$docker_args"
     set +e
     bash tests/run-in-docker.sh "${parsed_docker_args[@]}" >/dev/null 2>&1

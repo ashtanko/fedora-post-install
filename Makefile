@@ -1,8 +1,8 @@
 # fedora-post-install — developer convenience targets.
-# Run `make help` for the list. UBUNTU and SCRIPT are optional overrides.
+# Run `make help` for the list. FEDORA and SCRIPT are optional overrides.
 
 SHELL  := /bin/bash
-UBUNTU ?= 24.04
+FEDORA ?= 44
 SCRIPT ?=
 VERSION ?=
 export VERSION
@@ -18,7 +18,7 @@ help: ## Show this help
 	     /^[a-zA-Z_-]+:.*##/ {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "Variables:"
-	@echo "  UBUNTU=<version>     22.04 | 24.04 | 26.04 (default: $(UBUNTU))"
+	@echo "  FEDORA=<version>     43 | 44 (default: $(FEDORA))"
 	@echo "  SCRIPT=<path.sh>     scope smoke/idempotency to one script"
 	@echo "  VERSION=<x.y.z>      required by 'make tag'"
 
@@ -100,21 +100,21 @@ tui-build: ## Build release TUI binaries for Linux amd64 and arm64
 
 # ── Docker tests ─────────────────────────────────────────────────────────────
 
-smoke: ## Smoke stage (UBUNTU=… SCRIPT=… to scope)
-	bash tests/run-in-docker.sh $(UBUNTU) smoke $(SCRIPT)
+smoke: ## Smoke stage (FEDORA=… SCRIPT=… to scope)
+	bash tests/run-in-docker.sh $(FEDORA) smoke $(SCRIPT)
 
-smoke-all: ## Smoke stage across every supported Ubuntu version
-	@for v in 22.04 24.04 26.04; do \
-		echo "==> smoke / ubuntu-$$v"; \
+smoke-all: ## Smoke stage across every supported Fedora version
+	@for v in 43 44; do \
+		echo "==> smoke / fedora-$$v"; \
 		bash tests/run-in-docker.sh $$v smoke || exit 1; \
 	done
 
-idempotency: ## Idempotency stage (UBUNTU=… SCRIPT=… to scope)
-	bash tests/run-in-docker.sh $(UBUNTU) idempotency $(SCRIPT)
+idempotency: ## Idempotency stage (FEDORA=… SCRIPT=… to scope)
+	bash tests/run-in-docker.sh $(FEDORA) idempotency $(SCRIPT)
 
-idempotency-all: ## Idempotency stage across every supported Ubuntu version
-	@for v in 22.04 24.04 26.04; do \
-		echo "==> idempotency / ubuntu-$$v"; \
+idempotency-all: ## Idempotency stage across every supported Fedora version
+	@for v in 43 44; do \
+		echo "==> idempotency / fedora-$$v"; \
 		bash tests/run-in-docker.sh $$v idempotency || exit 1; \
 	done
 

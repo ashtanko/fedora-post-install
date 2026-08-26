@@ -63,12 +63,17 @@ else
     [[ "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{64}$ ]] \
         || { echo "❌ Atuin checksum file does not contain a valid SHA-256 digest"; exit 1; }
     echo "$EXPECTED_SHA  $ATUIN_TMP/$ATUIN_ASSET" | sha256sum --check --quiet
-    tar -xzf "$ATUIN_TMP/$ATUIN_ASSET" -C "$ATUIN_TMP" atuin
-    [ -f "$ATUIN_TMP/atuin" ] \
-        || { echo "❌ atuin was not found in the downloaded archive"; exit 1; }
-
+    mapfile -t ATUIN_MEMBERS < <(
+        tar -tzf "$ATUIN_TMP/$ATUIN_ASSET" \
+            | awk -F/ '$NF == "atuin" { print }'
+    )
+    if (( ${#ATUIN_MEMBERS[@]} != 1 )); then
+        echo "❌ Expected exactly one atuin binary in the downloaded archive"
+        exit 1
+    fi
     ATUIN_STAGE=$(mktemp "$USER_BIN/.atuin-stage.XXXXXX")
-    install -m 0755 "$ATUIN_TMP/atuin" "$ATUIN_STAGE"
+    tar -xOzf "$ATUIN_TMP/$ATUIN_ASSET" "${ATUIN_MEMBERS[0]}" > "$ATUIN_STAGE"
+    chmod 0755 "$ATUIN_STAGE"
     STAGE_VERSION=$("$ATUIN_STAGE" --version 2>/dev/null | head -1) \
         || { echo "❌ Staged Atuin binary failed validation"; exit 1; }
     case "$STAGE_VERSION" in

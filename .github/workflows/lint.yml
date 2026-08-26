@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Verify runner tools
+        run: shellcheck --version
       - name: Run all local checks
         run: make check

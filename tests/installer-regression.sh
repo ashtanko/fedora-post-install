@@ -108,13 +108,6 @@ make_remote_installer_stub() {
     for command_name in bash cat chmod dirname grep head mkdir mktemp python3 rm sh; do
         ln -s "$(command -v "$command_name")" "$bin/$command_name"
     done
-    cat > "$bin/dpkg" <<'EOF'
-#!/bin/bash
-if [ "${1:-}" = -s ] && [ "${2:-}" = python3-venv ]; then
-    exit 0
-fi
-exec /usr/bin/dpkg "$@"
-EOF
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 out=""
@@ -139,7 +132,7 @@ BIN
 chmod +x "$STUB_INSTALL_TARGET"
 INSTALLER
 EOF
-    chmod +x "$bin/curl" "$bin/dpkg"
+    chmod +x "$bin/curl"
 }
 
 test_remote_ai_installers() {
@@ -526,13 +519,6 @@ test_failed_remote_installer_is_not_executed() {
     for command_name in dirname mktemp python3 rm; do
         ln -s "$(command -v "$command_name")" "$bin/$command_name"
     done
-    cat > "$bin/dpkg" <<'EOF'
-#!/bin/bash
-if [ "${1:-}" = -s ] && [ "${2:-}" = python3-venv ]; then
-    exit 0
-fi
-exit 1
-EOF
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 payload='printf "executed\n" > "$STUB_EXEC_MARKER"'
@@ -550,7 +536,7 @@ else
 fi
 exit 18
 EOF
-    chmod +x "$bin/curl" "$bin/dpkg"
+    chmod +x "$bin/curl"
 
     for entry in \
         "opencode:$REPO_ROOT/ai/opencode.sh" \

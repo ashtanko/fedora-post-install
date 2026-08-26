@@ -1,9 +1,9 @@
 #!/bin/bash
-# Build the test image for a given Ubuntu version, then run every
+# Build the test image for a supported Fedora version, then run every
 # manifest-compatible script in its own fresh container.
 #
-# Usage: tests/run-in-docker.sh [ubuntu_version] [smoke|idempotency] [single_script]
-#   ubuntu_version  : 22.04 | 24.04 | 26.04 (default: 24.04)
+# Usage: tests/run-in-docker.sh [fedora_version] [smoke|idempotency] [single_script]
+#   fedora_version  : 43 | 44 (default: 44)
 #   mode            : smoke | idempotency           (default: smoke)
 #   single_script   : optional — run only this one path (e.g. dev/node.sh)
 set -euo pipefail
@@ -15,16 +15,16 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-UBUNTU_VERSION="${1:-24.04}"
+FEDORA_VERSION="${1:-44}"
 MODE="${2:-smoke}"
 ONLY="${3:-}"
 
 # shellcheck source=manifest.sh
 source "$REPO_ROOT/tests/manifest.sh"
 
-case "$UBUNTU_VERSION" in
-    22.04|24.04|26.04) ;;
-    *) echo "❌ unsupported Ubuntu version: $UBUNTU_VERSION (expected 22.04, 24.04, or 26.04)"; exit 2 ;;
+case "$FEDORA_VERSION" in
+    43|44) ;;
+    *) echo "❌ unsupported Fedora version: $FEDORA_VERSION (expected 43 or 44)"; exit 2 ;;
 esac
 case "$MODE" in
     smoke|idempotency) ;;
@@ -39,16 +39,16 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 1
 fi
 
-IMAGE="fedora-setup-test:${UBUNTU_VERSION}"
+IMAGE="fedora-setup-test:${FEDORA_VERSION}"
 
 echo "🐳 Building image $IMAGE..."
-# CI sets DOCKER_BUILD_CACHE_DIR so the image's apt layer survives between runs;
+# CI sets DOCKER_BUILD_CACHE_DIR so the image's DNF layer survives between runs;
 # without it (the local default) plain `docker build` uses the daemon's own
 # layer cache and needs no extra setup. The src/dest split is buildx's
 # documented workaround for a local cache that otherwise grows without bound.
 CACHE_DIR="${DOCKER_BUILD_CACHE_DIR:-}"
 if [ -n "$CACHE_DIR" ] && docker buildx version >/dev/null 2>&1; then
-    build_args=(--load --build-arg "UBUNTU_VERSION=${UBUNTU_VERSION}")
+    build_args=(--load --build-arg "FEDORA_VERSION=${FEDORA_VERSION}")
     if [ -d "$CACHE_DIR" ]; then
         build_args+=(--cache-from "type=local,src=${CACHE_DIR}")
     fi
@@ -62,7 +62,7 @@ if [ -n "$CACHE_DIR" ] && docker buildx version >/dev/null 2>&1; then
     mv "${CACHE_DIR}.new" "$CACHE_DIR"
 else
     docker build \
-        --build-arg "UBUNTU_VERSION=${UBUNTU_VERSION}" \
+        --build-arg "FEDORA_VERSION=${FEDORA_VERSION}" \
         -t "$IMAGE" \
         -f "$REPO_ROOT/tests/Dockerfile" \
         "$REPO_ROOT/tests"
@@ -85,7 +85,7 @@ run_one() {
         return 0
     fi
 
-    printf "▶️  RUN    %-40s [%s/%s]\n" "$path" "$UBUNTU_VERSION" "$MODE"
+    printf "▶️  RUN    %-40s [%s/%s]\n" "$path" "$FEDORA_VERSION" "$MODE"
 
     if docker run --rm \
         -v "$REPO_ROOT":/home/tester/repo:ro \

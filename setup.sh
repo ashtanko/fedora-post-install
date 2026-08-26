@@ -51,8 +51,11 @@ esac
 
 # Load user config before LOG_FILE is set so SETUP_LOG_FILE is available.
 CONFIG_HELPER="$SCRIPT_DIR/lib/config.bash"
+PKG_HELPER="$SCRIPT_DIR/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$SCRIPT_DIR"
 
 LOG_FILE="${SETUP_LOG_FILE:-$HOME/fedora-setup.log}"
@@ -164,11 +167,7 @@ if [ "$MODE" = "run-item" ]; then
     exit 0
 fi
 
-case "$(uname -m)" in
-    x86_64|amd64) TUI_ARCH="amd64" ;;
-    aarch64|arm64) TUI_ARCH="arm64" ;;
-    *) TUI_ARCH="" ;;
-esac
+TUI_ARCH="$(release_arch 2>/dev/null || true)"
 TUI_BIN="$SCRIPT_DIR/bin/fedora-post-install-tui-$TUI_ARCH"
 if [ "$MODE" = "auto" ] && [ -n "$TUI_ARCH" ] && [ -t 0 ] && [ -t 1 ] \
     && [ "${TERM:-dumb}" != "dumb" ] && [ -x "$TUI_BIN" ]; then

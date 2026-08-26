@@ -37,12 +37,17 @@ if [ -f "$SYSCTL_FILE" ] && printf '%s\n' "$DESIRED_SYSCTL" | sudo cmp -s - "$SY
     echo "✅ inotify limits already set (watches=$INOTIFY_MAX_WATCHES, instances=$INOTIFY_MAX_INSTANCES)"
 else
     echo "🔧 Writing $SYSCTL_FILE..."
+    sudo install -d -m 0755 "$(dirname "$SYSCTL_FILE")"
     printf '%s\n' "$DESIRED_SYSCTL" | sudo tee "$SYSCTL_FILE" >/dev/null
     if command -v restorecon &>/dev/null; then
         sudo restorecon "$SYSCTL_FILE"
     fi
-    sudo sysctl -p "$SYSCTL_FILE" >/dev/null
-    echo "✅ inotify limits applied (watches=$INOTIFY_MAX_WATCHES, instances=$INOTIFY_MAX_INSTANCES)"
+    if sudo sysctl -p "$SYSCTL_FILE" >/dev/null 2>&1; then
+        echo "✅ inotify limits applied (watches=$INOTIFY_MAX_WATCHES, instances=$INOTIFY_MAX_INSTANCES)"
+    else
+        echo "⚠️  inotify limits persisted but could not be applied in this environment"
+        echo "💡 Apply them after reboot or with: sudo sysctl --system"
+    fi
 fi
 
 # ── open-file limits (pam_limits, needs a new login session) ───────────────
@@ -54,6 +59,7 @@ if [ -f "$LIMITS_FILE" ] && printf '%s\n' "$DESIRED_LIMITS" | sudo cmp -s - "$LI
     echo "✅ Open-file limit already set to $NOFILE_LIMIT"
 else
     echo "🔧 Writing $LIMITS_FILE..."
+    sudo install -d -m 0755 "$(dirname "$LIMITS_FILE")"
     printf '%s\n' "$DESIRED_LIMITS" | sudo tee "$LIMITS_FILE" >/dev/null
     if command -v restorecon &>/dev/null; then
         sudo restorecon "$LIMITS_FILE"

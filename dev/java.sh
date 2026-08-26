@@ -18,7 +18,7 @@ source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; ex
 echo "🚀 Installing Java (OpenJDK)..."
 
 SUPPORTED_VERSIONS=(8 11 17 21 25)
-DEFAULT_VERSION=21
+DEFAULT_VERSION=25
 
 if [[ -n "${JAVA_VERSION:-}" ]]; then
     VERSION="$JAVA_VERSION"
@@ -28,16 +28,16 @@ elif [[ -t 0 ]]; then
     echo "  1) 8  (LTS, legacy)"
     echo "  2) 11 (LTS)"
     echo "  3) 17 (LTS)"
-    echo "  4) 21 (LTS, recommended)"
-    echo "  5) 25 (current)"
-    echo -n "Choice [4]: "
+    echo "  4) 21 (LTS)"
+    echo "  5) 25 (LTS, recommended)"
+    echo -n "Choice [5]: "
     read -r choice
-    case "${choice:-4}" in
+    case "${choice:-5}" in
         1) VERSION=8 ;;
         2) VERSION=11 ;;
         3) VERSION=17 ;;
-        4|"") VERSION=21 ;;
-        5) VERSION=25 ;;
+        4) VERSION=21 ;;
+        5|"") VERSION=25 ;;
         *) echo "❌ Invalid choice: $choice"; exit 1 ;;
     esac
 else
