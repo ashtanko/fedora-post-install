@@ -14,7 +14,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
 | 3 — installer ports | Complete | All ten installer/manual-script categories are ported and audited for Fedora |
 | 4 — updater ports | Complete | All 37 retained updaters are audited; RPM-owned tools use targeted DNF updates, while standalone and source-owned tools verify provenance before native or verified replacement updates |
-| 5 — Fedora tests and CI | Complete | Fedora 43/44 DNF5 containers, workflow matrices, RPM state snapshots, and Fedora script contracts are active; Fedora 44 full smoke and idempotency pass all 77 runnable entries, and Fedora 43 passes a representative package smoke test |
+| 5 — Fedora tests and CI | Complete | Fedora 43/44 DNF5 containers, workflow matrices, RPM state snapshots, and Fedora script contracts are active; full smoke and idempotency pass all 77 runnable entries on both supported releases |
 | 6 — documentation | Complete | User, contributor, agent, configuration, testing, release, security, and troubleshooting guidance now describes Fedora 43/44, DNF/RPM trust, firewalld, SELinux, and Secure Boot; local checks and an isolated release dry-run pass |
 
 ## Dispositions
@@ -361,13 +361,11 @@ Phase 5 test and CI references (checked 2026-08-26):
   workflows retain `ubuntu-latest` as their host and use its preinstalled
   binary while Fedora remains the Docker target:
   <https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md>.
-- The Fedora 44 full Docker smoke and idempotency stages each selected all 148
-  manifest entries: 77 passed, 0 failed, and 71 were intentionally skipped with
-  a Fedora-specific reason. Fedora 43 additionally built successfully and
-  passed a focused `system/base.sh` smoke test (1 selected, 1 passed). The test
-  image includes `diffutils` because minimal Fedora images do not otherwise
-  provide the `cmp` and `diff` commands used by guarded writes and state
-  comparisons.
+- The Fedora 43 and 44 full Docker smoke and idempotency stages each selected
+  all 148 manifest entries: 77 passed, 0 failed, and 71 were intentionally
+  skipped with a Fedora-specific reason. The test image includes `diffutils`
+  because minimal Fedora images do not otherwise provide the `cmp` and `diff`
+  commands used by guarded writes and state comparisons.
 
 ## Phase 6 documentation results
 
@@ -395,6 +393,30 @@ Phase 5 test and CI references (checked 2026-08-26):
 
 Phase 6 changed documentation and the example configuration only, so it did not
 invalidate the Fedora container results recorded for Phase 5 above.
+
+## Final acceptance results
+
+The definition-of-done audit completed on 2026-08-26:
+
+- The legacy-mechanism scan found no unexpected apt, dpkg, PPA, Snap, or UFW
+  path outside the historical migration records, explanatory documentation,
+  and regression patterns that reject their reintroduction.
+- `make check` passed with 192 ShellCheck inputs, 148 synchronized manifest
+  entries, 108 selectable catalog items in nine categories, all local
+  regressions, and the Go TUI test, vet, build, and catalog gate.
+- Fedora 43 full smoke and idempotency each selected 148 entries: 77 passed,
+  0 failed, and 71 were intentionally skipped. Together with the Fedora 44
+  results above, both modes are green on the complete supported matrix.
+- `make release-dry-run` produced and verified
+  `fedora-post-install-0.2.0.tar.gz` with both Linux TUI architectures, safe
+  archive paths, valid checksums, configuration precedence, launcher behavior,
+  and 248 archive entries.
+
+All migration phases and acceptance criteria are complete. The remaining
+`compat=no` and `compat=partial` limitations are explicit in
+`tests/manifest.sh` and covered by the project-level Fedora contract and
+category regressions where a plain container cannot exercise host hardware,
+systemd, a desktop session, enrollment, or an interactive updater safely.
 
 The current signed `repomd.xml` files used by repositories with metadata
 checking enabled were also verified successfully with `gpgv` against the
