@@ -8,7 +8,7 @@ VERSION ?=
 export VERSION
 
 .DEFAULT_GOAL := help
-.PHONY: help lint manifest config-regression runtime-regression installer-regression \
+.PHONY: help lint manifest config-regression pkg-regression runtime-regression installer-regression \
         contract-regression regressions check smoke smoke-all \
         idempotency idempotency-all setup version tui-test tui-build tag dist release-artifact \
         release-dry-run clean clean-markers
@@ -32,6 +32,9 @@ manifest: ## Verify every .sh is registered in tests/manifest.sh
 
 config-regression: ## Verify config precedence and secret export isolation
 	bash tests/config-regression.sh
+
+pkg-regression: ## Verify Fedora package helper behavior and repository trust checks
+	bash tests/pkg-regression.sh
 
 runtime-regression: ## Verify runtime safety and transactional install behavior
 	bash tests/runtime-core-regression.sh
