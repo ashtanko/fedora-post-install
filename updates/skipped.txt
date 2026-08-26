@@ -1,16 +1,15 @@
 # installer|reason
 essentials/swap.sh|system configuration task; no independently versioned software is installed
-essentials/firewall.sh|Ubuntu package and system policy are maintained through APT and UFW configuration
-essentials/auto-updates.sh|configures Ubuntu's unattended-upgrades service rather than a standalone tool
+essentials/firewall.sh|firewalld is maintained by DNF and this script owns its workstation policy
+essentials/auto-updates.sh|configures DNF automatic security updates rather than a standalone tool
 essentials/locale-timezone.sh|system configuration task; no independently versioned software is installed
-essentials/gnome-settings.sh|desktop configuration task; GNOME packages are maintained through APT
-essentials/journald.sh|system configuration task; systemd is maintained through Ubuntu updates
-essentials/fstrim.sh|system configuration task; systemd/util-linux are maintained through Ubuntu updates
-essentials/motd-news.sh|system configuration task; no independently versioned software is installed
+essentials/gnome-settings.sh|desktop configuration task; GNOME packages are maintained through DNF
+essentials/journald.sh|system configuration task; systemd is maintained through Fedora updates
+essentials/fstrim.sh|system configuration task; systemd/util-linux are maintained through DNF
 essentials/sysctl-limits.sh|system configuration task; no independently versioned software is installed
 essentials/system-info.sh|diagnostic task; it does not install independently versioned software
-essentials/fail2ban.sh|Ubuntu package is maintained through APT
-essentials/lynis.sh|Ubuntu package is maintained through APT
+essentials/fail2ban.sh|fail2ban and its firewalld integration are maintained through DNF
+essentials/lynis.sh|Fedora package is maintained through DNF
 system/base.sh|performs system-wide APT maintenance itself; it is not one project-owned tool
 system/hostname.sh|system configuration task; no independently versioned software is installed
 system/user-groups.sh|system configuration task; no independently versioned software is installed

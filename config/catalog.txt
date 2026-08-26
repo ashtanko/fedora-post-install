@@ -1,12 +1,11 @@
 # category-id|category-label|item-label|repo-relative-script
-essentials|Essentials|Swap file|essentials/swap.sh
-essentials|Essentials|UFW firewall|essentials/firewall.sh
-essentials|Essentials|Unattended security updates|essentials/auto-updates.sh
+essentials|Essentials|Optional disk swap|essentials/swap.sh
+essentials|Essentials|firewalld firewall|essentials/firewall.sh
+essentials|Essentials|Automatic DNF security updates|essentials/auto-updates.sh
 essentials|Essentials|Locale + timezone|essentials/locale-timezone.sh
 essentials|Essentials|GNOME quality-of-life settings|essentials/gnome-settings.sh
 essentials|Essentials|Journal log size cap|essentials/journald.sh
 essentials|Essentials|SSD/NVMe periodic TRIM|essentials/fstrim.sh
-essentials|Essentials|Disable motd-news ads|essentials/motd-news.sh
 essentials|Essentials|inotify + open-file limits|essentials/sysctl-limits.sh
 essentials|Essentials|System info dump|essentials/system-info.sh
 essentials|Essentials|fail2ban (SSH brute-force protection)|essentials/fail2ban.sh

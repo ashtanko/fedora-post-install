@@ -18,14 +18,14 @@ sudo -v && bash setup.sh
 
 | Setting | Value |
 |---|---|
-| Default incoming | `deny` |
-| Default outgoing | `allow` |
-| OpenSSH | `limit` (rate-limited against brute-force) |
-| State | `enabled` |
+| Zone policy | Preserved; the script does not reset existing rules or services |
+| SSH | The `ssh` service is allowed in the selected/default zone |
+| Brute-force protection | Managed separately by fail2ban when that script is enabled |
+| State | firewalld is enabled and started |
 
-Set `ENABLE_UFW=no` in `.env` to skip this script entirely. Already-active UFW is detected and not re-enabled.
+Set `ENABLE_FIREWALL=no` in `.env` to skip this script entirely. Already-active firewalld is detected and not restarted. Set `FIREWALL_ZONE` to target a zone other than firewalld's current default.
 
-If you SSH into the box, the OpenSSH `limit` rule is permissive enough for normal use but will block aggressive brute-force attempts. If you've moved sshd to a non-standard port, edit the rule yourself after the script runs.
+The script ensures SSH remains reachable before it exits, but the firewalld `ssh` service describes the standard SSH port. If sshd listens on a custom port, add that port to the selected zone before removing the standard service. The fail2ban script installs Fedora's `fail2ban-firewalld` integration and reads sshd events from the systemd journal.
 
 ## Sudo timestamp timeout ([system/sudoers.sh](../system/sudoers.sh))
 
@@ -59,7 +59,7 @@ The autostart block is the only piece this repo persists into your shell rc file
 
 ## Auto-updates ([essentials/auto-updates.sh](../essentials/auto-updates.sh))
 
-Enables `unattended-upgrades` for the **security pocket only** (default Ubuntu policy). Set `ENABLE_AUTO_UPDATES=no` to skip.
+Enables automatic **security-only** DNF updates with `apply_updates = yes`. Current Fedora releases use `dnf5-plugin-automatic` and `dnf5-automatic.timer`; a DNF4 compatibility path uses `dnf-automatic`. Automatic rebooting is disabled. Set `ENABLE_AUTO_UPDATES=no` to skip.
 
 ## Timezone auto-detection ([essentials/locale-timezone.sh](../essentials/locale-timezone.sh))
 
@@ -119,9 +119,7 @@ Each repo's signature is pinned to its own keyring file via `signed-by=`. Removi
 
 ## Telemetry
 
-These scripts don't phone home. Upstream installers do whatever they do — Google Chrome, Docker Desktop, JetBrains Toolbox, VS Code, and the vendor AI CLIs each have their own opt-out paths in their own settings. Review them after install if that matters to you.
-
-The one exception in the other direction: [essentials/motd-news.sh](../essentials/motd-news.sh) *disables* an existing outbound call — Ubuntu's `motd-news` fetches ESM/livepatch headlines from Canonical on login. Turning it off is opt-out, not opt-in.
+These scripts don't phone home. Upstream installers do whatever they do — Google Chrome, Docker Desktop, JetBrains Toolbox, VS Code, and the vendor AI CLIs each have their own opt-out paths in their own settings. Review them after install if that matters to you. The timezone script contacts ipapi.co only when `TZ` is unset, as described above.
 
 ## Threat model in one sentence
 

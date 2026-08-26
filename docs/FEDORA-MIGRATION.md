@@ -9,10 +9,10 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 
 | Phase | State | Notes |
 |---|---|---|
-| 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 installer/manual scripts and 44 updater scripts inventoried below |
-| 1 — shared package layer | In progress | `lib/pkg.bash` and isolated regression coverage added; installer callers are not migrated yet |
+| 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
+| 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | Not started | Category scripts still contain Debian/Ubuntu package paths |
+| 3 — installer ports | In progress | The complete `essentials/` category is ported; the other categories remain pending |
 | 4 — updater ports | Not started | Updater ownership and DNF-managed skip decisions still require audit |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -101,18 +101,18 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `essentials/auto-updates.sh` | replace | Pending; rewrite around `dnf-automatic` security updates and its timer |
-| `essentials/fail2ban.sh` | replace | Pending; add `fail2ban-firewalld` and the systemd backend |
-| `essentials/firewall.sh` | replace | Pending; rewrite UFW behavior around firewalld zones and services |
-| `essentials/fstrim.sh` | replace | Pending; detect Fedora's normally enabled `fstrim.timer` and no-op cleanly |
-| `essentials/gnome-settings.sh` | neutral | Audit pending; GNOME `gsettings` behavior is distro-independent |
-| `essentials/journald.sh` | port | Pending; retain the journal cap but audit Fedora defaults and restore labels on the drop-in |
-| `essentials/locale-timezone.sh` | port | Pending; replace Debian locale generation and package assumptions |
-| `essentials/lynis.sh` | port | Pending; install the Fedora repository package |
-| `essentials/motd-news.sh` | delete | Confirmed Ubuntu-only: the script only disables Ubuntu motd-news/ESM advertising; removal pending catalog/manifest/docs synchronization |
-| `essentials/swap.sh` | replace | Pending; respect zram and implement an explicit Btrfs-safe disk-swap policy |
-| `essentials/sysctl-limits.sh` | neutral | Audit pending; standard sysctl/limits drop-ins, with SELinux label validation required |
-| `essentials/system-info.sh` | neutral | Audit pending; read-only system inventory |
+| `essentials/auto-updates.sh` | replace | Complete; uses `dnf5-plugin-automatic`/`dnf5-automatic.timer`, with a DNF4 compatibility path, security-only application, and no automatic reboot |
+| `essentials/fail2ban.sh` | replace | Complete; installs `fail2ban-firewalld` and configures the sshd jail with the systemd backend |
+| `essentials/firewall.sh` | replace | Complete; enables firewalld, preserves the selected zone policy, and ensures its SSH service is allowed |
+| `essentials/fstrim.sh` | replace | Complete; uses Fedora's `util-linux` package when needed and no-ops when the timer is already enabled |
+| `essentials/gnome-settings.sh` | neutral | Complete; GNOME `gsettings` behavior and session guards are distribution-independent |
+| `essentials/journald.sh` | port | Complete; retains the journal cap and restores the SELinux label on its drop-in |
+| `essentials/locale-timezone.sh` | port | Complete; installs Fedora `glibc-langpack-*`, uses `/etc/locale.conf`, and retains systemd locale/timezone management |
+| `essentials/lynis.sh` | port | Complete; installs Fedora's `lynis` package through the shared DNF helper |
+| `essentials/motd-news.sh` | delete | Complete; removed because Fedora has no Ubuntu motd-news/ESM advertising facility |
+| `essentials/swap.sh` | replace | Complete; respects active zram, defaults disk swap off, and uses Btrfs-native swapfile creation when opted in |
+| `essentials/sysctl-limits.sh` | neutral | Complete; standard drop-ins retained and relabeled for SELinux before application |
+| `essentials/system-info.sh` | neutral | Complete; read-only system inventory has no distro-specific mutation or package dependency |
 
 ### `ide/`
 

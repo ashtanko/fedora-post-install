@@ -218,7 +218,8 @@ exec "$@"
 EOF
     chmod +x "$fakebin/swapon" "$fakebin/sudo"
     HOME="$TEST_ROOT/swap/home" PATH="$fakebin:$PATH" SWAP_FILE="$swapfile" FSTAB_FILE="$fstab" \
-        SWAPON_CALLS="$calls" /bin/bash "$REPO_ROOT/essentials/swap.sh" >/dev/null
+        SWAPON_CALLS="$calls" ENABLE_DISK_SWAP=yes \
+        /bin/bash "$REPO_ROOT/essentials/swap.sh" >/dev/null
     grep -qF "$swapfile" "$calls" || fail "existing inactive swap was not enabled"
     grep -qF "$swapfile none swap sw 0 0" "$fstab" || fail "existing inactive swap was not persisted"
     pass "existing inactive swap reaches persistence logic"

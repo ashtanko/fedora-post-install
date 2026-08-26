@@ -41,14 +41,16 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `DOCKER_PRUNE_VOLUMES` | [tools/docker-maintenance.sh](../tools/docker-maintenance.sh) | `no` | Opt-in: `yes` deletes unused volumes, which may hold real data |
 | `DOCKER_PRUNE_UNTIL` | [tools/docker-maintenance.sh](../tools/docker-maintenance.sh) | `168h` | Age cutoff for containers, networks, images, and build cache |
 | `SETUP_LOG_FILE` | [setup.sh](../setup.sh) | `$HOME/fedora-setup.log` | Where the master installer appends timestamped output |
-| `SWAP_SIZE_GB` | [essentials/swap.sh](../essentials/swap.sh) | `4` | Skipped if any swap is already active |
+| `ENABLE_DISK_SWAP` | [essentials/swap.sh](../essentials/swap.sh) | `no` | Opt in to a disk swap file; Fedora's active zram remains preferred |
+| `SWAP_SIZE_GB` | [essentials/swap.sh](../essentials/swap.sh) | `4` | Disk swap size; used only when `ENABLE_DISK_SWAP=yes` and no swap is active |
 | `SWAP_FILE` / `FSTAB_FILE` | [essentials/swap.sh](../essentials/swap.sh) | `/swapfile` / `/etc/fstab` | Overrideable paths also support isolated regression testing |
-| `ENABLE_UFW` | [essentials/firewall.sh](../essentials/firewall.sh) | `yes` | Set `no` to skip firewall configuration |
-| `ENABLE_AUTO_UPDATES` | [essentials/auto-updates.sh](../essentials/auto-updates.sh) | `yes` | Set `no` to skip unattended-upgrades |
+| `ENABLE_FIREWALL` | [essentials/firewall.sh](../essentials/firewall.sh) | `yes` | Set `no` to skip firewalld configuration |
+| `FIREWALL_ZONE` | [essentials/firewall.sh](../essentials/firewall.sh) | firewalld default | Zone where the SSH service is allowed |
+| `ENABLE_AUTO_UPDATES` | [essentials/auto-updates.sh](../essentials/auto-updates.sh) | `yes` | Set `no` to skip the DNF automatic security-update timer |
 | `ENABLE_FAIL2BAN` | [essentials/fail2ban.sh](../essentials/fail2ban.sh) | `yes` | Set `no` to skip SSH brute-force protection |
 | `FAIL2BAN_BANTIME` / `FAIL2BAN_FINDTIME` / `FAIL2BAN_MAXRETRY` | [essentials/fail2ban.sh](../essentials/fail2ban.sh) | `1h` / `10m` / `5` | sshd jail thresholds; bantime/findtime use systemd-style durations |
 | `TZ` | [essentials/locale-timezone.sh](../essentials/locale-timezone.sh) | auto-detect | Falls back to ipapi.co when empty |
-| `LOCALE` | [essentials/locale-timezone.sh](../essentials/locale-timezone.sh) | `en_US.UTF-8` | Generated and set as system default |
+| `LOCALE` | [essentials/locale-timezone.sh](../essentials/locale-timezone.sh) | `en_US.UTF-8` | Its Fedora `glibc-langpack-*` is installed and it is set as system default |
 | `JOURNAL_MAX_USE` | [essentials/journald.sh](../essentials/journald.sh) | `200M` | systemd disk-size syntax: `200M`, `1G`, `10%` |
 | `INOTIFY_MAX_WATCHES` | [essentials/sysctl-limits.sh](../essentials/sysctl-limits.sh) | `524288` | `fs.inotify.max_user_watches` |
 | `INOTIFY_MAX_INSTANCES` | [essentials/sysctl-limits.sh](../essentials/sysctl-limits.sh) | `1024` | `fs.inotify.max_user_instances` |

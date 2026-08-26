@@ -109,7 +109,7 @@ Browse [docs/SCRIPTS.md](docs/SCRIPTS.md) for the complete inventory. Categories
 
 | Folder | Purpose |
 |---|---|
-| [essentials/](essentials/) | OS bootstrap: swap, UFW firewall, fail2ban, Lynis audit, auto-updates, locale/TZ, GNOME tweaks, journal size cap, fstrim, motd-news, inotify/nofile limits, system info |
+| [essentials/](essentials/) | OS bootstrap: zram-aware optional disk swap, firewalld, fail2ban, Lynis audit, DNF auto-updates, locale/TZ, GNOME tweaks, journal size cap, fstrim, inotify/nofile limits, system info |
 | [system/](system/) | Foundations: apt upgrade + build tools, hostname, user groups, NTP, DNS, sudo timeout, keyboard remap (keyd), GPG key, SSH key |
 | [apps/](apps/) | GUI apps + CLIs: Chrome, Guake, Warp, VS Code, Postman, Bitwarden CLI, Flameshot |
 | [dev/](dev/) | Runtimes + cloud: Java, Docker (rootful + rootless), Podman, Flutter, Node (NVM), Deno, Bun, Python (pyenv), Rust, Go, .NET, Ruby (rbenv), PHP, C/C++, AWS/GCP/Azure CLIs, Kubernetes, Terraform, databases |
@@ -128,7 +128,8 @@ Scripts load configuration through `lib/config.bash`; every variable is optional
 | Variable | Purpose |
 |---|---|
 | `GIT_NAME`, `GIT_EMAIL` | Identity for git config, GPG key, SSH key (interactive prompt if unset) |
-| `SWAP_SIZE_GB` | Swap file size in GB (default `4`) |
+| `ENABLE_DISK_SWAP` | `yes`/`no` — opt in to disk swap in addition to Fedora's default zram |
+| `SWAP_SIZE_GB` | Optional disk swap file size in GB (default `4`) |
 | `INSTALL_OH_MY_ZSH` | `yes`/`no` — toggle Oh My Zsh in `tools/zsh.sh` |
 | `INSTALL_FISHER` | `yes`/`no` — toggle Fisher in `tools/fish.sh` |
 | `SET_FISH_AS_DEFAULT` | `yes`/`no` — make Fish the login shell |
@@ -185,7 +186,7 @@ Full testing guide: [docs/TESTING.md](docs/TESTING.md).
 | [docs/TESTING.md](docs/TESTING.md) | Docker test harness, manifest format, CI workflows |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Adding a new script: shape, manifest row, local checks, CI gates |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures and recovery steps |
-| [docs/SECURITY.md](docs/SECURITY.md) | Trade-offs the scripts make: UFW defaults, GPG passphrase, rc-file edits, telemetry |
+| [docs/SECURITY.md](docs/SECURITY.md) | Trade-offs the scripts make: firewalld policy, GPG passphrase, rc-file edits, telemetry |
 
 ## Conventions
 

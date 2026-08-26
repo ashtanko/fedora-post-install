@@ -14,17 +14,16 @@
 
 SCRIPTS=(
   # essentials/
-  "essentials/auto-updates.sh|no|||systemctl enable unattended-upgrades fails without systemd"
-  "essentials/firewall.sh|no|||UFW needs kernel netfilter; rules don't apply inside a container"
+  "essentials/auto-updates.sh|no|||the DNF automatic timer needs systemd as PID 1"
+  "essentials/firewall.sh|no|||firewalld needs systemd and kernel netfilter; rules don't apply inside a container"
   "essentials/fstrim.sh|no|||no systemd in a plain container to manage fstrim.timer; ROTA detection works but has nothing to enable"
   "essentials/gnome-settings.sh|no|||requires active GNOME session (gsettings/dbus)"
   "essentials/journald.sh|no|||no systemd-journald in a plain container; the drop-in would never take effect"
-  "essentials/locale-timezone.sh|partial|TZ=Etc/UTC,LOCALE=en_US.UTF-8|[[ \$(locale -a) == *en_US.utf8* ]]|timedatectl needs systemd; locale-gen part works"
-  "essentials/motd-news.sh|no|||/etc/default/motd-news and motd-news.timer aren't present in the minimal container base image"
+  "essentials/locale-timezone.sh|partial|TZ=Etc/UTC,LOCALE=en_US.UTF-8|[[ \$(locale -a) == *en_US.utf8* ]]|timedatectl needs systemd; the Fedora language-pack path still runs"
   "essentials/swap.sh|no|||needs real block device + /etc/fstab persistence"
   "essentials/sysctl-limits.sh|partial||grep -q 'fs.inotify.max_user_watches=524288' /etc/sysctl.d/99-fpi-inotify.conf \&\& grep -q 'soft nofile 1048576' /etc/security/limits.d/99-fpi-nofile.conf|/proc/sys is read-only in an unprivileged container; sysctl -p no-ops but the drop-in files still land and are verified|/etc/sysctl.d/99-fpi-inotify.conf,/etc/security/limits.d/99-fpi-nofile.conf"
   "essentials/system-info.sh|yes||ls \$HOME/system-info-*.log >/dev/null|"
-  "essentials/fail2ban.sh|partial||grep -q 'maxretry = 5' /etc/fail2ban/jail.d/99-fpi-sshd.local|no systemd to start the fail2ban service; the jail.d drop-in still lands and is verified|/etc/fail2ban/jail.d/99-fpi-sshd.local"
+  "essentials/fail2ban.sh|partial||grep -q 'backend  = systemd' /etc/fail2ban/jail.d/99-fpi-sshd.local \&\& grep -q 'maxretry = 5' /etc/fail2ban/jail.d/99-fpi-sshd.local|no systemd to start the fail2ban service; the Fedora jail.d drop-in still lands and is verified|/etc/fail2ban/jail.d/99-fpi-sshd.local"
   "essentials/lynis.sh|yes||ls \$HOME/lynis-audit-*.log >/dev/null|"
 
   # system/

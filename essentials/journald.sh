@@ -43,6 +43,9 @@ if [ -f "$DROPIN_FILE" ] && printf '%s\n' "$DESIRED_CONFIG" | sudo cmp -s - "$DR
 else
     echo "🔧 Writing $DROPIN_FILE (SystemMaxUse=$JOURNAL_MAX_USE)..."
     printf '%s\n' "$DESIRED_CONFIG" | sudo tee "$DROPIN_FILE" >/dev/null
+    if command -v restorecon &>/dev/null; then
+        sudo restorecon "$DROPIN_FILE"
+    fi
 
     echo "🔄 Restarting systemd-journald..."
     sudo systemctl restart systemd-journald

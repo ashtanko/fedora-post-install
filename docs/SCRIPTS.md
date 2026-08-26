@@ -8,17 +8,16 @@ OS bootstrap — run these first on a fresh install.
 
 | Script | Purpose |
 |---|---|
-| [swap.sh](../essentials/swap.sh) | Create swap file if none active (size from `$SWAP_SIZE_GB`, default 4G); persists in `/etc/fstab` |
-| [firewall.sh](../essentials/firewall.sh) | UFW with safe defaults (deny in / allow out / limit OpenSSH); set `ENABLE_UFW=no` to skip |
-| [auto-updates.sh](../essentials/auto-updates.sh) | unattended-upgrades + 20auto-upgrades for daily security patches; set `ENABLE_AUTO_UPDATES=no` to skip |
-| [locale-timezone.sh](../essentials/locale-timezone.sh) | Sets timezone (from `$TZ` or auto-detected via ipapi.co) and generates `$LOCALE` (default `en_US.UTF-8`) |
+| [swap.sh](../essentials/swap.sh) | Respects Fedora's active zram swap; optionally creates a Btrfs-safe disk swap file when `ENABLE_DISK_SWAP=yes` |
+| [firewall.sh](../essentials/firewall.sh) | Enables firewalld and allows its SSH service in the existing/default zone; set `ENABLE_FIREWALL=no` to skip |
+| [auto-updates.sh](../essentials/auto-updates.sh) | Enables automatic DNF security updates through the DNF5 or DNF4 timer; set `ENABLE_AUTO_UPDATES=no` to skip |
+| [locale-timezone.sh](../essentials/locale-timezone.sh) | Sets timezone (from `$TZ` or ipapi.co) and installs the Fedora language pack for `$LOCALE` (default `en_US.UTF-8`) |
 | [gnome-settings.sh](../essentials/gnome-settings.sh) | Idempotent gsettings: night light, tap-to-click, fixed workspaces, hidden files, etc. Skips if not GNOME |
 | [journald.sh](../essentials/journald.sh) | Caps the systemd journal to `$JOURNAL_MAX_USE` (default `200M`) via a journald.conf.d drop-in |
 | [fstrim.sh](../essentials/fstrim.sh) | Enables `fstrim.timer` for periodic SSD/NVMe TRIM; skips on rotational-only disks |
-| [motd-news.sh](../essentials/motd-news.sh) | Disables Ubuntu's `motd-news` ESM/livepatch login-banner ads (config file + systemd timer) |
 | [sysctl-limits.sh](../essentials/sysctl-limits.sh) | Raises inotify watch/instance limits and the open-file (`nofile`) limit for IDEs, docker, and bundlers |
 | [system-info.sh](../essentials/system-info.sh) | One-shot dump of CPU/RAM/GPU/disk/distro to `~/system-info-<ts>.log` |
-| [fail2ban.sh](../essentials/fail2ban.sh) | SSH brute-force protection via a `jail.d` drop-in; set `ENABLE_FAIL2BAN=no` to skip |
+| [fail2ban.sh](../essentials/fail2ban.sh) | SSH protection using Fedora's fail2ban/firewalld integration and systemd journal backend; set `ENABLE_FAIL2BAN=no` to skip |
 | [lynis.sh](../essentials/lynis.sh) | One-shot Lynis security audit dumped to `~/lynis-audit-<ts>.log` |
 
 ## system/

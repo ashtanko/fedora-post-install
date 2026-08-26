@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Configuring fail2ban (SSH brute-force protection)..."
@@ -19,13 +22,8 @@ if [[ "${ENABLE_FAIL2BAN:-yes}" == "no" ]]; then
     exit 0
 fi
 
-if command -v fail2ban-client &>/dev/null; then
-    echo "✅ fail2ban already installed ($(fail2ban-client --version 2>/dev/null | head -1))"
-else
-    echo "📦 Installing fail2ban..."
-    sudo apt-get update
-    sudo apt-get install -y fail2ban
-fi
+echo "📦 Ensuring fail2ban and its firewalld integration are installed..."
+dnf_install fail2ban fail2ban-firewalld
 
 # .local files are read after jail.conf and jail.d/*.conf, so this overrides
 # the shipped defaults without editing (and losing on package upgrade) the
@@ -40,6 +38,7 @@ MAXRETRY="${FAIL2BAN_MAXRETRY:-5}"
 DESIRED_CONFIG="[sshd]
 enabled  = true
 port     = ssh
+backend  = systemd
 maxretry = $MAXRETRY
 findtime = $FINDTIME
 bantime  = $BANTIME"
@@ -51,6 +50,9 @@ if [ -f "$DROPIN_FILE" ] && printf '%s\n' "$DESIRED_CONFIG" | sudo cmp -s - "$DR
 else
     echo "🔧 Writing $DROPIN_FILE..."
     printf '%s\n' "$DESIRED_CONFIG" | sudo tee "$DROPIN_FILE" >/dev/null
+    if command -v restorecon &>/dev/null; then
+        sudo restorecon "$DROPIN_FILE"
+    fi
     echo "✅ sshd jail configured (maxretry=$MAXRETRY, findtime=$FINDTIME, bantime=$BANTIME)"
 fi
 

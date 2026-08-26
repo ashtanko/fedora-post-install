@@ -41,17 +41,16 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### essentials/
 | Script | Purpose |
 |---|---|
-| `swap.sh` | Create swap file if none active (size from `$SWAP_SIZE_GB`, default 4G); persists in `/etc/fstab` |
-| `firewall.sh` | UFW with safe defaults (deny in / allow out / limit OpenSSH); set `ENABLE_UFW=no` to skip |
-| `auto-updates.sh` | unattended-upgrades + 20auto-upgrades for daily security patches; set `ENABLE_AUTO_UPDATES=no` to skip |
-| `locale-timezone.sh` | Sets timezone (from `$TZ` or auto-detected via ipapi.co) and generates `$LOCALE` (default `en_US.UTF-8`) |
+| `swap.sh` | Respects Fedora's active zram; creates a Btrfs-safe disk swap file only when `ENABLE_DISK_SWAP=yes` |
+| `firewall.sh` | Enables firewalld and permits its SSH service in the selected zone; set `ENABLE_FIREWALL=no` to skip |
+| `auto-updates.sh` | DNF5/DNF4 automatic security updates and timer; set `ENABLE_AUTO_UPDATES=no` to skip |
+| `locale-timezone.sh` | Sets timezone (from `$TZ` or ipapi.co) and installs the Fedora language pack for `$LOCALE` |
 | `gnome-settings.sh` | Idempotent gsettings: night light, tap-to-click, fixed workspaces, hidden files, etc. Skips if not GNOME |
 | `journald.sh` | Caps the systemd journal to `$JOURNAL_MAX_USE` (default `200M`) via a journald.conf.d drop-in |
 | `fstrim.sh` | Enables `fstrim.timer` for periodic SSD/NVMe TRIM; skips on rotational-only disks |
-| `motd-news.sh` | Disables Ubuntu's `motd-news` ESM/livepatch login-banner ads (config file + systemd timer) |
 | `sysctl-limits.sh` | Raises inotify watch/instance limits and the open-file (`nofile`) limit for IDEs, docker, and bundlers |
 | `system-info.sh` | One-shot dump of CPU/RAM/GPU/disk/distro to `~/system-info-<ts>.log` |
-| `fail2ban.sh` | SSH brute-force protection via a `jail.d` drop-in; set `ENABLE_FAIL2BAN=no` to skip |
+| `fail2ban.sh` | Fedora fail2ban/firewalld SSH protection with a systemd journal backend; set `ENABLE_FAIL2BAN=no` to skip |
 | `lynis.sh` | One-shot Lynis security audit dumped to `~/lynis-audit-<ts>.log` |
 
 ### system/
@@ -248,9 +247,11 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `DOCKER_PRUNE_VOLUMES` | tools/docker-maintenance.sh | `no` |
 | `DOCKER_PRUNE_UNTIL` | tools/docker-maintenance.sh | `168h` |
 | `SETUP_LOG_FILE` | setup.sh | `$HOME/fedora-setup.log` |
+| `ENABLE_DISK_SWAP` | essentials/swap.sh | `no` |
 | `SWAP_SIZE_GB` | essentials/swap.sh | `4` |
 | `SWAP_FILE` / `FSTAB_FILE` | essentials/swap.sh | `/swapfile` / `/etc/fstab` |
-| `ENABLE_UFW` | essentials/firewall.sh | `yes` |
+| `ENABLE_FIREWALL` | essentials/firewall.sh | `yes` |
+| `FIREWALL_ZONE` | essentials/firewall.sh | firewalld default |
 | `ENABLE_AUTO_UPDATES` | essentials/auto-updates.sh | `yes` |
 | `ENABLE_FAIL2BAN` | essentials/fail2ban.sh | `yes` |
 | `FAIL2BAN_BANTIME` | essentials/fail2ban.sh | `1h` |

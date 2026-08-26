@@ -8,16 +8,18 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Enabling periodic SSD/NVMe TRIM..."
 
 if ! command -v fstrim &>/dev/null; then
     echo "📦 Installing util-linux (provides fstrim)..."
-    sudo apt update
-    sudo apt install -y util-linux
+    dnf_install util-linux
 fi
 
 # fstrim.timer runs `fstrim --all`, which already skips filesystems that

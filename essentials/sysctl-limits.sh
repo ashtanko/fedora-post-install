@@ -14,7 +14,7 @@ load_config "$REPO_ROOT"
 
 echo "🚀 Raising inotify watch and open-file limits..."
 
-# Ubuntu's stock limits are tuned for a generic server, not a box running an
+# Fedora's stock limits are tuned for general workloads, not a box running an
 # IDE, docker, and a bundler all watching large repos at once — that's what
 # throws ENOSPC from `inotify_add_watch` or "too many open files".
 INOTIFY_MAX_WATCHES="${INOTIFY_MAX_WATCHES:-524288}"
@@ -38,6 +38,9 @@ if [ -f "$SYSCTL_FILE" ] && printf '%s\n' "$DESIRED_SYSCTL" | sudo cmp -s - "$SY
 else
     echo "🔧 Writing $SYSCTL_FILE..."
     printf '%s\n' "$DESIRED_SYSCTL" | sudo tee "$SYSCTL_FILE" >/dev/null
+    if command -v restorecon &>/dev/null; then
+        sudo restorecon "$SYSCTL_FILE"
+    fi
     sudo sysctl -p "$SYSCTL_FILE" >/dev/null
     echo "✅ inotify limits applied (watches=$INOTIFY_MAX_WATCHES, instances=$INOTIFY_MAX_INSTANCES)"
 fi
@@ -52,6 +55,9 @@ if [ -f "$LIMITS_FILE" ] && printf '%s\n' "$DESIRED_LIMITS" | sudo cmp -s - "$LI
 else
     echo "🔧 Writing $LIMITS_FILE..."
     printf '%s\n' "$DESIRED_LIMITS" | sudo tee "$LIMITS_FILE" >/dev/null
+    if command -v restorecon &>/dev/null; then
+        sudo restorecon "$LIMITS_FILE"
+    fi
     echo "✅ Open-file limit set to $NOFILE_LIMIT"
 fi
 

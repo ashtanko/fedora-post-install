@@ -118,4 +118,4 @@ That item already has a marker. Either:
 
 1. Tail the log: `tail -200 ~/fedora-setup.log`.
 2. Run the failing script standalone and watch the live output.
-3. Check the matching test in [tests/manifest.sh](../tests/manifest.sh) — the `compat` column flags scripts that aren't expected to work in certain environments (e.g. UFW / GNOME / systemd inside a container).
+3. Check the matching test in [tests/manifest.sh](../tests/manifest.sh) — the `compat` column flags scripts that aren't expected to work in certain environments (e.g. firewalld / GNOME / systemd inside a container).
