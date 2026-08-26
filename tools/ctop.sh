@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
@@ -22,8 +25,10 @@ if command -v ctop &>/dev/null; then
     exit 0
 fi
 
-# ctop's release assets use the Debian arch names, so no translation table.
-ARCH=$(dpkg --print-architecture)
+dnf_install curl
+
+# ctop's release assets use amd64/arm64 rather than RPM architecture names.
+ARCH=$(release_arch)
 case "$ARCH" in
     amd64|arm64) ;;
     *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
@@ -40,7 +45,8 @@ CTOP_BASE="https://github.com/bcicen/ctop/releases/download/${CTOP_VERSION}"
 echo "📦 Downloading ctop $CTOP_VERSION..."
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP/ctop" "${CTOP_BASE}/${CTOP_ASSET}"
+curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+    -o "$TMP/ctop" "${CTOP_BASE}/${CTOP_ASSET}"
 
 echo "🔒 Verifying checksum..."
 CTOP_CHECKSUMS="$TMP/sha256sums.txt"

@@ -89,28 +89,28 @@ Shell, CLI, and dev helpers.
 | [starship.sh](../tools/starship.sh) | Starship cross-shell prompt, initialized for installed Bash, Zsh, and Fish shells |
 | [cli-tools.sh](../tools/cli-tools.sh) | bat, fzf, ripgrep, eza, jq, htop, tmux, tree, gh (GitHub CLI) |
 | [modern-cli.sh](../tools/modern-cli.sh) | lazygit, delta, zoxide, btop, direnv, fd, dust, hyperfine, tldr (tealdeer) |
-| [btop.sh](../tools/btop.sh) | btop — modern resource/process monitor (apt) |
+| [btop.sh](../tools/btop.sh) | btop — modern resource/process monitor from Fedora's repositories |
 | [fonts.sh](../tools/fonts.sh) | JetBrains Mono, Fira Code, Hack — all Nerd Font variants |
 | [git-config.sh](../tools/git-config.sh) | Opinionated git defaults (rebase pull, autosetup, aliases, global gitignore, optional GPG signing) |
-| [pre-commit-setup.sh](../tools/pre-commit-setup.sh) | pre-commit framework via pipx + git template hook + starter `.pre-commit-config.yaml` |
+| [pre-commit-setup.sh](../tools/pre-commit-setup.sh) | Fedora's pre-commit package + git template hook + starter `.pre-commit-config.yaml` |
 | [backup-home.sh](../tools/backup-home.sh) | Tar (optionally GPG-encrypted) backup of SSH/GPG/AWS/.config to `$BACKUP_DIR` |
-| [system-maintenance.sh](../tools/system-maintenance.sh) | apt autoremove/clean, journal vacuum, docker/snap/flatpak prune, user-cache trim |
-| [wireshark.sh](../tools/wireshark.sh) | Wireshark + tshark; preseeds non-root packet capture via the `wireshark` group |
-| [dotfiles.sh](../tools/dotfiles.sh) | chezmoi dotfiles manager; optionally clones `$DOTFILES_REPO` (never auto-applies) |
-| [rclone.sh](../tools/rclone.sh) | rclone cloud storage sync — pairs with `backup-home.sh` for offsite copies |
+| [system-maintenance.sh](../tools/system-maintenance.sh) | DNF autoremove/cache cleanup, journal vacuum, Docker/Flatpak prune, user-cache trim |
+| [wireshark.sh](../tools/wireshark.sh) | Fedora Wireshark GUI/CLI packages; configures non-root capture through the `wireshark` group and `dumpcap` capabilities |
+| [dotfiles.sh](../tools/dotfiles.sh) | Fedora's chezmoi dotfiles manager; optionally clones `$DOTFILES_REPO` (never auto-applies) |
+| [rclone.sh](../tools/rclone.sh) | Fedora's rclone cloud storage sync package — pairs with `backup-home.sh` for offsite copies |
 | [lazydocker.sh](../tools/lazydocker.sh) | lazydocker terminal UI for Docker (GitHub release, checksum-verified) |
 | [ctop.sh](../tools/ctop.sh) | ctop — live per-container CPU/memory/net/IO metrics (GitHub release, checksum-verified) |
-| [dive.sh](../tools/dive.sh) | dive — explore a Docker image layer by layer and find wasted space (GitHub release `.deb`, checksum-verified) |
-| [hadolint.sh](../tools/hadolint.sh) | hadolint Dockerfile linter (GitHub release; upstream publishes no digest, so the download is ELF-checked) |
-| [trivy.sh](../tools/trivy.sh) | Trivy — image, filesystem, and IaC vulnerability scanner via its official signed apt repo (release-independent `generic` suite) |
+| [dive.sh](../tools/dive.sh) | dive — explore Docker image layers (official GitHub release RPM, checksum-verified) |
+| [hadolint.sh](../tools/hadolint.sh) | Fedora's hadolint Dockerfile linter package |
+| [trivy.sh](../tools/trivy.sh) | Trivy — image, filesystem, and IaC vulnerability scanner via Aqua's signed RPM repository |
 | [docker-maintenance.sh](../tools/docker-maintenance.sh) | Docker-only disk reclaim: prunes containers, networks, images, and build cache with before/after `docker system df`; volumes are opt-in |
 | [tmux-config.sh](../tools/tmux-config.sh) | TPM plugin manager + starter `~/.tmux.conf` (written only if absent); prefix rebound to `Ctrl-a` |
-| [restic.sh](../tools/restic.sh) | restic — deduplicated, encrypted, incremental backups; speaks rclone remotes natively |
+| [restic.sh](../tools/restic.sh) | Fedora's restic package — deduplicated, encrypted incremental backups with native rclone backend support |
 | [network-tools.sh](../tools/network-tools.sh) | mtr, nmap, dig, ss, lsof, nc, iperf3, HTTPie, whois |
-| [gitleaks.sh](../tools/gitleaks.sh) | Standalone gitleaks secret scanner (also wired as a pre-commit hook by `pre-commit-setup.sh`) |
-| [yq.sh](../tools/yq.sh) | yq — the YAML counterpart to `jq` (checksum-verified from yq's hash matrix) |
-| [just.sh](../tools/just.sh) | `just` command runner (GitHub release, checksum-verified) |
-| [atuin.sh](../tools/atuin.sh) | Atuin searchable shell history, wired into Bash, Zsh, and Fish; sync is opt-in |
+| [gitleaks.sh](../tools/gitleaks.sh) | Fedora's gitleaks secret scanner package (also wired as a pre-commit hook by `pre-commit-setup.sh`) |
+| [yq.sh](../tools/yq.sh) | Fedora's yq package — the YAML counterpart to `jq` |
+| [just.sh](../tools/just.sh) | Fedora's `just` command-runner package |
+| [atuin.sh](../tools/atuin.sh) | Checksum-verified current Atuin release, wired into Bash, Zsh, and Fish; sync is opt-in |
 
 ## ide/
 
@@ -164,10 +164,9 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-all.sh](../updates/update-all.sh) | Run every supported updater, continue after individual failures, and return a combined result |
 | [update-android-studio.sh](../updates/update-android-studio.sh) | Refresh the installed Android Studio snap |
 | [update-antigravity.sh](../updates/update-antigravity.sh) | Upgrade the Antigravity package from Google's configured APT repository |
-| [update-atuin.sh](../updates/update-atuin.sh) | Update an Atuin installation through its native updater |
+| [update-atuin.sh](../updates/update-atuin.sh) | Install the checksum-verified latest Atuin release asset |
 | [update-aws-cli.sh](../updates/update-aws-cli.sh) | Verify AWS's detached signature, then update the repository-managed AWS CLI v2 installation |
 | [update-bun.sh](../updates/update-bun.sh) | Upgrade the Bun binary installed under `$BUN_INSTALL` |
-| [update-chezmoi.sh](../updates/update-chezmoi.sh) | Update the repository-managed chezmoi binary |
 | [update-claude.sh](../updates/update-claude.sh) | Upgrade Claude Code from Anthropic's configured APT channel, or from npm when the active executable is npm-owned |
 | [update-cline.sh](../updates/update-cline.sh) | Update the active global npm installation of Cline CLI |
 | [update-codex.sh](../updates/update-codex.sh) | Run native `codex update` for the standalone CLI installed by this project |
@@ -175,16 +174,14 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-ctop.sh](../updates/update-ctop.sh) | Atomically install the checksum-verified latest ctop release |
 | [update-cursor-agent.sh](../updates/update-cursor-agent.sh) | Update the repository-managed Cursor Agent CLI |
 | [update-deno.sh](../updates/update-deno.sh) | Upgrade the Deno binary installed under `$DENO_INSTALL` |
-| [update-dive.sh](../updates/update-dive.sh) | Install the checksum-verified latest dive release package |
+| [update-dive.sh](../updates/update-dive.sh) | Install the checksum-verified latest official dive RPM release |
 | [update-fisher.sh](../updates/update-fisher.sh) | Update Fisher and its managed Fish plugins |
 | [update-flutter.sh](../updates/update-flutter.sh) | Upgrade Flutter on its current release channel |
 | [update-gemini.sh](../updates/update-gemini.sh) | Install the latest stable Gemini CLI into its existing global npm prefix |
-| [update-gitleaks.sh](../updates/update-gitleaks.sh) | Atomically install the checksum-verified latest gitleaks release |
 | [update-github-copilot.sh](../updates/update-github-copilot.sh) | Update the repository-managed GitHub Copilot CLI |
 | [update-go.sh](../updates/update-go.sh) | Safely replace the managed SDK with the checksum-verified latest stable Go release |
 | [update-goose.sh](../updates/update-goose.sh) | Update the repository-managed goose CLI |
 | [update-huggingface-cli.sh](../updates/update-huggingface-cli.sh) | Update the repository-managed Hugging Face CLI |
-| [update-just.sh](../updates/update-just.sh) | Install the checksum-verified latest just release |
 | [update-lazydocker.sh](../updates/update-lazydocker.sh) | Install the checksum-verified latest lazydocker release |
 | [update-llama-cpp.sh](../updates/update-llama-cpp.sh) | Fast-forward a clean llama.cpp checkout and rebuild its existing CMake configuration |
 | [update-mcp-inspector.sh](../updates/update-mcp-inspector.sh) | Update the npm-owned MCP Inspector installation |
@@ -193,19 +190,16 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-nvim.sh](../updates/update-nvim.sh) | Replace the managed Neovim installation only when an official or configured digest is available |
 | [update-oh-my-zsh.sh](../updates/update-oh-my-zsh.sh) | Run Oh My Zsh's automation-safe upgrade script |
 | [update-opencode.sh](../updates/update-opencode.sh) | Update the curl-installed opencode CLI through its native updater |
-| [update-pipx-tools.sh](../updates/update-pipx-tools.sh) | Upgrade installed Poetry, pre-commit, database CLIs, LLM, and LiteLLM pipx applications |
+| [update-pipx-tools.sh](../updates/update-pipx-tools.sh) | Upgrade installed Poetry, database CLIs, LLM, and LiteLLM pipx applications |
 | [update-pyenv.sh](../updates/update-pyenv.sh) | Fast-forward the clean pyenv checkout |
 | [update-rbenv.sh](../updates/update-rbenv.sh) | Fast-forward the clean rbenv and ruby-build checkouts |
-| [update-rclone.sh](../updates/update-rclone.sh) | Self-update the standalone rclone binary installed by this project |
-| [update-restic.sh](../updates/update-restic.sh) | Self-update the standalone restic binary installed by this project |
 | [update-rust.sh](../updates/update-rust.sh) | Update rustup and installed Rust toolchains |
 | [update-starship.sh](../updates/update-starship.sh) | Atomically install the checksum-verified latest Starship release asset |
 | [update-tpm.sh](../updates/update-tpm.sh) | Fast-forward the clean TPM checkout |
 | [update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | Update extensions through the RPM-owned VS Code CLI |
 | [update-vscode.sh](../updates/update-vscode.sh) | Upgrade the Microsoft `code` RPM with a targeted DNF transaction |
-| [update-yq.sh](../updates/update-yq.sh) | Install the checksum-verified latest yq release |
 
-The updater set intentionally excludes ordinary APT-managed packages, applications with their own automatic updater, and tools without a documented, ownership-compatible, verifiable scriptable update path. [`updates/skipped.txt`](../updates/skipped.txt) records the audited reason for every catalogued installer without an updater. Individual updaters skip absent or differently managed installations. Source-checkout updaters refuse dirty working trees rather than overwrite local changes.
+The updater set intentionally excludes ordinary DNF-managed packages, applications with their own automatic updater, and tools without a documented, ownership-compatible, verifiable scriptable update path. [`updates/skipped.txt`](../updates/skipped.txt) records the audited reason for every catalogued installer without an updater. Individual updaters skip absent or differently managed installations. Source-checkout updaters refuse dirty working trees rather than overwrite local changes.
 
 ## software/
 

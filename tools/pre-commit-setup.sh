@@ -11,23 +11,19 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing pre-commit framework..."
 
-# pre-commit installs cleanly via pipx; fall back to pip --user if pipx absent
 if command -v pre-commit &>/dev/null; then
     echo "✅ pre-commit already installed ($(pre-commit --version))"
 else
-    if command -v pipx &>/dev/null; then
-        echo "📦 Installing pre-commit via pipx..."
-        pipx install pre-commit
-    else
-        echo "📦 pipx not found — installing via apt..."
-        sudo apt update
-        sudo apt install -y pipx
-        pipx ensurepath >/dev/null 2>&1 || true
-        pipx install pre-commit
-    fi
+    echo "📦 Installing pre-commit from Fedora..."
+    dnf_install pre-commit
+    command -v pre-commit &>/dev/null \
+        || { echo "❌ pre-commit installation failed or is not in PATH"; exit 1; }
 fi
 
 # Enable pre-commit for any new repo by default — git looks at this template

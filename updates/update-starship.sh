@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
@@ -25,11 +28,11 @@ if [ -L "$STARSHIP_BIN" ] || [ ! -f "$STARSHIP_BIN" ] || [ ! -O "$STARSHIP_BIN" 
     exit 0
 fi
 
-case "$(uname -m)" in
+case "$(rpm_arch)" in
     x86_64) STARSHIP_ARCH="x86_64" ;;
     aarch64) STARSHIP_ARCH="aarch64" ;;
     *)
-        echo "❌ Unsupported Starship architecture: $(uname -m)" >&2
+        echo "❌ Unsupported Starship architecture" >&2
         exit 1
         ;;
 esac

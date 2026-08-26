@@ -11,64 +11,29 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing modern CLI productivity extras..."
 
-ARCH=$(dpkg --print-architecture)
+ARCH=$(release_arch)
 case "$ARCH" in
-    amd64) RUST_ARCH="x86_64"; LAZYGIT_ARCH="x86_64" ;;
-    arm64) RUST_ARCH="aarch64"; LAZYGIT_ARCH="arm64" ;;
+    amd64) LAZYGIT_ARCH="x86_64" ;;
+    arm64) LAZYGIT_ARCH="arm64" ;;
     *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
 BIN_DIR="/usr/local/bin"
-USER_BIN="$HOME/.local/bin"
-mkdir -p "$USER_BIN"
-
-install_if_missing() {
-    local cmd="$1"
-    local pkg="$2"
-    if command -v "$cmd" &>/dev/null; then
-        echo "✅ $cmd already installed"
-    else
-        echo "📦 Installing $pkg..."
-        sudo apt-get install -y "$pkg"
-    fi
-}
-
-sudo apt-get update
-
-# --- apt-supplied packages ---
-install_if_missing btop      btop
-install_if_missing direnv    direnv
-install_if_missing hyperfine hyperfine
-
-# delta (git pager) — apt name is `git-delta` on 24.04+; fall back to GitHub release
-if command -v delta &>/dev/null; then
-    echo "✅ delta already installed"
-elif apt-cache show git-delta &>/dev/null; then
-    echo "📦 Installing delta from apt (git-delta)..."
-    sudo apt-get install -y git-delta
-else
-    echo "🔍 Resolving latest delta release (apt package unavailable)..."
-    DELTA_VERSION=$(latest_github_tag dandavison/delta)
-    DELTA_URL="https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta-musl_${DELTA_VERSION}_${ARCH}.deb"
-    DEB=$(mktemp --suffix=.deb)
-    trap 'rm -f "$DEB"' EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$DEB" "$DELTA_URL"
-    sudo apt-get install -y "$DEB"
-    echo "✅ delta installed"
-fi
-
-# fd-find — binary ships as `fdfind`; symlink so `fd` works
-install_if_missing fdfind fd-find
-if [ ! -e "$USER_BIN/fd" ] && command -v fdfind &>/dev/null; then
-    ln -s "$(command -v fdfind)" "$USER_BIN/fd"
-    echo "✅ Symlinked fd → fdfind"
-fi
+# Fedora carries these tools in its own repositories and exposes the intended
+# binaries (`delta`, `fd`, `zoxide`, `dust`, and `tldr`) without compatibility
+# symlinks. lazygit remains a verified upstream release because Fedora does not
+# currently package it.
+dnf_install btop direnv hyperfine git-delta fd-find zoxide du-dust tealdeer \
+    curl tar
 
 # --- lazygit (GitHub release) ---
 if command -v lazygit &>/dev/null; then
@@ -82,7 +47,8 @@ else
     echo "📦 Downloading lazygit $LG_VERSION..."
     TMP=$(mktemp -d)
     trap 'rm -rf "$TMP"' EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP/lazygit.tar.gz" "$LG_URL"
+    curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+        -o "$TMP/lazygit.tar.gz" "$LG_URL"
 
     echo "🔒 Verifying checksum..."
     LG_CHECKSUMS="$TMP/checksums.txt"
@@ -97,74 +63,6 @@ else
     tar -xzf "$TMP/lazygit.tar.gz" -C "$TMP"
     sudo install -m 0755 "$TMP/lazygit" "$BIN_DIR/lazygit"
     echo "✅ lazygit installed → $BIN_DIR/lazygit"
-fi
-
-# --- zoxide (GitHub release .deb) ---
-# Deliberately not upstream's `curl .../main/install.sh | bash`: that pipes a
-# mutable branch URL into a shell. The published .deb comes from an immutable
-# release tag and installs through apt, same shape as the delta fallback above.
-if command -v zoxide &>/dev/null; then
-    echo "✅ zoxide already installed"
-else
-    echo "🔍 Resolving latest zoxide release..."
-    ZOXIDE_VERSION=$(latest_github_tag ajeetdsouza/zoxide)
-    ZOXIDE_NUM=${ZOXIDE_VERSION#v}
-    ZOXIDE_URL="https://github.com/ajeetdsouza/zoxide/releases/download/${ZOXIDE_VERSION}/zoxide_${ZOXIDE_NUM}-1_${ARCH}.deb"
-    echo "📦 Downloading zoxide $ZOXIDE_VERSION..."
-    # zoxide publishes no checksum asset to verify against (fetched over TLS from
-    # github.com); retry protects against a dropped connection, not tampering.
-    ZOXIDE_DEB=$(mktemp --suffix=.deb)
-    trap 'rm -f "$ZOXIDE_DEB"' EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$ZOXIDE_DEB" "$ZOXIDE_URL"
-    sudo apt-get install -y "$ZOXIDE_DEB"
-    rm -f "$ZOXIDE_DEB"
-    echo "✅ zoxide installed"
-fi
-
-# --- dust (GitHub release) ---
-if command -v dust &>/dev/null; then
-    echo "✅ dust already installed"
-else
-    echo "🔍 Resolving latest dust release..."
-    DUST_VERSION=$(latest_github_tag bootandy/dust)
-    DUST_URL="https://github.com/bootandy/dust/releases/download/${DUST_VERSION}/dust-${DUST_VERSION}-${RUST_ARCH}-unknown-linux-gnu.tar.gz"
-    echo "📦 Downloading dust $DUST_VERSION..."
-    # dust publishes no checksum asset to verify against (fetched over TLS from
-    # github.com); retry protects against a dropped connection, not tampering.
-    TMP_D=$(mktemp -d)
-    # shellcheck disable=SC2064
-    trap "rm -rf '$TMP_D'" EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP_D/dust.tar.gz" "$DUST_URL"
-    tar -xzf "$TMP_D/dust.tar.gz" -C "$TMP_D" --strip-components=1
-    sudo install -m 0755 "$TMP_D/dust" "$BIN_DIR/dust"
-    echo "✅ dust installed → $BIN_DIR/dust"
-fi
-
-# --- tealdeer (`tldr` command — GitHub release) ---
-if command -v tldr &>/dev/null; then
-    echo "✅ tldr already installed"
-else
-    echo "🔍 Resolving latest tealdeer release..."
-    TLDR_VERSION=$(latest_github_tag tealdeer-rs/tealdeer)
-    TLDR_ASSET="tealdeer-linux-${RUST_ARCH}-musl"
-    TLDR_URL="https://github.com/tealdeer-rs/tealdeer/releases/download/${TLDR_VERSION}/${TLDR_ASSET}"
-    echo "📦 Downloading tealdeer $TLDR_VERSION..."
-    TMP_T=$(mktemp)
-    TLDR_CHECKSUMS="${TMP_T}.sha256"
-    # shellcheck disable=SC2064
-    trap "rm -f '$TMP_T' '$TLDR_CHECKSUMS'" EXIT
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP_T" "$TLDR_URL"
-
-    echo "🔒 Verifying checksum..."
-    curl -fsSL --retry 3 --retry-all-errors -o "$TLDR_CHECKSUMS" "${TLDR_URL}.sha256"
-    EXPECTED_SHA=$(awk 'NR==1 {print $1}' "$TLDR_CHECKSUMS")
-    [[ "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{64}$ ]] \
-        || { echo "❌ tealdeer checksum manifest is missing a valid digest for $TLDR_ASSET"; exit 1; }
-    echo "$EXPECTED_SHA  $TMP_T" | sha256sum --check --quiet
-    echo "✅ Checksum verified"
-
-    sudo install -m 0755 "$TMP_T" "$BIN_DIR/tldr"
-    echo "✅ tldr installed → $BIN_DIR/tldr"
 fi
 
 # --- Shell integration for direnv + zoxide (idempotent rc-file edits) ---
@@ -198,7 +96,7 @@ echo "   delta     - syntax-highlighting pager for diffs"
 echo "   zoxide    - smarter cd (z <partial-dir-name>)"
 echo "   btop      - resource monitor"
 echo "   direnv    - per-directory env vars"
-echo "   fd        - friendlier find (symlinked from fd-find)"
+echo "   fd        - friendlier find"
 echo "   dust      - disk usage with bars"
 echo "   hyperfine - command-line benchmarking"
 echo "   tldr      - simplified man pages"

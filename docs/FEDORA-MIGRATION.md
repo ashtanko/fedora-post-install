@@ -12,7 +12,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, and `dev/` categories are ported; the other categories remain pending |
+| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, and `tools/` categories are ported; the other categories remain pending |
 | 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -158,33 +158,33 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `tools/atuin.sh` | port | Pending; retain upstream installer and translate prerequisites |
-| `tools/backup-home.sh` | neutral | Audit pending; user-data archive utility |
-| `tools/btop.sh` | port | Pending; install Fedora repository package |
-| `tools/cli-tools.sh` | port | Pending; use Fedora packages and delete `batcat` compatibility links |
-| `tools/ctop.sh` | port | Pending; retain verified release binary and replace `dpkg` architecture lookup |
-| `tools/dive.sh` | replace | Pending; replace GitHub DEB installation with a Fedora-compatible release asset |
-| `tools/docker-maintenance.sh` | neutral | Audit pending; Docker CLI maintenance only |
-| `tools/dotfiles.sh` | port | Pending; use Fedora package or retained upstream installer after audit |
-| `tools/fish.sh` | port | Pending; install Fedora package and audit login-shell path |
-| `tools/fonts.sh` | port | Pending; translate archive/font-cache prerequisites |
-| `tools/git-config.sh` | neutral | Audit pending; Git configuration only |
-| `tools/gitleaks.sh` | port | Pending; retain verified release archive and use shared architecture mapping |
-| `tools/hadolint.sh` | port | Pending; retain release binary and translate prerequisites/architecture |
-| `tools/just.sh` | port | Pending; retain verified release archive and use shared architecture mapping |
-| `tools/lazydocker.sh` | port | Pending; retain verified release archive and use shared architecture mapping |
-| `tools/modern-cli.sh` | port | Pending; use Fedora packages and delete `fdfind` compatibility links |
-| `tools/network-tools.sh` | port | Pending; map Debian network utility package names to Fedora |
-| `tools/pre-commit-setup.sh` | port | Pending; translate pipx/Python prerequisites |
-| `tools/rclone.sh` | port | Pending; retain verified release archive and replace Debian package handling |
-| `tools/restic.sh` | port | Pending; install Fedora repository package |
-| `tools/starship.sh` | port | Pending; retain verified release archive and use shared architecture mapping |
-| `tools/system-maintenance.sh` | replace | Pending; use DNF cleanup, retain Flatpak/journal cleanup, and remove Snap handling |
-| `tools/tmux-config.sh` | port | Pending; install Fedora tmux/Git prerequisites |
-| `tools/trivy.sh` | port | Pending; use Aqua's RPM repository and a pinned signing key |
-| `tools/wireshark.sh` | replace | Pending; replace debconf preseeding with the wireshark group and `dumpcap` capabilities |
-| `tools/yq.sh` | port | Pending; retain checksum-verified release binary and use shared architecture mapping |
-| `tools/zsh.sh` | port | Pending; install Fedora package and retain safe Oh My Zsh download flow |
+| `tools/atuin.sh` | port | Complete; Fedora 43/44 ship 18.12.1 versus upstream 18.20.0 with later Bash integration fixes, so the materially newer checksum-published release is installed with shared RPM architecture mapping |
+| `tools/backup-home.sh` | neutral | Complete; audited as a distribution-neutral user-data archive utility |
+| `tools/btop.sh` | port | Complete; installs Fedora's `btop` package through DNF |
+| `tools/cli-tools.sh` | port | Complete; uses Fedora packages for the full set and needs no `batcat` compatibility link or GitHub CLI vendor repository |
+| `tools/ctop.sh` | port | Complete; retains the checksum-verified release binary and uses shared release architecture mapping |
+| `tools/dive.sh` | replace | Complete; installs Dive's checksum-verified official RPM release through DNF |
+| `tools/docker-maintenance.sh` | neutral | Complete; audited as Docker CLI maintenance with no distribution package path |
+| `tools/dotfiles.sh` | port | Complete; installs Fedora's current `chezmoi` package through DNF and retains optional non-applying repository initialization |
+| `tools/fish.sh` | port | Complete; installs Fedora's Fish package, validates `/etc/shells`, and retains Fisher setup |
+| `tools/fonts.sh` | port | Complete; installs Fedora archive/fontconfig prerequisites before extracting Nerd Fonts |
+| `tools/git-config.sh` | neutral | Complete; audited as distribution-neutral Git configuration |
+| `tools/gitleaks.sh` | port | Complete; installs Fedora's current `gitleaks` package through DNF |
+| `tools/hadolint.sh` | port | Complete; installs Fedora's current `hadolint` package through DNF |
+| `tools/just.sh` | port | Complete; installs Fedora's current `just` package through DNF |
+| `tools/lazydocker.sh` | port | Complete; retains the checksum-verified release archive and uses shared architecture mapping |
+| `tools/modern-cli.sh` | port | Complete; uses Fedora packages for all but lazygit and needs no `fdfind` compatibility link |
+| `tools/network-tools.sh` | port | Complete; maps DNS, socket, and netcat commands to `bind-utils`, `iproute`, and `nmap-ncat` |
+| `tools/pre-commit-setup.sh` | port | Complete; installs Fedora's current `pre-commit` package through DNF and retains Git template configuration |
+| `tools/rclone.sh` | port | Complete; uses Fedora's current signed `rclone` package and delegates updates to DNF |
+| `tools/restic.sh` | port | Complete; uses Fedora's current signed `restic` package and delegates updates to DNF |
+| `tools/starship.sh` | port | Complete; replaces the mutable installer with a checksum-verified user-local release archive and shared RPM architecture mapping |
+| `tools/system-maintenance.sh` | replace | Complete; uses DNF autoremove/cache cleanup, retains journal/Flatpak/Docker cleanup, and removes Snap handling |
+| `tools/tmux-config.sh` | port | Complete; installs Fedora's tmux and Git prerequisites through DNF |
+| `tools/trivy.sh` | port | Complete; uses Aqua's RPM repository, pins signing key `825AD9036F7C850E6A6FED4935B8ACA44FD9CA9F`, and documents its unsigned repository metadata |
+| `tools/wireshark.sh` | replace | Complete; installs Fedora's GUI/CLI packages and configures the wireshark group plus `dumpcap` capabilities |
+| `tools/yq.sh` | port | Complete; installs Fedora's current Mike Farah `yq` package through DNF |
+| `tools/zsh.sh` | port | Complete; installs Fedora's Zsh/curl packages and retains the saved Oh My Zsh installer flow |
 
 ### `vpn/`
 
@@ -206,46 +206,46 @@ can update them in lockstep with their installers.
 | `updates/update-all.sh` | port | Pending; orchestration, output, and Fedora ownership audit |
 | `updates/update-android-studio.sh` | replace | Pending; must match the new tarball or Flatpak installation |
 | `updates/update-antigravity.sh` | replace | Pending; remove APT ownership path |
-| `updates/update-atuin.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-atuin.sh` | port | Complete; delegates only user-owned Atuin binaries to the checksum-verifying installer |
 | `updates/update-aws-cli.sh` | port | Pending; replace Debian package ownership checks |
 | `updates/update-bun.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-chezmoi.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-chezmoi.sh` | delete | Complete; removed because Fedora's package and DNF now own chezmoi updates |
 | `updates/update-claude.sh` | replace | Pending; remove APT ownership path and match the selected installer |
 | `updates/update-cline.sh` | neutral | Audit pending; npm-owned updater |
 | `updates/update-codex.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-composer.sh` | port | Pending; translate packaged prerequisites/ownership checks |
-| `updates/update-ctop.sh` | port | Pending; replace Debian architecture detection |
+| `updates/update-ctop.sh` | port | Complete; validates standalone ownership and uses shared Fedora release architecture mapping |
 | `updates/update-cursor-agent.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-deno.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-dive.sh` | replace | Pending; match the new Fedora-compatible release mechanism |
-| `updates/update-fisher.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-dive.sh` | replace | Complete; validates RPM ownership and installs the checksum-verified official RPM release |
+| `updates/update-fisher.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-flutter.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-gemini.sh` | neutral | Audit pending; npm ownership logic |
 | `updates/update-github-copilot.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-gitleaks.sh` | port | Pending; replace Debian architecture detection |
+| `updates/update-gitleaks.sh` | delete | Complete; removed because Fedora's package and DNF now own gitleaks updates |
 | `updates/update-go.sh` | port | Pending; replace Debian architecture detection |
 | `updates/update-goose.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-huggingface-cli.sh` | neutral | Audit pending; tool-owned updater |
-| `updates/update-just.sh` | port | Pending; replace Debian architecture detection |
-| `updates/update-lazydocker.sh` | port | Pending; replace Debian architecture detection |
+| `updates/update-just.sh` | delete | Complete; removed because Fedora's package and DNF now own just updates |
+| `updates/update-lazydocker.sh` | port | Complete; uses RPM ownership checks and delegates to the verified Fedora-aware installer |
 | `updates/update-llama-cpp.sh` | neutral | Audit pending; source update/build path |
 | `updates/update-mcp-inspector.sh` | neutral | Audit pending; npm ownership logic |
 | `updates/update-mistral-vibe.sh` | neutral | Audit pending; Python-owned updater |
 | `updates/update-node.sh` | neutral | Audit pending; NVM-owned updater |
 | `updates/update-nvim.sh` | neutral | Audit pending; verified release updater |
-| `updates/update-oh-my-zsh.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-oh-my-zsh.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-opencode.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-pipx-tools.sh` | neutral | Audit pending; pipx-owned updater |
 | `updates/update-pyenv.sh` | neutral | Audit pending; Git-owned updater |
 | `updates/update-rbenv.sh` | neutral | Audit pending; Git-owned updater |
-| `updates/update-rclone.sh` | port | Pending; replace Debian package/archive handling |
-| `updates/update-restic.sh` | port | Pending; DNF-owned install may move to `skipped.txt` |
+| `updates/update-rclone.sh` | delete | Complete; removed because Fedora's package and DNF now own rclone updates |
+| `updates/update-restic.sh` | delete | Complete; removed because Fedora's package and DNF now own restic updates |
 | `updates/update-rust.sh` | neutral | Audit pending; rustup-owned updater |
-| `updates/update-starship.sh` | port | Pending; replace Debian architecture detection |
-| `updates/update-tpm.sh` | neutral | Audit pending; Git-owned updater |
+| `updates/update-starship.sh` | port | Complete; retains checksum-verified atomic replacement and uses shared RPM architecture mapping |
+| `updates/update-tpm.sh` | neutral | Complete; Git-owned updater has no distribution package path |
 | `updates/update-vscode-extensions.sh` | port | Complete; updates extensions only when the active CLI belongs to the `code` RPM |
 | `updates/update-vscode.sh` | port | Complete; verifies `code` RPM ownership and performs a targeted DNF refresh/upgrade |
-| `updates/update-yq.sh` | port | Pending; replace Debian architecture detection |
+| `updates/update-yq.sh` | delete | Complete; removed because Fedora's package and DNF now own yq updates |
 
 ## Shared package-layer decisions
 

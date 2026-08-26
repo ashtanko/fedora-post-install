@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Zsh..."
 
@@ -19,14 +22,17 @@ if command -v zsh &>/dev/null; then
     echo "✅ Zsh already installed ($(zsh --version))"
 else
     echo "📦 Installing Zsh..."
-    sudo apt update
-    sudo apt install -y zsh
+    dnf_install zsh
+fi
+if ! command -v chsh &>/dev/null; then
+    echo "📦 Installing Fedora's login-shell utility..."
+    dnf_install util-linux-user
 fi
 
 # Change default shell
 USERNAME="${USER:-$(id -un)}"
 CURRENT_SHELL=$(getent passwd "$USERNAME" | cut -d: -f7)
-ZSH_PATH=$(which zsh)
+ZSH_PATH=$(command -v zsh)
 if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
     echo "✅ Zsh is already the default shell"
 else
@@ -41,6 +47,10 @@ if [ -d "$HOME/.oh-my-zsh" ]; then
 else
     INSTALL_OMZ="${INSTALL_OH_MY_ZSH:-yes}"
     if [ "$INSTALL_OMZ" != "no" ]; then
+        if ! command -v curl &>/dev/null; then
+            echo "📦 Installing curl..."
+            dnf_install curl
+        fi
         echo "✨ Installing Oh My Zsh..."
         OMZ_INSTALLER=$(mktemp)
         trap 'rm -f "$OMZ_INSTALLER"' EXIT

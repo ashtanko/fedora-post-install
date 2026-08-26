@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
@@ -27,15 +30,16 @@ if [ "$CTOP_BIN" != "/usr/local/bin/ctop" ] || [ ! -f "$CTOP_BIN" ] || [ ! -x "$
     exit 0
 fi
 
-if command -v dpkg-query &>/dev/null && dpkg-query -S "$CTOP_BIN" &>/dev/null; then
-    echo "⏭️  Skipping ctop update: $CTOP_BIN is owned by a Debian package."
+if rpm -qf "$CTOP_BIN" &>/dev/null; then
+    echo "⏭️  Skipping ctop update: $CTOP_BIN is owned by an RPM package."
     exit 0
 fi
 
-case "$(dpkg --print-architecture)" in
-    amd64|arm64) CTOP_ARCH="$(dpkg --print-architecture)" ;;
+case "$(release_arch)" in
+    amd64) CTOP_ARCH="amd64" ;;
+    arm64) CTOP_ARCH="arm64" ;;
     *)
-        echo "❌ Unsupported ctop architecture: $(dpkg --print-architecture)" >&2
+        echo "❌ Unsupported ctop architecture" >&2
         exit 1
         ;;
 esac

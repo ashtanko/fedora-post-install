@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
@@ -22,9 +25,10 @@ if command -v dive &>/dev/null; then
     exit 0
 fi
 
-# dive's .deb assets are named with the Debian arch names, so no translation
-# table here (unlike the x86_64/aarch64 shape most Rust and Go releases use).
-ARCH=$(dpkg --print-architecture)
+dnf_install curl
+
+# Dive publishes Fedora-compatible RPM assets using amd64/arm64 filenames.
+ARCH=$(release_arch)
 case "$ARCH" in
     amd64|arm64) ;;
     *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
@@ -33,13 +37,14 @@ esac
 echo "🔍 Resolving latest dive release..."
 DIVE_VERSION=$(latest_github_tag wagoodman/dive)
 DIVE_NUM=${DIVE_VERSION#v}
-DIVE_ASSET="dive_${DIVE_NUM}_linux_${ARCH}.deb"
+DIVE_ASSET="dive_${DIVE_NUM}_linux_${ARCH}.rpm"
 DIVE_BASE="https://github.com/wagoodman/dive/releases/download/${DIVE_VERSION}"
 
 echo "📦 Downloading dive $DIVE_VERSION..."
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP/$DIVE_ASSET" "${DIVE_BASE}/${DIVE_ASSET}"
+curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+    -o "$TMP/$DIVE_ASSET" "${DIVE_BASE}/${DIVE_ASSET}"
 
 echo "🔒 Verifying checksum..."
 DIVE_CHECKSUMS="$TMP/checksums.txt"
@@ -51,8 +56,9 @@ EXPECTED_SHA=$(awk -v want="$DIVE_ASSET" '$2 == want {print $1; exit}' "$DIVE_CH
 echo "$EXPECTED_SHA  $TMP/$DIVE_ASSET" | sha256sum --check --quiet
 echo "✅ Checksum verified"
 
-# A local .deb that's already on disk — no apt-get update needed to install it.
-sudo apt-get install -y "$TMP/$DIVE_ASSET"
+# Install the checksum-verified local RPM so DNF resolves runtime dependencies
+# and records package ownership.
+sudo dnf -q install -y --setopt=install_weak_deps=False "$TMP/$DIVE_ASSET"
 
 if ! command -v dive &>/dev/null; then
     echo "❌ dive installation failed or is not in PATH"

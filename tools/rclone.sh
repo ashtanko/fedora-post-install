@@ -11,23 +11,19 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing rclone (cloud storage sync)..."
 
 if command -v rclone &>/dev/null; then
     echo "✅ rclone already installed ($(rclone version 2>/dev/null | head -1))"
 else
-    echo "📦 Ensuring curl + unzip are present..."
-    sudo apt-get update
-    sudo apt-get install -y curl unzip
-
-    echo "📦 Installing rclone via official installer..."
-    RCLONE_INSTALLER=$(mktemp)
-    trap 'rm -f "$RCLONE_INSTALLER"' EXIT
-    curl -fsSL --retry 3 --retry-all-errors -o "$RCLONE_INSTALLER" https://rclone.org/install.sh
-    sudo bash "$RCLONE_INSTALLER"
-    rm -f "$RCLONE_INSTALLER"
-    trap - EXIT
+    # Fedora tracks rclone closely, so prefer its signed repository package to
+    # a mutable upstream installer. DNF owns future updates as well.
+    echo "📦 Installing Fedora's rclone package..."
+    dnf_install rclone
 
     if ! command -v rclone &>/dev/null; then
         echo "❌ rclone installation failed or is not in PATH"

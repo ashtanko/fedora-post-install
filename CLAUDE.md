@@ -107,31 +107,31 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 |---|---|
 | `zsh.sh` | Zsh + Oh My Zsh; set `INSTALL_OH_MY_ZSH=no` to skip OMZ |
 | `fish.sh` | Fish shell + Fisher plugin manager; `SET_FISH_AS_DEFAULT=no` leaves the login shell alone |
-| `starship.sh` | Starship cross-shell prompt, wired into Bash, Zsh, and Fish |
-| `cli-tools.sh` | bat, fzf, ripgrep, eza, jq, htop, tmux, tree, gh (GitHub CLI) |
-| `modern-cli.sh` | lazygit, delta, zoxide, btop, direnv, fd, dust, hyperfine, tldr (tealdeer) |
-| `btop.sh` | btop — modern resource/process monitor (apt) |
+| `starship.sh` | Checksum-verified Starship cross-shell prompt, wired into Bash, Zsh, and Fish |
+| `cli-tools.sh` | Fedora packages for bat, fzf, ripgrep, eza, jq, htop, tmux, tree, and GitHub CLI |
+| `modern-cli.sh` | Fedora packages for delta, zoxide, btop, direnv, fd, dust, hyperfine, and tealdeer; checksum-verified lazygit release |
+| `btop.sh` | btop — modern resource/process monitor from Fedora's repositories |
 | `fonts.sh` | JetBrains Mono, Fira Code, Hack — all Nerd Font variants |
 | `git-config.sh` | Opinionated git defaults (rebase pull, autosetup, aliases, global gitignore, optional GPG signing) |
-| `pre-commit-setup.sh` | pre-commit framework via pipx + git template hook + starter `.pre-commit-config.yaml` |
+| `pre-commit-setup.sh` | Fedora's pre-commit package + git template hook + starter `.pre-commit-config.yaml` |
 | `backup-home.sh` | Tar (optionally GPG-encrypted) backup of SSH/GPG/AWS/.config to `$BACKUP_DIR` |
-| `system-maintenance.sh` | apt autoremove/clean, journal vacuum, docker/snap/flatpak prune, user-cache trim |
-| `wireshark.sh` | Wireshark + tshark; preseeds non-root packet capture via the `wireshark` group |
-| `dotfiles.sh` | chezmoi dotfiles manager; optionally clones `$DOTFILES_REPO` (never auto-applies) |
-| `rclone.sh` | rclone cloud storage sync — pairs with `backup-home.sh` for offsite copies |
+| `system-maintenance.sh` | DNF autoremove/clean, journal vacuum, Docker/Flatpak prune, user-cache trim |
+| `wireshark.sh` | Fedora Wireshark GUI/CLI packages; configures non-root capture through the `wireshark` group and `dumpcap` capabilities |
+| `dotfiles.sh` | Fedora's chezmoi dotfiles manager; optionally clones `$DOTFILES_REPO` (never auto-applies) |
+| `rclone.sh` | Fedora's rclone cloud storage sync package — pairs with `backup-home.sh` for offsite copies |
 | `lazydocker.sh` | lazydocker terminal UI for Docker (GitHub release, checksum-verified) |
 | `ctop.sh` | ctop — live per-container CPU/memory/net/IO metrics (GitHub release, checksum-verified) |
-| `dive.sh` | dive — explore a Docker image layer by layer (GitHub release `.deb`, checksum-verified) |
-| `hadolint.sh` | hadolint Dockerfile linter (GitHub release; upstream publishes no digest, so the download is ELF-checked) |
-| `trivy.sh` | Trivy image/filesystem/IaC vulnerability scanner via its official signed apt repo (release-independent `generic` suite) |
+| `dive.sh` | dive — explore a Docker image layer by layer (official GitHub release RPM, checksum-verified) |
+| `hadolint.sh` | Fedora's hadolint Dockerfile-linter package |
+| `trivy.sh` | Trivy image/filesystem/IaC vulnerability scanner via Aqua's RPM repository |
 | `docker-maintenance.sh` | Docker-only disk reclaim: containers, networks, images, build cache; volumes opt-in |
 | `tmux-config.sh` | TPM plugin manager + starter `~/.tmux.conf` (written only if absent); prefix rebound to `Ctrl-a` |
-| `restic.sh` | restic — deduplicated, encrypted, incremental backups; speaks rclone remotes natively |
+| `restic.sh` | Fedora's restic package — deduplicated, encrypted, incremental backups with rclone support |
 | `network-tools.sh` | mtr, nmap, dig, ss, lsof, nc, iperf3, HTTPie, whois |
-| `gitleaks.sh` | Standalone gitleaks secret scanner (also wired as a pre-commit hook by `pre-commit-setup.sh`) |
-| `yq.sh` | yq — the YAML counterpart to `jq` (checksum-verified from yq's hash matrix) |
-| `just.sh` | `just` command runner (GitHub release, checksum-verified) |
-| `atuin.sh` | Atuin searchable shell history, wired into Bash, Zsh, and Fish; sync is opt-in |
+| `gitleaks.sh` | Fedora's gitleaks secret-scanner package (also wired as a pre-commit hook by `pre-commit-setup.sh`) |
+| `yq.sh` | Fedora's yq package — the YAML counterpart to `jq` |
+| `just.sh` | Fedora's `just` command-runner package |
+| `atuin.sh` | Checksum-verified current Atuin release, wired into Bash, Zsh, and Fish; sync is opt-in |
 
 ### ide/
 | Script | Purpose |

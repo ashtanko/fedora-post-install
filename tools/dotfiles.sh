@@ -11,49 +11,23 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing chezmoi (dotfiles manager)..."
-
-USER_BIN="$HOME/.local/bin"
-mkdir -p "$USER_BIN"
-export PATH="$USER_BIN:$PATH"
 
 if command -v chezmoi &>/dev/null; then
     echo "✅ chezmoi already installed ($(chezmoi --version | head -1))"
 else
-    if ! command -v curl &>/dev/null; then
-        echo "📦 Installing curl..."
-        sudo apt-get update
-        sudo apt-get install -y curl
-    fi
-    echo "📦 Installing chezmoi to $USER_BIN..."
-    CHEZMOI_INSTALLER=$(mktemp)
-    trap 'rm -f "$CHEZMOI_INSTALLER"' EXIT
-    curl -fsSL --retry 3 --retry-all-errors -o "$CHEZMOI_INSTALLER" https://get.chezmoi.io
-    # No "--" here: chezmoi's docs use it to separate `sh -c "..."`'s own
-    # implicit $0 from the install script's args, but we're already invoking
-    # the saved file directly, so `-b` must be $1 or the installer's getopts
-    # never sees it (and silently falls through to running plain `chezmoi -b`).
-    sh "$CHEZMOI_INSTALLER" -b "$USER_BIN"
-    rm -f "$CHEZMOI_INSTALLER"
-    trap - EXIT
-
+    echo "📦 Installing chezmoi from Fedora..."
+    dnf_install chezmoi
     if ! command -v chezmoi &>/dev/null; then
         echo "❌ chezmoi installation failed or is not in PATH"
         exit 1
     fi
     echo "✅ chezmoi installed ($(chezmoi --version | head -1))"
 fi
-
-# Persist ~/.local/bin on PATH (several other scripts already add this same
-# guarded line; grep -q keeps it a no-op if one of them got here first).
-# shellcheck disable=SC2016
-PATH_LINE='[ -d "$HOME/.local/bin" ] && case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH";; esac'
-for RC in "$HOME/.zshrc" "$HOME/.bashrc"; do
-    [ -f "$RC" ] || continue
-    # shellcheck disable=SC2016
-    grep -qF '$HOME/.local/bin' "$RC" || echo "$PATH_LINE" >> "$RC"
-done
 
 # Optional: point an existing source-of-truth repo at chezmoi. `chezmoi init`
 # only clones into ~/.local/share/chezmoi — it never touches target files —

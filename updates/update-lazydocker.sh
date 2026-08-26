@@ -24,8 +24,8 @@ if [ "$LAZYDOCKER_BIN" != "/usr/local/bin/lazydocker" ]; then
     exit 0
 fi
 
-if command -v dpkg-query &>/dev/null && dpkg-query -S "$LAZYDOCKER_BIN" &>/dev/null; then
-    echo "⏭️  Skipping lazydocker update: $LAZYDOCKER_BIN is owned by a Debian package."
+if rpm -qf "$LAZYDOCKER_BIN" &>/dev/null; then
+    echo "⏭️  Skipping lazydocker update: $LAZYDOCKER_BIN is owned by an RPM package."
     exit 0
 fi
 

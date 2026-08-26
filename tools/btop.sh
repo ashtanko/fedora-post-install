@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing btop resource monitor..."
 
@@ -20,8 +23,7 @@ if command -v btop &>/dev/null; then
 fi
 
 echo "📦 Installing btop..."
-sudo apt update
-sudo apt install -y btop
+dnf_install btop
 
 if command -v btop &>/dev/null; then
     echo "✅ btop installed successfully"

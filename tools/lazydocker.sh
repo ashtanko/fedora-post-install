@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
@@ -22,7 +25,9 @@ if command -v lazydocker &>/dev/null && [ "${FPI_LAZYDOCKER_UPDATE:-0}" != "1" ]
     exit 0
 fi
 
-ARCH=$(dpkg --print-architecture)
+dnf_install curl tar
+
+ARCH=$(release_arch)
 case "$ARCH" in
     amd64) LD_ARCH="x86_64" ;;
     arm64) LD_ARCH="arm64" ;;
@@ -45,7 +50,8 @@ cleanup() {
     [ -z "$STAGE" ] || sudo rm -f "$STAGE"
 }
 trap cleanup EXIT
-wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP/lazydocker.tar.gz" "$LD_URL"
+curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+    -o "$TMP/lazydocker.tar.gz" "$LD_URL"
 
 echo "🔒 Verifying checksum..."
 LD_CHECKSUMS="$TMP/checksums.txt"

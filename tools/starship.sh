@@ -11,6 +11,12 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
+GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
+# shellcheck source=lib/github.bash
+source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Starship cross-shell prompt..."
 
@@ -21,18 +27,51 @@ export PATH="$USER_BIN:$PATH"
 if command -v starship &>/dev/null; then
     echo "✅ Starship already installed ($(starship --version | head -1))"
 else
-    if ! command -v curl &>/dev/null; then
-        echo "📦 Installing curl..."
-        sudo apt-get update
-        sudo apt-get install -y curl
-    fi
-    echo "📦 Installing Starship to $USER_BIN..."
-    STARSHIP_INSTALLER=$(mktemp)
-    trap 'rm -f "$STARSHIP_INSTALLER"' EXIT
-    curl -fsSL --retry 3 --retry-all-errors -o "$STARSHIP_INSTALLER" \
-        https://starship.rs/install.sh
-    sh "$STARSHIP_INSTALLER" --yes --bin-dir "$USER_BIN"
-    rm -f "$STARSHIP_INSTALLER"
+    dnf_install curl tar coreutils
+
+    STARSHIP_ARCH=$(rpm_arch)
+    case "$STARSHIP_ARCH" in
+        x86_64|aarch64) ;;
+        *) echo "❌ Unsupported Starship architecture: $STARSHIP_ARCH"; exit 1 ;;
+    esac
+
+    echo "🔍 Resolving latest Starship release..."
+    STARSHIP_VERSION=$(latest_github_tag starship/starship)
+    STARSHIP_ASSET="starship-${STARSHIP_ARCH}-unknown-linux-musl.tar.gz"
+    STARSHIP_BASE="https://github.com/starship/starship/releases/download/${STARSHIP_VERSION}"
+    STARSHIP_TMP=$(mktemp -d)
+    STARSHIP_STAGE=""
+    cleanup() {
+        rm -rf "$STARSHIP_TMP"
+        if [ -n "$STARSHIP_STAGE" ]; then
+            rm -f "$STARSHIP_STAGE"
+        fi
+    }
+    trap cleanup EXIT
+
+    echo "📦 Downloading Starship $STARSHIP_VERSION..."
+    curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+        -o "$STARSHIP_TMP/$STARSHIP_ASSET" "$STARSHIP_BASE/$STARSHIP_ASSET"
+    curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+        -o "$STARSHIP_TMP/$STARSHIP_ASSET.sha256" \
+        "$STARSHIP_BASE/$STARSHIP_ASSET.sha256"
+
+    echo "🔒 Verifying checksum..."
+    EXPECTED_SHA=$(awk 'NR == 1 {print $1}' "$STARSHIP_TMP/$STARSHIP_ASSET.sha256")
+    [[ "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{64}$ ]] \
+        || { echo "❌ Starship checksum file does not contain a valid SHA-256 digest"; exit 1; }
+    echo "$EXPECTED_SHA  $STARSHIP_TMP/$STARSHIP_ASSET" | sha256sum --check --quiet
+    tar -xzf "$STARSHIP_TMP/$STARSHIP_ASSET" -C "$STARSHIP_TMP" starship
+    [ -f "$STARSHIP_TMP/starship" ] \
+        || { echo "❌ starship was not found in the downloaded archive"; exit 1; }
+
+    STARSHIP_STAGE=$(mktemp "$USER_BIN/.starship-stage.XXXXXX")
+    install -m 0755 "$STARSHIP_TMP/starship" "$STARSHIP_STAGE"
+    "$STARSHIP_STAGE" --version >/dev/null 2>&1 \
+        || { echo "❌ Staged Starship binary failed validation"; exit 1; }
+    mv -f "$STARSHIP_STAGE" "$USER_BIN/starship"
+    STARSHIP_STAGE=""
+    rm -rf "$STARSHIP_TMP"
     trap - EXIT
     echo "✅ Starship installed ($(starship --version | head -1))"
 fi
@@ -79,7 +118,7 @@ configure_fish() {
     echo "✅ Configured Starship for fish in $config_file"
 }
 
-# Bash is present on every supported Ubuntu install. Configure optional shells
+# Bash is present on every supported Fedora install. Configure optional shells
 # only when installed or already used by the current account.
 configure_posix_shell "$HOME/.bashrc" bash
 if command -v zsh &>/dev/null || [ -f "$HOME/.zshrc" ]; then

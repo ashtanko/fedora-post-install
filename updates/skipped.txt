@@ -35,18 +35,25 @@ dev/gcloud.sh|Google Cloud packages are maintained through its configured RPM re
 dev/azure-cli.sh|Microsoft packages are maintained through its configured RPM repository and DNF
 dev/cpp.sh|Fedora compiler and build-tool packages are maintained through DNF
 dev/podman.sh|Fedora's Podman and podman-compose packages are maintained through DNF
-tools/cli-tools.sh|bulk Ubuntu package set is maintained through APT
+tools/cli-tools.sh|Fedora package set is maintained through DNF
 tools/modern-cli.sh|mixed package set has no single ownership-compatible updater
-tools/btop.sh|Ubuntu package is maintained through APT
+tools/btop.sh|Fedora package is maintained through DNF
 tools/fonts.sh|downloaded font assets have no documented in-place updater
 tools/git-config.sh|configuration task; it does not install independently versioned software
 tools/backup-home.sh|backup operation; it does not install independently versioned software
 tools/system-maintenance.sh|maintenance operation; it does not install independently versioned software
-tools/wireshark.sh|Ubuntu package is maintained through APT
-tools/hadolint.sh|upstream provides release binaries but no documented in-place updater
-tools/trivy.sh|vendor package is maintained through the configured APT repository
+tools/wireshark.sh|Fedora packages are maintained through DNF; the script also owns capture permissions
+tools/dotfiles.sh|Fedora chezmoi package is maintained through DNF
+tools/gitleaks.sh|Fedora package is maintained through DNF
+tools/hadolint.sh|Fedora package is maintained through DNF
+tools/just.sh|Fedora package is maintained through DNF
+tools/pre-commit-setup.sh|Fedora pre-commit package is maintained through DNF; the script also owns Git template configuration
+tools/trivy.sh|vendor RPM package is maintained through the configured repository and DNF
 tools/docker-maintenance.sh|maintenance operation; it does not install independently versioned software
-tools/network-tools.sh|bulk Ubuntu package set is maintained through APT
+tools/network-tools.sh|Fedora package set is maintained through DNF
+tools/rclone.sh|Fedora package is maintained through DNF
+tools/restic.sh|Fedora package is maintained through DNF
+tools/yq.sh|Fedora package is maintained through DNF
 ide/zed.sh|the application manages its own updates
 ide/jetbrains-toolbox.sh|JetBrains Toolbox manages its own updates
 ide/cursor.sh|the application manages its own updates

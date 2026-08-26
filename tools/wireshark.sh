@@ -11,42 +11,55 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Wireshark..."
 
-# $USER isn't reliably set outside a login shell.
-CURRENT_USER="$(whoami)"
+# SUDO_USER preserves the desktop account when this script is accidentally
+# launched through sudo; otherwise use the current account.
+CURRENT_USER="${SUDO_USER:-${USER:-$(id -un)}}"
 
-# Preseed the debconf question wireshark-common asks on install ("allow
-# non-superusers to capture packets?") so apt never blocks on a prompt.
-# Answering "true" grants dumpcap capabilities via the wireshark group —
-# the same group system/user-groups.sh already adds this user to.
-echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
+echo "📦 Installing Wireshark GUI and CLI packages..."
+dnf_install wireshark wireshark-cli libcap shadow-utils
 
-if command -v wireshark &>/dev/null && command -v tshark &>/dev/null; then
-    echo "✅ Wireshark already installed ($(wireshark --version 2>/dev/null | head -1))"
-    echo "🔧 Re-affirming non-root capture permission..."
-    sudo dpkg-reconfigure -f noninteractive wireshark-common
-else
-    echo "📦 Installing wireshark + tshark..."
-    sudo apt-get update
-    # tshark isn't pulled in by the wireshark metapackage — install it
-    # explicitly so headless capture/analysis works out of the box.
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark tshark
+# Fedora's wireshark-cli RPM normally creates the group and ships dumpcap with
+# these capabilities. Re-affirm both so the standalone script repairs a partial
+# installation and remains useful if system/user-groups.sh was not selected.
+if ! getent group wireshark >/dev/null 2>&1; then
+    echo "🔧 Creating the wireshark system group..."
+    sudo groupadd --system wireshark
 fi
 
-# Belt-and-braces: grant capture rights even if system/user-groups.sh was
-# never run, so this script is useful standalone.
-if getent group wireshark >/dev/null 2>&1; then
-    if groups "$CURRENT_USER" | grep -qw wireshark; then
-        echo "✅ $CURRENT_USER already in the wireshark group"
-    else
-        echo "🔧 Adding $CURRENT_USER to the wireshark group..."
-        sudo usermod -aG wireshark "$CURRENT_USER"
-        echo "⚠️  Log out and back in (or run: newgrp wireshark) for capture permission to take effect"
-    fi
+DUMPCAP_BIN=$(command -v dumpcap 2>/dev/null || true)
+if [ -z "$DUMPCAP_BIN" ]; then
+    echo "❌ dumpcap was not installed by wireshark-cli"
+    exit 1
+fi
+
+echo "🔧 Configuring non-root packet capture..."
+sudo chgrp wireshark "$DUMPCAP_BIN"
+sudo chmod 0750 "$DUMPCAP_BIN"
+sudo setcap cap_net_raw,cap_net_admin=eip "$DUMPCAP_BIN"
+
+if [ "$(stat -c '%G' "$DUMPCAP_BIN")" != "wireshark" ] \
+    || ! getcap "$DUMPCAP_BIN" | grep -Eq 'cap_net_(admin,cap_net_raw|raw,cap_net_admin)=eip'; then
+    echo "❌ dumpcap capture permissions could not be configured"
+    exit 1
+fi
+
+if id -nG "$CURRENT_USER" | tr ' ' '\n' | grep -qx wireshark; then
+    echo "✅ $CURRENT_USER already in the wireshark group"
 else
-    echo "⚠️  wireshark group not found — dumpcap will need sudo to capture"
+    echo "🔧 Adding $CURRENT_USER to the wireshark group..."
+    sudo usermod -aG wireshark "$CURRENT_USER"
+    echo "⚠️  Log out and back in (or run: newgrp wireshark) for capture permission to take effect"
+fi
+
+if ! command -v wireshark &>/dev/null || ! command -v tshark &>/dev/null; then
+    echo "❌ Wireshark installation failed or its commands are not in PATH"
+    exit 1
 fi
 
 echo ""

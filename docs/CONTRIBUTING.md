@@ -21,6 +21,10 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=../lib/config.bash
 source "$CONFIG_HELPER"
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+[[ -r "$PKG_HELPER" ]] || { echo "❌ missing package helper: $PKG_HELPER" >&2; exit 1; }
+# shellcheck source=../lib/pkg.bash
+source "$PKG_HELPER"
 
 echo "🚀 Installing <thing>..."
 
@@ -32,8 +36,7 @@ fi
 
 # 2. Install
 echo "📦 Installing <tool>..."
-sudo apt-get update
-sudo apt-get install -y <pkg>
+dnf_install <pkg>
 
 # 3. (Optional) PATH or rc-file changes — guarded with grep -q
 RC_LINE='export PATH="$HOME/.local/bin:$PATH"'
@@ -50,7 +53,7 @@ echo "✅ <tool> setup complete!"
 
 Real examples to model on:
 
-- [tools/cli-tools.sh](../tools/cli-tools.sh) — apt-based installs with a per-tool `install_if_missing` helper, plus a tar-release fallback for a tool that isn't in apt.
+- [tools/cli-tools.sh](../tools/cli-tools.sh) — a Fedora package set installed idempotently through the shared DNF helper.
 - [system/ssh.sh](../system/ssh.sh) — file-existence idempotency, env-var fallback to interactive prompt, multi-line rc block guarded by `grep -q`.
 - [dev/node.sh](../dev/node.sh) — third-party installer (NVM), `set +u` relaxation when sourcing the vendor's init script, escaped rc block.
 
@@ -64,7 +67,7 @@ Cheap and reliable idempotency checks:
 |---|---|
 | `command -v <tool> &>/dev/null` | Binary on `PATH` |
 | `[ -f <file> ]` / `[ -d <dir> ]` | Vendor installer drops a known file |
-| `dpkg -s <pkg> &>/dev/null` | Pure apt package |
+| `dnf_installed <pkg>` | Fedora package |
 | `! grep -q <pattern> "$RC"` | Before appending to `~/.zshrc` / `~/.bashrc` |
 
 ## `.env` support

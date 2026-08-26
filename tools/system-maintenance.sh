@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 # One-shot disk-cleanup pass. Safe to run repeatedly.
 
@@ -22,12 +25,12 @@ human_size() {
 BEFORE=$(human_size)
 
 echo ""
-echo "📦 apt: removing orphaned dependencies..."
-sudo apt autoremove -y --purge
+echo "📦 DNF: removing orphaned dependencies..."
+sudo dnf -q autoremove -y
 
 echo ""
-echo "📦 apt: cleaning package cache..."
-sudo apt clean
+echo "📦 DNF: cleaning package caches..."
+sudo dnf clean all
 
 echo ""
 echo "📰 systemd journal: vacuuming logs older than 7 days..."
@@ -37,16 +40,6 @@ if command -v docker &>/dev/null; then
     echo ""
     echo "🐳 docker: pruning dangling images, stopped containers, build cache..."
     docker system prune -f || true
-fi
-
-if command -v snap &>/dev/null; then
-    echo ""
-    echo "📦 snap: removing old disabled revisions..."
-    LANG=C snap list --all 2>/dev/null \
-        | awk '/disabled/{print $1, $3}' \
-        | while read -r name rev; do
-            sudo snap remove "$name" --revision="$rev" || true
-        done
 fi
 
 if command -v flatpak &>/dev/null; then

@@ -100,7 +100,14 @@ test_npm_installers() {
 
 make_remote_installer_stub() {
     local bin="$1"
+    local command_name
     mkdir -p "$bin"
+    # Keep installer discovery isolated from host-installed CLIs (for example,
+    # a desktop Goose package at /usr/bin/goose) while exposing only the basic
+    # commands needed by the fixture and saved installer.
+    for command_name in bash cat chmod dirname grep head mkdir mktemp python3 rm sh; do
+        ln -s "$(command -v "$command_name")" "$bin/$command_name"
+    done
     cat > "$bin/dpkg" <<'EOF'
 #!/bin/bash
 if [ "${1:-}" = -s ] && [ "${2:-}" = python3-venv ]; then
@@ -157,12 +164,12 @@ test_remote_ai_installers() {
         make_remote_installer_stub "$bin"
 
         STUB_INSTALL_TARGET="$target" STUB_LOG="$log" HOME="$home" \
-            PATH="$bin:/usr/bin:/bin" /bin/bash "$script" > "$output" 2>&1
+            PATH="$bin" /bin/bash "$script" > "$output" 2>&1
         [ -x "$target" ] || fail "$name installer did not create its CLI"
         assert_contains "$log" "curl $url"
 
         STUB_INSTALL_TARGET="$target" STUB_LOG="$log" HOME="$home" \
-            PATH="$bin:/usr/bin:/bin" /bin/bash "$script" >> "$output" 2>&1
+            PATH="$bin" /bin/bash "$script" >> "$output" 2>&1
         curl_count=$(grep -c '^curl ' "$log")
         [ "$curl_count" -eq 1 ] || fail "$name installer downloaded again on its second run"
         case "$name" in
@@ -427,30 +434,29 @@ EOF
 #!/bin/bash
 exit 0
 EOF
+    cat > "$bin/rpm" <<'EOF'
+#!/bin/bash
+if [ "${1:-}" = "--eval" ]; then
+    echo x86_64
+fi
+exit 0
+EOF
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 # Models `curl -fsSLI -o /dev/null -w '%{url_effective}' <repo>/releases/latest`,
-# which is how release tags are resolved now that api.github.com is avoided.
-for arg in "$@"; do
-    case "$arg" in
-        */releases/latest) echo "${arg%/latest}/tag/v-test"; exit 0 ;;
-    esac
-done
-echo '{"tag_name":"v-test"}'
-EOF
-    cat > "$bin/wget" <<'EOF'
-#!/bin/bash
+# plus the retrying archive fetch used by the font installer.
+output=""
 while [ "$#" -gt 0 ]; do
-    if [ "$1" = -O ]; then
-        shift
-        cp "$FONT_ARCHIVE" "$1"
-        exit 0
-    fi
+    case "$1" in
+        */releases/latest) echo "${1%/latest}/tag/v-test"; exit 0 ;;
+        -o) output="$2"; shift 2; continue ;;
+    esac
     shift
 done
-exit 2
+[ -n "$output" ] || exit 2
+cp "$FONT_ARCHIVE" "$output"
 EOF
-    chmod +x "$bin/fc-cache" "$bin/fc-list" "$bin/curl" "$bin/wget"
+    chmod +x "$bin/fc-cache" "$bin/fc-list" "$bin/rpm" "$bin/curl"
     FONT_ARCHIVE="$archive" HOME="$home" PATH="$bin:/usr/bin:/bin" \
         /bin/bash "$REPO_ROOT/tools/fonts.sh" > "$TEST_TMP/fonts.out" 2>&1
     [ -s "$home/.local/share/fonts/TestNerdFont.ttf" ] || fail "font file was not installed"
@@ -490,8 +496,18 @@ EOF
 
 test_failed_remote_installer_is_not_executed() {
     local bin="$TEST_TMP/failed-installer-bin"
-    local name script home output marker status
+    local name script home output marker status command_name
     mkdir -p "$bin"
+    for command_name in dirname mktemp python3 rm; do
+        ln -s "$(command -v "$command_name")" "$bin/$command_name"
+    done
+    cat > "$bin/dpkg" <<'EOF'
+#!/bin/bash
+if [ "${1:-}" = -s ] && [ "${2:-}" = python3-venv ]; then
+    exit 0
+fi
+exit 1
+EOF
     cat > "$bin/curl" <<'EOF'
 #!/bin/bash
 payload='printf "executed\n" > "$STUB_EXEC_MARKER"'
@@ -509,7 +525,7 @@ else
 fi
 exit 18
 EOF
-    chmod +x "$bin/curl"
+    chmod +x "$bin/curl" "$bin/dpkg"
 
     for entry in \
         "opencode:$REPO_ROOT/ai/opencode.sh" \
@@ -529,7 +545,7 @@ EOF
         mkdir -p "$home"
 
         set +e
-        STUB_EXEC_MARKER="$marker" HOME="$home" PATH="$bin:/usr/bin:/bin" \
+        STUB_EXEC_MARKER="$marker" HOME="$home" PATH="$bin" \
             OPENCODE_INSTALL_DIR="$home/.opencode" /bin/bash "$script" > "$output" 2>&1
         status=$?
         set -e
@@ -575,99 +591,69 @@ EOF
     assert_contains "$TEST_TMP/ollama-models-empty.out" "OLLAMA_MODELS is empty"
 }
 
-test_cli_tools_preserves_user_bat_and_configures_path() {
+test_cli_tools_uses_fedora_command_names() {
     local home="$TEST_TMP/cli-tools-home"
     local bin="$TEST_TMP/cli-tools-bin"
     local output="$TEST_TMP/cli-tools.out"
-    local cmd rc marker_count
+    local cmd
     mkdir -p "$home/.local/bin" "$bin"
     printf 'user-owned-bat\n' > "$home/.local/bin/bat"
-    printf "   # \$HOME/.local/bin is intentionally not configured here\n" > "$home/.bashrc"
-    printf "   # \$HOME/.local/bin is intentionally not configured here\n" > "$home/.zshrc"
+    : > "$home/.bashrc"
+    : > "$home/.zshrc"
 
-    for cmd in batcat fzf rg jq htop tmux tree eza gh; do
+    for cmd in bat fzf rg jq htop tmux tree eza gh; do
         ln -s /usr/bin/true "$bin/$cmd"
     done
+    cat > "$bin/rpm" <<'EOF'
+#!/bin/bash
+if [ "${1:-}" = "--eval" ]; then
+    echo x86_64
+fi
+exit 0
+EOF
     cat > "$bin/sudo" <<'EOF'
 #!/bin/bash
 exit 0
 EOF
-    chmod +x "$bin/sudo"
+    chmod +x "$bin/rpm" "$bin/sudo"
 
     HOME="$home" PATH="$bin:/usr/bin:/bin" \
         /bin/bash "$REPO_ROOT/tools/cli-tools.sh" > "$output" 2>&1
     HOME="$home" PATH="$bin:/usr/bin:/bin" \
         /bin/bash "$REPO_ROOT/tools/cli-tools.sh" >> "$output" 2>&1
 
-    [ ! -L "$home/.local/bin/bat" ] || fail "cli-tools replaced an unmanaged bat file"
+    [ ! -L "$home/.local/bin/bat" ] || fail "cli-tools created a Fedora-unnecessary bat compatibility link"
     [ "$(< "$home/.local/bin/bat")" = "user-owned-bat" ] \
         || fail "cli-tools changed an unmanaged bat file"
-    for rc in "$home/.bashrc" "$home/.zshrc"; do
-        assert_contains "$rc" "export PATH=\"\$HOME/.local/bin:\$PATH\""
-        marker_count=$(grep -cF '# ~/.local/bin (added by cli-tools.sh)' "$rc")
-        [ "$marker_count" -eq 1 ] || fail "cli-tools PATH block was not idempotent in $rc"
-    done
 }
 
-test_modern_cli_requires_checksum() {
-    local home="$TEST_TMP/modern-checksum-home"
-    local bin="$TEST_TMP/modern-checksum-bin"
-    local log="$TEST_TMP/modern-checksum.log"
-    local output="$TEST_TMP/modern-checksum.out"
-    local cmd status
+test_modern_cli_uses_fedora_fd() {
+    local home="$TEST_TMP/modern-fedora-home"
+    local bin="$TEST_TMP/modern-fedora-bin"
+    local output="$TEST_TMP/modern-fedora.out"
+    local cmd
     mkdir -p "$home" "$bin"
+    : > "$home/.bashrc"
+    : > "$home/.zshrc"
 
-    for cmd in btop direnv hyperfine delta fdfind lazygit zoxide dust; do
+    for cmd in btop direnv hyperfine delta fd lazygit zoxide dust tldr; do
         ln -s /usr/bin/true "$bin/$cmd"
     done
-    cat > "$bin/sudo" <<'EOF'
+    cat > "$bin/rpm" <<'EOF'
 #!/bin/bash
-echo "$*" >> "$STUB_LOG"
+if [ "${1:-}" = "--eval" ]; then
+    echo x86_64
+fi
 exit 0
 EOF
-    cat > "$bin/curl" <<'EOF'
-#!/bin/bash
-url=""
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-        -o|-w) shift 2 ;;
-        -*) shift ;;
-        *) url="$1"; shift ;;
-    esac
-done
-case "$url" in
-    */releases/latest)
-        printf '%s\n' "${url%/latest}/tag/v1.8.1"
-        exit 0
-        ;;
-    *.sha256) exit 22 ;;
-    *) exit 2 ;;
-esac
-EOF
-    cat > "$bin/wget" <<'EOF'
-#!/bin/bash
-out=""
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-        -O) out="$2"; shift 2 ;;
-        *) shift ;;
-    esac
-done
-[ -n "$out" ] || exit 2
-printf 'downloaded-binary\n' > "$out"
-EOF
-    chmod +x "$bin/sudo" "$bin/curl" "$bin/wget"
+    chmod +x "$bin/rpm"
 
-    set +e
-    STUB_LOG="$log" HOME="$home" PATH="$bin:/usr/bin:/bin" \
-        /bin/bash "$REPO_ROOT/tools/modern-cli.sh" > "$output" 2>&1
-    status=$?
-    set -e
+    HOME="$home" PATH="$bin:/usr/bin:/bin" \
+        /bin/bash "$REPO_ROOT/tools/modern-cli.sh" > "$output" 2>&1 \
+        || { sed -n '1,120p' "$output" >&2; fail "modern-cli failed with Fedora command fixtures"; }
 
-    [ "$status" -ne 0 ] || fail "modern-cli accepted a missing tealdeer checksum"
-    if grep -q 'install .*tldr' "$log"; then
-        fail "modern-cli installed tealdeer after checksum retrieval failed"
-    fi
+    [ ! -e "$home/.local/bin/fd" ] \
+        || fail "modern-cli created a Fedora-unnecessary fd compatibility link"
 }
 
 test_npm_installers
@@ -681,7 +667,7 @@ test_font_extraction
 test_prompt_runner_config
 test_failed_remote_installer_is_not_executed
 test_ollama_models
-test_cli_tools_preserves_user_bat_and_configures_path
-test_modern_cli_requires_checksum
+test_cli_tools_uses_fedora_command_names
+test_modern_cli_uses_fedora_fd
 
 echo "✅ Installer regression tests passed"

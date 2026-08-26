@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Setting up tmux (TPM + starter config)..."
 
@@ -18,14 +21,13 @@ echo "🚀 Setting up tmux (TPM + starter config)..."
 # equivalent of what zsh.sh does with Oh My Zsh and fish.sh does with Fisher.
 if ! command -v tmux &>/dev/null; then
     echo "📦 Installing tmux..."
-    sudo apt-get update
-    sudo apt-get install -y tmux
+    dnf_install tmux
 fi
 echo "✅ tmux installed ($(tmux -V))"
 
 if ! command -v git &>/dev/null; then
     echo "📦 Installing git (required to clone TPM)..."
-    sudo apt-get install -y git
+    dnf_install git
 fi
 
 # --- TPM (tmux plugin manager) ---

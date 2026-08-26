@@ -8,7 +8,7 @@ VERSION ?=
 export VERSION
 
 .DEFAULT_GOAL := help
-.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression identity-regression runtime-regression installer-regression \
+.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression tools-regression identity-regression runtime-regression installer-regression \
         contract-regression regressions check smoke smoke-all \
         idempotency idempotency-all setup version tui-test tui-build tag dist release-artifact \
         release-dry-run clean clean-markers
@@ -47,6 +47,9 @@ apps-regression: ## Verify Fedora-native application installers and updater owne
 
 dev-regression: ## Verify Fedora-native development installers and updater ownership
 	bash tests/dev-regression.sh
+
+tools-regression: ## Verify Fedora-native tools installers and updater ownership
+	bash tests/tools-regression.sh
 
 identity-regression: ## Verify the Fedora project identity is used consistently
 	bash tests/identity-regression.sh

@@ -11,43 +11,24 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing network diagnostic tools..."
 
 # Rounds out the diagnostics story tools/wireshark.sh starts (packet capture)
 # and system/hosts-dns.sh implies (resolver configuration worth verifying).
-install_if_missing() {
-    local cmd="$1"
-    local pkg="$2"
-    if command -v "$cmd" &>/dev/null; then
-        echo "✅ $cmd already installed"
-    else
-        echo "📦 Installing $pkg..."
-        sudo apt-get install -y "$pkg"
+# Fedora package mappings: bind-utils owns dig, iproute owns ss, and
+# nmap-ncat owns nc.
+dnf_install mtr traceroute nmap bind-utils iproute lsof nmap-ncat iperf3 httpie whois
+
+for COMMAND in mtr traceroute nmap dig ss lsof nc iperf3 http whois; do
+    if ! command -v "$COMMAND" &>/dev/null; then
+        echo "❌ $COMMAND installation failed or is not in PATH"
+        exit 1
     fi
-}
-
-sudo apt-get update
-
-# Reachability + routing
-install_if_missing mtr       mtr-tiny
-install_if_missing traceroute traceroute
-install_if_missing nmap      nmap
-
-# DNS — dig/nslookup, for verifying what system/hosts-dns.sh configured
-install_if_missing dig       bind9-dnsutils
-
-# Sockets / listening ports
-install_if_missing ss        iproute2
-install_if_missing lsof      lsof
-install_if_missing nc        netcat-openbsd
-
-# Throughput testing
-install_if_missing iperf3    iperf3
-
-# HTTP clients
-install_if_missing httpie    httpie
-install_if_missing whois     whois
+done
 
 echo ""
 echo "✅ Network tools installed!"

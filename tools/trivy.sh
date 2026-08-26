@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Trivy (container + filesystem vulnerability scanner)..."
 
@@ -19,29 +22,19 @@ if command -v trivy &>/dev/null; then
     exit 0
 fi
 
-ARCH=$(dpkg --print-architecture)
-KEYRING=/etc/apt/keyrings/trivy.gpg
-SOURCE_LIST=/etc/apt/sources.list.d/trivy.list
+echo "📦 Adding Aqua Security's Trivy RPM repository..."
+dnf_install ca-certificates curl gnupg2
 
-echo "📦 Adding Trivy apt repository..."
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL --retry 3 --retry-all-errors https://get.trivy.dev/deb/public.key \
-    | sudo gpg --dearmor --yes -o "$KEYRING"
-sudo chmod a+r "$KEYRING"
-
-# Deliberately the release-independent `generic` suite rather than the Ubuntu
-# codename: Trivy publishes codename suites too, but not for every release
-# (25.04/plucky has none), and pointing apt at a suite upstream never published
-# breaks every later `apt-get update` with a 404 — exactly the failure that the
-# ondrej/php PPA caused in dev/php.sh.
-echo "deb [arch=${ARCH} signed-by=${KEYRING}] https://get.trivy.dev/deb generic main" \
-    | sudo tee "$SOURCE_LIST" > /dev/null
-
-sudo apt-get update
-sudo apt-get install -y trivy
+# Aqua signs every RPM with this key, but its repository does not publish a
+# repomd.xml.asc file. Keep package signature checking enabled while disabling
+# only repository-metadata signature checking for this upstream repository.
+# shellcheck disable=SC2016
+repo_add trivy \
+    'https://aquasecurity.github.io/trivy-repo/rpm/releases/$basearch/' \
+    'https://aquasecurity.github.io/trivy-repo/rpm/public.key' \
+    '825AD9036F7C850E6A6FED4935B8ACA44FD9CA9F' \
+    0
+dnf_install trivy
 
 if ! command -v trivy &>/dev/null; then
     echo "❌ Trivy installation failed or is not in PATH"

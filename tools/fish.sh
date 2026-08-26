@@ -11,6 +11,9 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing Fish shell..."
 
@@ -18,19 +21,19 @@ declare -a REQUIRED_PACKAGES=()
 command -v fish &>/dev/null || REQUIRED_PACKAGES+=(fish)
 command -v curl &>/dev/null || REQUIRED_PACKAGES+=(curl)
 command -v git &>/dev/null || REQUIRED_PACKAGES+=(git)
+command -v chsh &>/dev/null || REQUIRED_PACKAGES+=(util-linux-user)
 
 if [ "${#REQUIRED_PACKAGES[@]}" -gt 0 ]; then
     echo "📦 Installing Fish prerequisites: ${REQUIRED_PACKAGES[*]}..."
-    sudo apt-get update
-    sudo apt-get install -y "${REQUIRED_PACKAGES[@]}"
+    dnf_install "${REQUIRED_PACKAGES[@]}"
 fi
 echo "✅ Fish installed ($(fish --version))"
 
 FISH_PATH=$(command -v fish)
 USERNAME="${USER:-$(id -un)}"
 
-# Fish installed from apt is normally registered already. Keep this guard for
-# custom packages and older Ubuntu releases where that may not be true.
+# Fedora's Fish package normally registers its login-shell path already. Keep
+# this guard so the script also handles a custom but valid Fish installation.
 if ! grep -qxF "$FISH_PATH" /etc/shells; then
     echo "🐚 Registering Fish in /etc/shells..."
     printf '%s\n' "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null

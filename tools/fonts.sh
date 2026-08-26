@@ -11,18 +11,17 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
 # shellcheck source=lib/github.bash
 source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
 echo "🚀 Installing developer Nerd Fonts..."
 
-# fontconfig provides fc-cache / fc-list (missing on minimal Ubuntu)
-if ! command -v fc-cache &>/dev/null; then
-    echo "📦 Installing fontconfig..."
-    sudo apt-get update
-    sudo apt-get install -y fontconfig
-fi
+# fontconfig provides fc-cache/fc-list; xz and tar unpack Nerd Fonts archives.
+dnf_install curl fontconfig tar xz
 
 FONTS_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONTS_DIR"
@@ -48,7 +47,8 @@ install_nerd_font() {
         tmp=$(mktemp -d)
         trap 'rm -rf "$tmp"' EXIT
 
-        wget --tries=3 --waitretry=2 -nv --show-progress -O "$tmp/${name}.tar.xz" "$url"
+        curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors \
+            -o "$tmp/${name}.tar.xz" "$url"
         mkdir -p "$tmp/extracted"
         tar -xJf "$tmp/${name}.tar.xz" -C "$tmp/extracted" \
             --wildcards --no-anchored '*.[ot]tf'

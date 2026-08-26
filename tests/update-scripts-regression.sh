@@ -155,8 +155,6 @@ run_mocked_tool_update update-goose.sh goose 'goose update' '.local/bin'
 run_mocked_tool_update update-github-copilot.sh copilot 'copilot update' '.local/bin'
 run_mocked_tool_update update-cursor-agent.sh cursor-agent 'cursor-agent update' '.local/bin'
 run_mocked_tool_update update-huggingface-cli.sh hf 'hf update' '.local/bin'
-run_mocked_tool_update update-chezmoi.sh chezmoi 'chezmoi upgrade' '.local/bin'
-run_mocked_tool_update update-atuin.sh atuin 'atuin update' '.atuin/bin'
 run_mocked_tool_update update-codex.sh codex 'codex update' '.local/bin'
 run_mocked_tool_update update-opencode.sh opencode 'opencode upgrade --method curl' '.opencode/bin'
 
@@ -552,25 +550,6 @@ chmod +x "$omz_case/bin/git"
 assert_log_line "zsh $omz_case/home/.oh-my-zsh/tools/upgrade.sh -v silent" \
     "$omz_case/invocations.log"
 
-# Standalone binary updaters must reject binaries outside the repository's
-# known installation layouts before invoking self-update.
-for ownership_tool in restic rclone; do
-    ownership_case="$TMP/mock-$ownership_tool-ownership"
-    mkdir -p "$ownership_case/home" "$ownership_case/bin"
-    ln -s "$(command -v dirname)" "$ownership_case/bin/dirname"
-    ln -s "$(command -v readlink)" "$ownership_case/bin/readlink"
-    make_logging_tool "$ownership_tool" "$ownership_case/bin"
-    : >"$ownership_case/invocations.log"
-    /usr/bin/env -i HOME="$ownership_case/home" PATH="$ownership_case/bin" \
-        UPDATE_TEST_LOG="$ownership_case/invocations.log" \
-        /bin/bash "$UPDATES_DIR/update-$ownership_tool.sh" \
-        >"$ownership_case/output.log" 2>&1 \
-        || fail "updates/update-$ownership_tool.sh failed its ownership rejection fixture"
-    if grep -Eq 'self-update|selfupdate' "$ownership_case/invocations.log"; then
-        fail "update-$ownership_tool invoked self-update for an unmanaged binary"
-    fi
-done
-
 # Source updaters must not pull an arbitrary repository merely because it sits
 # at the configured path.
 source_owner_case="$TMP/mock-source-ownership"
@@ -696,9 +675,18 @@ grep -Fq "\"\${AWS_DOWNLOAD_URL}.sig\"" "$aws_source" \
 
 starship_case="$TMP/mock-starship-release"
 mkdir -p "$starship_case/home/.local/bin" "$starship_case/bin"
-for command_name in awk cat dirname gzip head install mktemp mv rm sha256sum tar uname; do
+for command_name in awk cat dirname gzip head install mktemp mv rm sha256sum tar; do
     ln -s "$(command -v "$command_name")" "$starship_case/bin/$command_name"
 done
+cat >"$starship_case/bin/rpm" <<'RPM_STUB'
+#!/bin/bash
+if [[ "${1:-}" == '--eval' ]]; then
+    echo x86_64
+    exit 0
+fi
+exit 1
+RPM_STUB
+chmod +x "$starship_case/bin/rpm"
 make_logging_tool starship "$starship_case/home/.local/bin"
 cat >"$starship_case/bin/curl" <<'CURL_STUB'
 #!/bin/bash
@@ -960,30 +948,28 @@ assert_log_line 'sudo dnf -q upgrade -y --refresh code' \
 # using private force flags rather than running mutable remote scripts.
 grep -Fq 'FPI_LAZYDOCKER_UPDATE=1' "$UPDATES_DIR/update-lazydocker.sh" \
     || fail "update-lazydocker does not delegate to the verified installer"
-grep -Fq 'FPI_JUST_UPDATE=1' "$UPDATES_DIR/update-just.sh" \
-    || fail "update-just does not delegate to the verified installer"
+grep -Fq 'FPI_ATUIN_UPDATE=1' "$UPDATES_DIR/update-atuin.sh" \
+    || fail "update-atuin does not delegate to the verified installer"
 grep -Fq 'FPI_NVIM_UPDATE=1' "$UPDATES_DIR/update-nvim.sh" \
     || fail "update-nvim does not delegate to the rollback-capable installer"
 
-for verified_release_updater in ctop gitleaks yq; do
-    verified_source="$UPDATES_DIR/update-${verified_release_updater}.sh"
-    grep -Fq 'sha256sum --check --quiet' "$verified_source" \
-        || fail "update-$verified_release_updater does not verify its release checksum"
-    grep -Fq 'mktemp' "$verified_source" \
-        || fail "update-$verified_release_updater does not create a collision-safe stage"
-    grep -Fq 'STAGED' "$verified_source" \
-        || fail "update-$verified_release_updater does not validate a staged binary"
-    grep -Fq 'mv -f --' "$verified_source" \
-        || fail "update-$verified_release_updater does not atomically activate its staged binary"
-done
+verified_source="$UPDATES_DIR/update-ctop.sh"
+grep -Fq 'sha256sum --check --quiet' "$verified_source" \
+    || fail "update-ctop does not verify its release checksum"
+grep -Fq 'mktemp' "$verified_source" \
+    || fail "update-ctop does not create a collision-safe stage"
+grep -Fq 'STAGED' "$verified_source" \
+    || fail "update-ctop does not validate a staged binary"
+grep -Fq 'mv -f --' "$verified_source" \
+    || fail "update-ctop does not atomically activate its staged binary"
 
-for delegated_installer in just lazydocker; do
+for delegated_installer in atuin lazydocker; do
     delegated_source="$REPO_ROOT/tools/${delegated_installer}.sh"
     grep -Fq 'stage.XXXXXX' "$delegated_source" \
         || fail "$delegated_installer installer does not create a sibling update stage"
     grep -Fq 'STAGE_VERSION=' "$delegated_source" \
         || fail "$delegated_installer installer does not validate the staged binary"
-    grep -Fq "sudo mv -f \"\$STAGE\"" "$delegated_source" \
+    grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?mv -f ' "$delegated_source" \
         || fail "$delegated_installer installer does not atomically activate its staged binary"
 done
 
