@@ -94,7 +94,17 @@ for updater in "${EXPECTED_UPDATERS[@]}"; do
     script="$UPDATES_DIR/$updater"
     [[ -f "$script" ]] || fail "missing updater: updates/$updater"
     bash -n "$script" || fail "updater does not parse: updates/$updater"
+    effective="$(sed -E 's/[[:space:]]+#.*$//' "$script")"
+    if grep -En '\bapt(-get|-cache)?\b|\bdpkg(-query)?\b|\.deb\b|/etc/apt|add-apt-repository|snap install' \
+        <<< "$effective"; then
+        fail "updates/$updater retains a Debian/Ubuntu package path"
+    fi
 done
+
+grep -Fq "AWS_ARCH=\$(rpm_arch)" "$UPDATES_DIR/update-aws-cli.sh" \
+    || fail "update-aws-cli does not use shared RPM architecture mapping"
+grep -Fq "ARCH=\$(release_arch)" "$UPDATES_DIR/update-go.sh" \
+    || fail "update-go does not use shared release architecture mapping"
 
 for updater in "${INDIVIDUAL_UPDATERS[@]}"; do
     output="$TMP/${updater%.sh}.skip.log"
@@ -149,7 +159,6 @@ run_mocked_tool_update() {
 run_mocked_tool_update update-deno.sh deno 'deno upgrade --quiet' '.deno/bin'
 run_mocked_tool_update update-bun.sh bun 'bun upgrade' '.bun/bin'
 run_mocked_tool_update update-rust.sh rustup 'rustup update' '.cargo/bin'
-run_mocked_tool_update update-flutter.sh flutter 'flutter upgrade' 'development/flutter/bin'
 run_mocked_tool_update update-aider.sh aider 'aider --upgrade' '.local/bin'
 run_mocked_tool_update update-goose.sh goose 'goose update' '.local/bin'
 run_mocked_tool_update update-github-copilot.sh copilot 'copilot update' '.local/bin'
@@ -157,6 +166,142 @@ run_mocked_tool_update update-cursor-agent.sh cursor-agent 'cursor-agent update'
 run_mocked_tool_update update-huggingface-cli.sh hf 'hf update' '.local/bin'
 run_mocked_tool_update update-codex.sh codex 'codex update' '.local/bin'
 run_mocked_tool_update update-opencode.sh opencode 'opencode upgrade --method curl' '.opencode/bin'
+
+# Flutter is a Git checkout in this project. Its native updater may run only
+# after the configured SDK path is proven to use the official clean checkout.
+flutter_case="$TMP/mock-flutter-owned"
+flutter_root="$flutter_case/home/development/flutter"
+mkdir -p "$flutter_root/bin" "$flutter_root/.git" "$flutter_case/bin"
+ln -s "$(command -v dirname)" "$flutter_case/bin/dirname"
+make_logging_tool flutter "$flutter_root/bin"
+cat >"$flutter_case/bin/git" <<'GIT_STUB'
+#!/bin/bash
+printf 'git %s\n' "$*" >>"$UPDATE_TEST_LOG"
+case "$*" in
+    *'config --get remote.origin.url'*)
+        echo "${UPDATE_TEST_FLUTTER_REMOTE:-https://github.com/flutter/flutter.git}"
+        ;;
+    *'status --porcelain'*)
+        [[ "${UPDATE_TEST_FLUTTER_DIRTY:-0}" == 1 ]] && echo ' M packages/flutter_tools'
+        ;;
+esac
+GIT_STUB
+chmod +x "$flutter_case/bin/git"
+: >"$flutter_case/invocations.log"
+/usr/bin/env -i HOME="$flutter_case/home" PATH="$flutter_case/bin" \
+    UPDATE_TEST_LOG="$flutter_case/invocations.log" \
+    /bin/bash "$UPDATES_DIR/update-flutter.sh" >"$flutter_case/output.log" 2>&1 \
+    || fail "updates/update-flutter.sh failed against the official clean checkout fixture"
+assert_log_line 'flutter upgrade' "$flutter_case/invocations.log"
+
+: >"$flutter_case/invocations.log"
+if /usr/bin/env -i HOME="$flutter_case/home" PATH="$flutter_case/bin" \
+    UPDATE_TEST_LOG="$flutter_case/invocations.log" UPDATE_TEST_FLUTTER_DIRTY=1 \
+    /bin/bash "$UPDATES_DIR/update-flutter.sh" >"$flutter_case/dirty.log" 2>&1; then
+    fail "update-flutter accepted a dirty SDK checkout"
+fi
+if grep -Fq 'flutter upgrade' "$flutter_case/invocations.log"; then
+    fail "update-flutter invoked Flutter before rejecting a dirty SDK checkout"
+fi
+
+: >"$flutter_case/invocations.log"
+/usr/bin/env -i HOME="$flutter_case/home" PATH="$flutter_case/bin" \
+    UPDATE_TEST_LOG="$flutter_case/invocations.log" \
+    UPDATE_TEST_FLUTTER_REMOTE='https://example.invalid/flutter.git' \
+    /bin/bash "$UPDATES_DIR/update-flutter.sh" >"$flutter_case/untrusted.log" 2>&1 \
+    || fail "update-flutter did not skip an untrusted SDK checkout safely"
+if grep -Fq 'flutter upgrade' "$flutter_case/invocations.log"; then
+    fail "update-flutter invoked Flutter from an untrusted SDK checkout"
+fi
+
+# Composer self-update is valid only for the active, non-RPM PHAR installed by
+# this project. A root-owned PHAR must use an isolated root home.
+composer_case="$TMP/mock-composer-owned"
+mkdir -p "$composer_case/home" "$composer_case/bin"
+ln -s "$(command -v dirname)" "$composer_case/bin/dirname"
+make_logging_tool composer "$composer_case/bin"
+chmod 0555 "$composer_case/bin/composer"
+cat >"$composer_case/bin/rpm" <<'RPM_STUB'
+#!/bin/bash
+[[ "${UPDATE_TEST_RPM_OWNED:-0}" == 1 ]]
+RPM_STUB
+cat >"$composer_case/bin/sudo" <<'SUDO_STUB'
+#!/bin/bash
+printf 'sudo %s\n' "$*" >>"$UPDATE_TEST_LOG"
+SUDO_STUB
+chmod +x "$composer_case/bin/rpm" "$composer_case/bin/sudo"
+: >"$composer_case/invocations.log"
+/usr/bin/env -i HOME="$composer_case/home" PATH="$composer_case/bin:/usr/bin:/bin" \
+    _FPI_COMPOSER_BIN="$composer_case/bin/composer" \
+    UPDATE_TEST_LOG="$composer_case/invocations.log" \
+    /bin/bash "$UPDATES_DIR/update-composer.sh" >"$composer_case/output.log" 2>&1 \
+    || fail "updates/update-composer.sh failed against the standalone PHAR fixture"
+assert_log_line "sudo -H $composer_case/bin/composer self-update --no-interaction" \
+    "$composer_case/invocations.log"
+
+: >"$composer_case/invocations.log"
+/usr/bin/env -i HOME="$composer_case/home" PATH="$composer_case/bin:/usr/bin:/bin" \
+    _FPI_COMPOSER_BIN="$composer_case/bin/composer" UPDATE_TEST_RPM_OWNED=1 \
+    UPDATE_TEST_LOG="$composer_case/invocations.log" \
+    /bin/bash "$UPDATES_DIR/update-composer.sh" >"$composer_case/rpm-owned.log" 2>&1 \
+    || fail "update-composer did not skip an RPM-owned executable safely"
+if grep -Fq 'self-update' "$composer_case/invocations.log"; then
+    fail "update-composer self-updated an RPM-owned executable"
+fi
+
+# The Git-owned language managers update only clean checkouts from their exact
+# official remotes. Exercise pyenv plus both rbenv repositories offline.
+source_case="$TMP/mock-language-manager-sources"
+pyenv_root="$source_case/home/.pyenv"
+rbenv_root="$source_case/home/.rbenv"
+ruby_build_root="$rbenv_root/plugins/ruby-build"
+mkdir -p "$pyenv_root/.git" "$rbenv_root/.git" "$ruby_build_root/.git" \
+    "$source_case/bin"
+ln -s "$(command -v dirname)" "$source_case/bin/dirname"
+ln -s "$(command -v basename)" "$source_case/bin/basename"
+cat >"$source_case/bin/git" <<'GIT_STUB'
+#!/bin/bash
+printf 'git %s\n' "$*" >>"$UPDATE_TEST_LOG"
+case "$*" in
+    *'config --get remote.origin.url'*)
+        case "$*" in
+            *'/plugins/ruby-build '*) echo 'https://github.com/rbenv/ruby-build.git' ;;
+            *'/.rbenv '*) echo 'https://github.com/rbenv/rbenv.git' ;;
+            *) echo 'https://github.com/pyenv/pyenv.git' ;;
+        esac
+        ;;
+    *'status --porcelain'*)
+        [[ "${UPDATE_TEST_SOURCE_DIRTY:-0}" == 1 ]] && echo ' M README.md'
+        ;;
+    *'rev-parse --short HEAD'*) echo 'deadbee' ;;
+esac
+GIT_STUB
+chmod +x "$source_case/bin/git"
+
+: >"$source_case/invocations.log"
+/usr/bin/env -i HOME="$source_case/home" PATH="$source_case/bin" \
+    UPDATE_TEST_LOG="$source_case/invocations.log" \
+    /bin/bash "$UPDATES_DIR/update-pyenv.sh" >"$source_case/pyenv.log" 2>&1 \
+    || fail "updates/update-pyenv.sh failed against the official clean checkout fixture"
+assert_log_line "git -C $pyenv_root pull --ff-only" "$source_case/invocations.log"
+
+: >"$source_case/invocations.log"
+/usr/bin/env -i HOME="$source_case/home" PATH="$source_case/bin" \
+    UPDATE_TEST_LOG="$source_case/invocations.log" \
+    /bin/bash "$UPDATES_DIR/update-rbenv.sh" >"$source_case/rbenv.log" 2>&1 \
+    || fail "updates/update-rbenv.sh failed against the official clean checkout fixtures"
+assert_log_line "git -C $rbenv_root pull --ff-only" "$source_case/invocations.log"
+assert_log_line "git -C $ruby_build_root pull --ff-only" "$source_case/invocations.log"
+
+: >"$source_case/invocations.log"
+if /usr/bin/env -i HOME="$source_case/home" PATH="$source_case/bin" \
+    UPDATE_TEST_LOG="$source_case/invocations.log" UPDATE_TEST_SOURCE_DIRTY=1 \
+    /bin/bash "$UPDATES_DIR/update-pyenv.sh" >"$source_case/pyenv-dirty.log" 2>&1; then
+    fail "update-pyenv accepted a dirty source checkout"
+fi
+if grep -Fq 'pull --ff-only' "$source_case/invocations.log"; then
+    fail "update-pyenv pulled before rejecting a dirty source checkout"
+fi
 
 # A repo-configured custom OpenCode directory must reach the child updater even
 # though load_config intentionally does not export config-only values globally.

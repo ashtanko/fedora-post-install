@@ -12,7 +12,7 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
-COMPOSER_BIN="/usr/local/bin/composer"
+COMPOSER_BIN="${_FPI_COMPOSER_BIN:-/usr/local/bin/composer}"
 ACTIVE_COMPOSER="$(command -v composer 2>/dev/null || true)"
 if [ ! -x "$COMPOSER_BIN" ]; then
     echo "⏭️  Skipping Composer update: the repository-managed standalone PHAR was not found at $COMPOSER_BIN."
@@ -34,7 +34,7 @@ echo "🚀 Updating Composer (${BEFORE_VERSION:-version unknown})..."
 if [ -w "$COMPOSER_BIN" ]; then
     "$COMPOSER_BIN" self-update --no-interaction
 else
-    sudo "$COMPOSER_BIN" self-update --no-interaction
+    sudo -H "$COMPOSER_BIN" self-update --no-interaction
 fi
 AFTER_VERSION=$("$COMPOSER_BIN" --version 2>/dev/null | head -1 || true)
 echo "✅ Composer updated: ${BEFORE_VERSION:-unknown} → ${AFTER_VERSION:-unknown}"

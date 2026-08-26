@@ -170,13 +170,13 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-claude.sh](../updates/update-claude.sh) | Upgrade Claude Code from Anthropic's configured RPM channel, or from npm when the active executable is npm-owned |
 | [update-cline.sh](../updates/update-cline.sh) | Update the active global npm installation of Cline CLI |
 | [update-codex.sh](../updates/update-codex.sh) | Run native `codex update` for the standalone CLI installed by this project |
-| [update-composer.sh](../updates/update-composer.sh) | Self-update the standalone Composer PHAR installed by this project |
+| [update-composer.sh](../updates/update-composer.sh) | Self-update the active standalone, non-RPM Composer PHAR installed by this project |
 | [update-ctop.sh](../updates/update-ctop.sh) | Atomically install the checksum-verified latest ctop release |
 | [update-cursor-agent.sh](../updates/update-cursor-agent.sh) | Update the repository-managed Cursor Agent CLI |
 | [update-deno.sh](../updates/update-deno.sh) | Upgrade the Deno binary installed under `$DENO_INSTALL` |
 | [update-dive.sh](../updates/update-dive.sh) | Install the checksum-verified latest official dive RPM release |
 | [update-fisher.sh](../updates/update-fisher.sh) | Update Fisher and its managed Fish plugins |
-| [update-flutter.sh](../updates/update-flutter.sh) | Upgrade Flutter on its current release channel |
+| [update-flutter.sh](../updates/update-flutter.sh) | Upgrade Flutter on its current release channel from a clean official Git checkout |
 | [update-gemini.sh](../updates/update-gemini.sh) | Install the latest stable Gemini CLI into its existing global npm prefix |
 | [update-github-copilot.sh](../updates/update-github-copilot.sh) | Update the repository-managed GitHub Copilot CLI |
 | [update-go.sh](../updates/update-go.sh) | Safely replace the managed SDK with the checksum-verified latest stable Go release |

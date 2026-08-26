@@ -19,6 +19,10 @@ if [ ! -d "$RBENV_DIR/.git" ] || [ ! -d "$RUBY_BUILD_DIR/.git" ]; then
     echo "⏭️  Skipping rbenv update: the repository-managed rbenv and ruby-build checkouts were not both found under $RBENV_DIR."
     exit 0
 fi
+if ! command -v git >/dev/null 2>&1; then
+    echo "❌ git is required to verify and update rbenv" >&2
+    exit 1
+fi
 
 RBENV_REMOTE=$(git -C "$RBENV_DIR" config --get remote.origin.url 2>/dev/null || true)
 RUBY_BUILD_REMOTE=$(git -C "$RUBY_BUILD_DIR" config --get remote.origin.url 2>/dev/null || true)

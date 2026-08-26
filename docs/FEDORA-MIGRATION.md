@@ -13,7 +13,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
 | 3 — installer ports | Complete | All ten installer/manual-script categories are ported and audited for Fedora |
-| 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
+| 4 — updater ports | Complete | All 37 retained updaters are audited; RPM-owned tools use targeted DNF updates, while standalone and source-owned tools verify provenance before native or verified replacement updates |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
 
@@ -197,33 +197,34 @@ until its implementation and tests have moved to Fedora.
 
 `setup.sh` and `install.sh` now use the Fedora identity, paths, configuration,
 and release artifacts. Their remaining distro behavior will be audited with the
-installer and test phases. The 44 updater scripts are tracked below so Phase 4
-can update them in lockstep with their installers.
+installer and test phases. The original 44 updater scripts were audited; seven
+Fedora-package-owned wrappers were removed, leaving the 37 updaters tracked
+below.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
 | `updates/update-aider.sh` | neutral | Complete; tool-owned updater has no distribution package path |
-| `updates/update-all.sh` | port | Pending; orchestration, output, and Fedora ownership audit |
+| `updates/update-all.sh` | port | Complete; validates the catalog, runs only its listed updaters, continues after failures, and reports a combined result |
 | `updates/update-android-studio.sh` | replace | Complete; delegates a managed installation to the checksum-verifying transactional tarball installer |
 | `updates/update-antigravity.sh` | replace | Complete; verifies RPM ownership and performs a targeted DNF refresh/upgrade |
 | `updates/update-atuin.sh` | port | Complete; delegates only user-owned Atuin binaries to the checksum-verifying installer |
-| `updates/update-aws-cli.sh` | port | Pending; replace Debian package ownership checks |
-| `updates/update-bun.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-aws-cli.sh` | port | Complete; selects RPM architecture and verifies AWS's fingerprint-pinned detached signature before running the v2 installer with `--update` |
+| `updates/update-bun.sh` | neutral | Complete; updates only the Bun binary under the configured user-local installation through `bun upgrade` |
 | `updates/update-chezmoi.sh` | delete | Complete; removed because Fedora's package and DNF now own chezmoi updates |
 | `updates/update-claude.sh` | replace | Complete; upgrades the owning `claude-code` RPM or verified global npm installation |
 | `updates/update-cline.sh` | neutral | Complete; npm-owned updater has no distribution package path |
 | `updates/update-codex.sh` | neutral | Complete; tool-owned updater has no distribution package path |
-| `updates/update-composer.sh` | port | Pending; translate packaged prerequisites/ownership checks |
+| `updates/update-composer.sh` | port | Complete; self-updates only the active standalone, non-RPM Composer PHAR and preserves Composer's home when privilege is required |
 | `updates/update-ctop.sh` | port | Complete; validates standalone ownership and uses shared Fedora release architecture mapping |
 | `updates/update-cursor-agent.sh` | neutral | Complete; tool-owned updater has no distribution package path |
-| `updates/update-deno.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-deno.sh` | neutral | Complete; updates only the Deno binary under the configured user-local installation through `deno upgrade` |
 | `updates/update-dive.sh` | replace | Complete; validates RPM ownership and installs the checksum-verified official RPM release |
 | `updates/update-fisher.sh` | neutral | Complete; tool-owned updater has no distribution package path |
-| `updates/update-flutter.sh` | neutral | Audit pending; tool-owned updater |
+| `updates/update-flutter.sh` | neutral | Complete; runs Flutter's native upgrade only from a clean checkout with the exact official Git remote |
 | `updates/update-gemini.sh` | neutral | Complete; verifies npm ownership before updating the active global prefix |
 | `updates/update-github-copilot.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-gitleaks.sh` | delete | Complete; removed because Fedora's package and DNF now own gitleaks updates |
-| `updates/update-go.sh` | port | Pending; replace Debian architecture detection |
+| `updates/update-go.sh` | port | Complete; uses shared release architecture, official checksums, and transactional replacement with rollback while respecting version pins |
 | `updates/update-goose.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-huggingface-cli.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-just.sh` | delete | Complete; removed because Fedora's package and DNF now own just updates |
@@ -231,16 +232,16 @@ can update them in lockstep with their installers.
 | `updates/update-llama-cpp.sh` | neutral | Complete; source-owned update/build path has no distribution package operation |
 | `updates/update-mcp-inspector.sh` | neutral | Complete; verifies npm ownership before updating the active global prefix |
 | `updates/update-mistral-vibe.sh` | neutral | Complete; Python tool ownership is verified before upgrade |
-| `updates/update-node.sh` | neutral | Audit pending; NVM-owned updater |
+| `updates/update-node.sh` | neutral | Complete; verifies a clean official NVM checkout, selects the latest upstream tag, and installs the latest Node.js LTS |
 | `updates/update-nvim.sh` | delete | Complete; removed because Fedora's current Neovim package and DNF now own updates |
 | `updates/update-oh-my-zsh.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-opencode.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-pipx-tools.sh` | neutral | Complete; upgrades only configured applications already owned by pipx |
-| `updates/update-pyenv.sh` | neutral | Audit pending; Git-owned updater |
-| `updates/update-rbenv.sh` | neutral | Audit pending; Git-owned updater |
+| `updates/update-pyenv.sh` | neutral | Complete; fast-forwards only a clean checkout with pyenv's exact official remote |
+| `updates/update-rbenv.sh` | neutral | Complete; fast-forwards only clean rbenv and ruby-build checkouts with their exact official remotes |
 | `updates/update-rclone.sh` | delete | Complete; removed because Fedora's package and DNF now own rclone updates |
 | `updates/update-restic.sh` | delete | Complete; removed because Fedora's package and DNF now own restic updates |
-| `updates/update-rust.sh` | neutral | Audit pending; rustup-owned updater |
+| `updates/update-rust.sh` | neutral | Complete; invokes the rustup binary from the configured user-owned Cargo installation |
 | `updates/update-starship.sh` | port | Complete; retains checksum-verified atomic replacement and uses shared RPM architecture mapping |
 | `updates/update-tpm.sh` | neutral | Complete; Git-owned updater has no distribution package path |
 | `updates/update-vscode-extensions.sh` | port | Complete; updates extensions only when the active CLI belongs to the `code` RPM |
@@ -326,6 +327,27 @@ Phase 3 application references (checked 2026-08-26):
   <https://docs.ollama.com/linux>. Hugging Face documents its standalone CLI
   installer and `hf` update behavior:
   <https://huggingface.co/docs/huggingface_hub/installation>.
+
+Phase 4 updater references (checked 2026-08-26):
+
+- AWS documents Fedora support, x86_64/aarch64 installers, detached-signature
+  verification, and signing-key fingerprint
+  `FB5DB77FD5C118B80511ADA8A6310ACC4672475C`:
+  <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>.
+- Bun, Deno, Flutter, Composer, and rustup document their native update commands:
+  <https://bun.com/docs/installation>,
+  <https://docs.deno.com/runtime/reference/cli/upgrade/>,
+  <https://docs.flutter.dev/install/upgrade>,
+  <https://getcomposer.org/doc/03-cli.md#self-update-selfupdate>, and
+  <https://rust-lang.github.io/rustup/basics.html#keeping-rust-up-to-date>.
+- NVM, pyenv, rbenv, and ruby-build publish their canonical Git repositories
+  and Git-based update flows:
+  <https://github.com/nvm-sh/nvm/blob/master/README.md>,
+  <https://github.com/pyenv/pyenv/blob/master/README.md>,
+  <https://github.com/rbenv/rbenv/blob/master/README.md>, and
+  <https://github.com/rbenv/ruby-build/blob/master/README.md>.
+- Go publishes stable release archives and SHA-256 checksums through its official
+  download service: <https://go.dev/dl/>.
 
 The current signed `repomd.xml` files used by repositories with metadata
 checking enabled were also verified successfully with `gpgv` against the

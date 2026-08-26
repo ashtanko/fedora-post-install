@@ -17,6 +17,10 @@ if [ ! -d "$PYENV_DIR/.git" ]; then
     echo "⏭️  Skipping pyenv update: the repository-managed checkout was not found at $PYENV_DIR."
     exit 0
 fi
+if ! command -v git >/dev/null 2>&1; then
+    echo "❌ git is required to verify and update pyenv" >&2
+    exit 1
+fi
 PYENV_REMOTE=$(git -C "$PYENV_DIR" config --get remote.origin.url 2>/dev/null || true)
 case "$PYENV_REMOTE" in
     https://github.com/pyenv/pyenv|https://github.com/pyenv/pyenv.git) ;;

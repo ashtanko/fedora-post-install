@@ -26,13 +26,13 @@ bash updates/update-all.sh
 | `update-claude.sh` | Upgrades only the `claude-code` RPM package, or the global `@anthropic-ai/claude-code` npm package when that owns `claude` |
 | `update-cline.sh` | `cline update` for the active global npm installation |
 | `update-codex.sh` | `codex update` for the standalone CLI installed by this project |
-| `update-composer.sh` | `composer self-update --no-interaction` |
+| `update-composer.sh` | Self-updates the active standalone, non-RPM Composer PHAR |
 | `update-ctop.sh` | Atomically installs the checksum-verified latest official release |
 | `update-cursor-agent.sh` | `cursor-agent update` |
 | `update-deno.sh` | `deno upgrade --quiet` |
 | `update-dive.sh` | Installs the checksum-verified latest official release package |
 | `update-fisher.sh` | `fisher update` |
-| `update-flutter.sh` | `flutter upgrade` on the current channel |
+| `update-flutter.sh` | Runs `flutter upgrade` from a clean official Flutter Git checkout |
 | `update-gemini.sh` | Installs the latest stable npm package into the owning global prefix |
 | `update-github-copilot.sh` | `copilot update` |
 | `update-go.sh` | Safely replaces the SDK with the checksum-verified latest stable Go release |
