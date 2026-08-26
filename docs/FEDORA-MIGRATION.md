@@ -12,8 +12,8 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/` and `system/` categories are ported; the other categories remain pending |
-| 4 — updater ports | Not started | Updater ownership and DNF-managed skip decisions still require audit |
+| 3 — installer ports | In progress | The complete `essentials/`, `system/`, and `apps/` categories are ported; the other categories remain pending |
+| 4 — updater ports | In progress | VS Code package and extension updater ownership now uses RPM/DNF; the remaining updater audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
 
@@ -63,13 +63,13 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `apps/bitwarden-cli.sh` | port | Pending; use shared release architecture and Fedora archive prerequisites |
-| `apps/browsers.sh` | port | Pending; use Google's RPM repository and pinned signing key |
-| `apps/flameshot.sh` | port | Pending; install Fedora repository package |
-| `apps/guake.sh` | port | Pending; install Fedora repository package |
-| `apps/postman.sh` | port | Pending; retain official tarball and translate prerequisites |
-| `apps/vscode.sh` | port | Pending; use Microsoft's VS Code yum repository and pinned signing key |
-| `apps/warp.sh` | port | Pending; replace local DEB/APT path with Warp's RPM channel |
+| `apps/bitwarden-cli.sh` | port | Complete; uses Fedora archive prerequisites and rejects non-x86_64 hosts before package changes because the vendor native build remains x86-only |
+| `apps/browsers.sh` | port | Complete; uses Google's x86_64 RPM repository with the exact published primary-key fingerprint |
+| `apps/flameshot.sh` | port | Complete; installs Fedora's `flameshot` package through the shared DNF helper |
+| `apps/guake.sh` | port | Complete; installs Fedora's `guake` package through the shared DNF helper |
+| `apps/postman.sh` | port | Complete; maps RPM architecture to both official Linux archives and activates a validated extraction transactionally without replacing an unknown path |
+| `apps/vscode.sh` | port | Complete; uses Microsoft's VS Code yum repository with the exact published primary-key fingerprint |
+| `apps/warp.sh` | port | Complete; uses Warp's signed RPM channel, which currently publishes both x86_64 and aarch64 packages |
 
 ### `dev/`
 
@@ -243,8 +243,8 @@ can update them in lockstep with their installers.
 | `updates/update-rust.sh` | neutral | Audit pending; rustup-owned updater |
 | `updates/update-starship.sh` | port | Pending; replace Debian architecture detection |
 | `updates/update-tpm.sh` | neutral | Audit pending; Git-owned updater |
-| `updates/update-vscode-extensions.sh` | port | Pending; remove Debian package ownership assumptions |
-| `updates/update-vscode.sh` | port | Pending; DNF-owned install likely moves to `skipped.txt` |
+| `updates/update-vscode-extensions.sh` | port | Complete; updates extensions only when the active CLI belongs to the `code` RPM |
+| `updates/update-vscode.sh` | port | Complete; verifies `code` RPM ownership and performs a targeted DNF refresh/upgrade |
 | `updates/update-yq.sh` | port | Pending; replace Debian architecture detection |
 
 ## Shared package-layer decisions
@@ -273,6 +273,31 @@ Verified references (checked 2026-08-26):
 - Flathub documents the user-scoped remote URL and `--user` install model:
   <https://docs.flathub.org/docs/for-app-authors/submission> and
   <https://docs.flathub.org/docs/for-users/user-vs-system-install>
+
+Phase 3 application references (checked 2026-08-26):
+
+- Google's Linux repository page publishes Chrome's active primary fingerprint
+  `EB4C1BFD4F042F6DDDCCEC917721F63BD38B4796` and its RPM key procedure:
+  <https://www.google.com/linuxrepositories/>. Chrome's Fedora build remains a
+  64-bit RPM: <https://support.google.com/chrome/a/answer/9025926>.
+- Microsoft's current Fedora instructions publish the VS Code yum URL and key:
+  <https://code.visualstudio.com/docs/setup/linux>. The downloaded primary key
+  fingerprint is `BC528686B50D79E339D3721CEB3E94ADBE1229CF`.
+- Warp's current Fedora instructions publish its RPM URL and both x64 and ARM64
+  packages: <https://docs.warp.dev/getting-started/quickstart/installation-and-setup>.
+  The downloaded primary key fingerprint is
+  `0913165C78D5B7A41B42AC657FF7AB39D60F803F`.
+- Bitwarden documents a native Linux x64 build and directs ARM64 users to npm:
+  <https://bitwarden.com/help/cli/>. Postman publishes both Linux x64 and ARM64
+  desktop downloads: <https://www.postman.com/downloads/>.
+- Fedora currently publishes both `guake` and `flameshot`:
+  <https://packages.fedoraproject.org/pkgs/guake/guake/> and
+  <https://packages.fedoraproject.org/pkgs/flameshot/flameshot/>.
+
+All three current `repomd.xml` signatures were also verified successfully with
+`gpgv` against the downloaded pinned keys before enabling `repo_gpgcheck=1`;
+the key files were inspected locally with GnuPG rather than trusting search
+snippets.
 
 No third-party RPM repository URL or fingerprint is accepted into the ledger
 until it is verified against that vendor's current primary documentation.

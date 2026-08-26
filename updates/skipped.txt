@@ -19,12 +19,12 @@ system/sudoers.sh|system configuration task; no independently versioned software
 system/keyboard.sh|keyd is maintained through the enabled alternateved/keyd COPR and DNF
 system/gpg.sh|credential/configuration task; GnuPG is maintained through DNF
 system/ssh.sh|credential/configuration task; OpenSSH clients are maintained through DNF
-apps/browsers.sh|configured browser packages are maintained through their APT repositories
-apps/guake.sh|Ubuntu package is maintained through APT
+apps/browsers.sh|Google Chrome is maintained through its configured RPM repository and DNF
+apps/guake.sh|Fedora package is maintained through DNF
 apps/postman.sh|the application manages its own updates
-apps/warp.sh|vendor package is maintained through its configured APT repository
+apps/warp.sh|vendor RPM package is maintained through its configured repository and DNF
 apps/bitwarden-cli.sh|the standalone CLI has no documented in-place updater; bw update only checks availability
-apps/flameshot.sh|Ubuntu package is maintained through APT
+apps/flameshot.sh|Fedora package is maintained through DNF
 dev/java.sh|configured OpenJDK packages are maintained through APT
 dev/docker.sh|Docker packages are maintained through the configured APT repository
 dev/docker-rootless.sh|configures an existing Docker installation; it does not own a separately updated tool

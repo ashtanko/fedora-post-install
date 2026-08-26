@@ -41,5 +41,5 @@ update-rust.sh|dev/rust.sh|rustup update
 update-starship.sh|tools/starship.sh|install the checksum-verified latest official release asset
 update-tpm.sh|tools/tmux-config.sh|fast-forward the clean TPM checkout
 update-vscode-extensions.sh|ide/vscode-extensions.sh|code --update-extensions
-update-vscode.sh|apps/vscode.sh|targeted Microsoft APT package upgrade
+update-vscode.sh|apps/vscode.sh|targeted Microsoft RPM package upgrade through DNF
 update-yq.sh|tools/yq.sh|install the checksum-verified latest official release

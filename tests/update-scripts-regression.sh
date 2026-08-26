@@ -911,7 +911,7 @@ if grep -Fqx 'antigravity --version' "$antigravity_case/invocations.log"; then
     fail "update-antigravity launched the GUI binary to read a version"
 fi
 
-# VS Code extension maintenance is scoped to the code Debian package and must
+# VS Code extension maintenance is scoped to the code RPM package and must
 # use the CLI's extension-only updater.
 vscode_case="$TMP/mock-vscode-extensions"
 mkdir -p "$vscode_case/home" "$vscode_case/bin"
@@ -919,19 +919,22 @@ for command_name in dirname grep head; do
     ln -s "$(command -v "$command_name")" "$vscode_case/bin/$command_name"
 done
 make_logging_tool code "$vscode_case/bin"
-cat >"$vscode_case/bin/dpkg-query" <<'DPKG_STUB'
+cat >"$vscode_case/bin/rpm" <<'RPM_STUB'
 #!/bin/bash
-case "${1:-}" in
-    -W) echo 'install ok installed' ;;
-    -S) echo "code: ${2:-/usr/bin/code}" ;;
-    *) exit 1 ;;
-esac
-DPKG_STUB
+if [[ "${1:-}" == "-q" && "${2:-}" == "--quiet" && "${3:-}" == "code" ]]; then
+    exit 0
+fi
+if [[ "${1:-}" == "-qf" ]]; then
+    echo code
+    exit 0
+fi
+exit 1
+RPM_STUB
 cat >"$vscode_case/bin/sudo" <<'SUDO_STUB'
 #!/bin/bash
 printf 'sudo %s\n' "$*" >>"$UPDATE_TEST_LOG"
 SUDO_STUB
-chmod +x "$vscode_case/bin/dpkg-query" "$vscode_case/bin/sudo"
+chmod +x "$vscode_case/bin/rpm" "$vscode_case/bin/sudo"
 : >"$vscode_case/invocations.log"
 /usr/bin/env -i HOME="$vscode_case/home" PATH="$vscode_case/bin" \
     UPDATE_TEST_LOG="$vscode_case/invocations.log" \
@@ -945,9 +948,8 @@ assert_log_line 'code --update-extensions' "$vscode_case/invocations.log"
     UPDATE_TEST_LOG="$vscode_case/invocations.log" \
     /bin/bash "$UPDATES_DIR/update-vscode.sh" \
     >"$vscode_case/package-output.log" 2>&1 \
-    || fail "updates/update-vscode.sh failed against the code APT fixture"
-assert_log_line 'sudo apt-get update' "$vscode_case/invocations.log"
-assert_log_line 'sudo apt-get install -y --only-upgrade code' \
+    || fail "updates/update-vscode.sh failed against the code RPM fixture"
+assert_log_line 'sudo dnf -q upgrade -y --refresh code' \
     "$vscode_case/invocations.log"
 
 # Release-replacement wrappers delegate to the checksum-verifying installers

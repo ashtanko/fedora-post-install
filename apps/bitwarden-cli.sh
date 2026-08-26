@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing Bitwarden CLI..."
@@ -22,16 +25,15 @@ if command -v bw &>/dev/null; then
     exit 0
 fi
 
-echo "📦 Ensuring curl + unzip are present..."
-sudo apt-get update
-sudo apt-get install -y curl unzip
-
-ARCH=$(dpkg --print-architecture)
-if [ "$ARCH" != "amd64" ]; then
+ARCH="$(rpm_arch)"
+if [ "$ARCH" != "x86_64" ]; then
     # Bitwarden only publishes an x86_64 Linux CLI build.
     echo "❌ Bitwarden CLI has no official Linux build for architecture: $ARCH"
     exit 1
 fi
+
+echo "📦 Ensuring curl + unzip are present..."
+dnf_install curl unzip
 
 echo "📦 Downloading Bitwarden CLI (official \"latest\" redirect)..."
 TMP=$(mktemp -d)

@@ -42,13 +42,13 @@ GUI applications.
 
 | Script | Purpose |
 |---|---|
-| [browsers.sh](../apps/browsers.sh) | Google Chrome (amd64 only; rejected before apt changes on other architectures) |
-| [guake.sh](../apps/guake.sh) | Guake drop-down terminal |
-| [postman.sh](../apps/postman.sh) | Postman API client — official tarball into `$POSTMAN_INSTALL_DIR`, with `~/.local/bin` symlink and `.desktop` entry |
-| [warp.sh](../apps/warp.sh) | Warp terminal (amd64 repository only; rejected before apt changes otherwise) |
-| [vscode.sh](../apps/vscode.sh) | VS Code via Microsoft apt repo |
-| [bitwarden-cli.sh](../apps/bitwarden-cli.sh) | Bitwarden CLI (`bw`) — official Linux zip, amd64 only |
-| [flameshot.sh](../apps/flameshot.sh) | Flameshot annotated screenshot tool |
+| [browsers.sh](../apps/browsers.sh) | Google Chrome from Google's signed x86_64 RPM repository; other architectures are rejected before repository changes |
+| [guake.sh](../apps/guake.sh) | Guake drop-down terminal from Fedora's repositories |
+| [postman.sh](../apps/postman.sh) | Postman API client — official x86_64/aarch64 tarball transactionally installed into `$POSTMAN_INSTALL_DIR`, with `~/.local/bin` symlink and `.desktop` entry |
+| [warp.sh](../apps/warp.sh) | Warp terminal from its signed x86_64/aarch64 RPM repository |
+| [vscode.sh](../apps/vscode.sh) | VS Code from Microsoft's signed yum repository |
+| [bitwarden-cli.sh](../apps/bitwarden-cli.sh) | Bitwarden CLI (`bw`) — official x86_64 Linux zip |
+| [flameshot.sh](../apps/flameshot.sh) | Flameshot annotated screenshot tool from Fedora's repositories |
 
 ## dev/
 
@@ -201,8 +201,8 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-rust.sh](../updates/update-rust.sh) | Update rustup and installed Rust toolchains |
 | [update-starship.sh](../updates/update-starship.sh) | Atomically install the checksum-verified latest Starship release asset |
 | [update-tpm.sh](../updates/update-tpm.sh) | Fast-forward the clean TPM checkout |
-| [update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | Update extensions through the Debian-packaged VS Code CLI |
-| [update-vscode.sh](../updates/update-vscode.sh) | Upgrade the Microsoft `code` APT package without upgrading unrelated packages |
+| [update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | Update extensions through the RPM-owned VS Code CLI |
+| [update-vscode.sh](../updates/update-vscode.sh) | Upgrade the Microsoft `code` RPM with a targeted DNF transaction |
 | [update-yq.sh](../updates/update-yq.sh) | Install the checksum-verified latest yq release |
 
 The updater set intentionally excludes ordinary APT-managed packages, applications with their own automatic updater, and tools without a documented, ownership-compatible, verifiable scriptable update path. [`updates/skipped.txt`](../updates/skipped.txt) records the audited reason for every catalogued installer without an updater. Individual updaters skip absent or differently managed installations. Source-checkout updaters refuse dirty working trees rather than overwrite local changes.

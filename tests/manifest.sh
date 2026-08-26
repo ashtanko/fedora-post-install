@@ -43,7 +43,7 @@ SCRIPTS=(
   "apps/postman.sh|no|||Postman is a GUI app; needs display"
   "apps/vscode.sh|no|||GUI editor; pulls hundreds of MB for no test value"
   "apps/warp.sh|no|||GUI terminal"
-  "apps/bitwarden-cli.sh|yes||command -v bw && bw --version|"
+  "apps/bitwarden-cli.sh|no|||the Phase 5 container harness is not Fedora yet; architecture and installation policy are covered by apps-regression.sh"
   "apps/flameshot.sh|no|||GUI screenshot tool; needs a display server"
 
   # dev/
@@ -173,8 +173,8 @@ SCRIPTS=(
   "updates/update-rust.sh|no|||requires an existing rustup-managed Rust installation; covered by local regression"
   "updates/update-starship.sh|no|||requires the user-local Starship installation and network access; covered by local regression"
   "updates/update-tpm.sh|no|||requires an existing clean TPM checkout; covered by local regression"
-  "updates/update-vscode-extensions.sh|no|||requires the Debian-packaged VS Code CLI and installed extensions; covered by local regression"
-  "updates/update-vscode.sh|no|||requires the Microsoft APT-packaged VS Code installation; covered by local regression"
+  "updates/update-vscode-extensions.sh|no|||requires the RPM-owned VS Code CLI and installed extensions; covered by local regression"
+  "updates/update-vscode.sh|no|||requires the Microsoft RPM-packaged VS Code installation; covered by local regression"
   "updates/update-yq.sh|no|||requires the standalone yq binary installed by this project; covered by local regression"
 
   # software/

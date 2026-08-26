@@ -17,13 +17,13 @@ if ! CODE_BIN=$(command -v code); then
     exit 0
 fi
 
-if ! dpkg-query -W -f='${Status}' code 2>/dev/null | grep -q 'ok installed'; then
-    echo "⏭️  Visual Studio Code is not managed by the Debian package installed by this project; skipping extension updates."
+if ! rpm -q --quiet code; then
+    echo "⏭️  Visual Studio Code is not managed by the RPM package installed by this project; skipping extension updates."
     exit 0
 fi
 
-if ! dpkg-query -S "$CODE_BIN" 2>/dev/null | grep -q '^code:'; then
-    echo "⏭️  The active Visual Studio Code executable is not owned by the code Debian package; skipping extension updates."
+if [ "$(rpm -qf --queryformat '%{NAME}\n' "$CODE_BIN" 2>/dev/null || true)" != "code" ]; then
+    echo "⏭️  The active Visual Studio Code executable is not owned by the code RPM package; skipping extension updates."
     exit 0
 fi
 

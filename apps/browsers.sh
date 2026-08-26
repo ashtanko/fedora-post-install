@@ -8,36 +8,32 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Setting up browsers..."
 
-ARCH=$(dpkg --print-architecture 2>/dev/null || uname -m)
-if [ "$ARCH" != "amd64" ] && [ "$ARCH" != "x86_64" ]; then
-    echo "❌ Google Chrome's bundled installer supports amd64 only (detected: $ARCH)."
+ARCH="$(rpm_arch)"
+if [ "$ARCH" != "x86_64" ]; then
+    echo "❌ Google's Chrome RPM repository supports x86_64 only (detected: $ARCH)."
     exit 1
 fi
 
 # --- Google Chrome ---
+echo "📦 Configuring Google's signed RPM repository..."
+repo_add google-chrome \
+    "https://dl.google.com/linux/chrome/rpm/stable/x86_64" \
+    "https://dl.google.com/linux/linux_signing_key.pub" \
+    "EB4C1BFD4F042F6DDDCCEC917721F63BD38B4796"
+dnf_install google-chrome-stable
+
 if command -v google-chrome &>/dev/null; then
-    echo "✅ Google Chrome already installed ($(google-chrome --version))"
+    echo "✅ Google Chrome installed ($(google-chrome --version))"
 else
-    echo "📦 Installing Google Chrome..."
-    DEB=$(mktemp --suffix=.deb)
-    trap 'rm -f "$DEB"' EXIT
-
-    wget --tries=3 --waitretry=2 -nv --show-progress -O "$DEB" \
-        "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-
-    sudo apt update
-    sudo apt install -y "$DEB"
-
-    if command -v google-chrome &>/dev/null; then
-        echo "✅ Google Chrome installed ($(google-chrome --version))"
-    else
-        echo "❌ Chrome installation failed"
-        exit 1
-    fi
+    echo "❌ Chrome installation failed"
+    exit 1
 fi

@@ -17,13 +17,13 @@ if ! CODE_BIN=$(command -v code); then
     exit 0
 fi
 
-if ! dpkg-query -W -f='${Status}' code 2>/dev/null | grep -q 'ok installed'; then
-    echo "⏭️  Visual Studio Code is not managed by the Microsoft APT package installed by this project; skipping update."
+if ! rpm -q --quiet code; then
+    echo "⏭️  Visual Studio Code is not managed by the Microsoft RPM package installed by this project; skipping update."
     exit 0
 fi
 
-if ! dpkg-query -S "$CODE_BIN" 2>/dev/null | grep -q '^code:'; then
-    echo "⏭️  The active code executable is not owned by the code APT package; skipping update."
+if [ "$(rpm -qf --queryformat '%{NAME}\n' "$CODE_BIN" 2>/dev/null || true)" != "code" ]; then
+    echo "⏭️  The active code executable is not owned by the code RPM package; skipping update."
     exit 0
 fi
 
@@ -31,8 +31,7 @@ BEFORE_VERSION=$("$CODE_BIN" --version 2>/dev/null | head -1 || true)
 echo "🚀 Updating Visual Studio Code..."
 echo "   Before: ${BEFORE_VERSION:-version unknown}"
 
-sudo apt-get update
-sudo apt-get install -y --only-upgrade code
+sudo dnf -q upgrade -y --refresh code
 
 AFTER_VERSION=$("$CODE_BIN" --version 2>/dev/null | head -1 || true)
 echo "✅ Visual Studio Code update complete"

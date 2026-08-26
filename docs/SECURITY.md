@@ -92,7 +92,17 @@ To audit:
 grep -nE 'NVM_DIR|PYENV|cargo|GPG_TTY|ssh-agent|GO_INSTALL_DIR|/usr/local/go' ~/.zshrc ~/.bashrc
 ```
 
-## APT keyring handling
+## RPM repository key handling
+
+Fedora repository installers use `lib/pkg.bash` to download each vendor key,
+require an exact pinned primary-key fingerprint, and only then install/import
+the key. Generated repository files use HTTPS and enable both RPM package
+signature checking (`gpgcheck=1`) and repository metadata signature checking
+(`repo_gpgcheck=1`). Google Chrome, VS Code, and Warp each use a separate key
+file under `/etc/pki/rpm-gpg/`; a mismatched or multi-primary key is rejected
+before repository state changes.
+
+## APT keyring handling (pending categories)
 
 Scripts that add a third-party apt repository follow the modern keyring pattern — they do **not** trust keys globally:
 

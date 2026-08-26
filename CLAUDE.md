@@ -69,13 +69,13 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### apps/
 | Script | Purpose |
 |---|---|
-| `browsers.sh` | Google Chrome |
-| `guake.sh` | Guake drop-down terminal |
-| `postman.sh` | Postman API client — official tarball into `$POSTMAN_INSTALL_DIR` (default `~/.local/share/Postman`), with `~/.local/bin/postman` symlink and `.desktop` entry |
-| `warp.sh` | Warp terminal |
-| `vscode.sh` | VS Code via Microsoft apt repo |
-| `bitwarden-cli.sh` | Bitwarden CLI (`bw`) — official Linux zip, amd64 only |
-| `flameshot.sh` | Flameshot annotated screenshot tool |
+| `browsers.sh` | Google Chrome from Google's signed x86_64 RPM repository |
+| `guake.sh` | Guake drop-down terminal from Fedora's repositories |
+| `postman.sh` | Postman API client — official x86_64/aarch64 tarball transactionally installed into `$POSTMAN_INSTALL_DIR` (default `~/.local/share/Postman`), with `~/.local/bin/postman` symlink and `.desktop` entry |
+| `warp.sh` | Warp terminal from its signed x86_64/aarch64 RPM repository |
+| `vscode.sh` | VS Code from Microsoft's signed yum repository |
+| `bitwarden-cli.sh` | Bitwarden CLI (`bw`) — official x86_64 Linux zip |
+| `flameshot.sh` | Flameshot annotated screenshot tool from Fedora's repositories |
 
 ### dev/
 | Script | Purpose |

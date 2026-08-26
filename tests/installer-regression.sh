@@ -307,36 +307,46 @@ EOF
 }
 
 test_architecture_guards() {
-    local script name bin log output
+    local script name expected bin log output
     for entry in \
-        "chrome:$REPO_ROOT/apps/browsers.sh" \
-        "warp:$REPO_ROOT/apps/warp.sh"; do
-        IFS=: read -r name script <<< "$entry"
+        "chrome|$REPO_ROOT/apps/browsers.sh|supports x86_64 only" \
+        "bitwarden|$REPO_ROOT/apps/bitwarden-cli.sh|no official Linux build for architecture: aarch64"; do
+        IFS='|' read -r name script expected <<< "$entry"
         bin="$TEST_TMP/${name}-arch-bin"
         log="$TEST_TMP/${name}-arch.log"
         output="$TEST_TMP/${name}-arch.out"
         mkdir -p "$bin"
         ln -s /usr/bin/dirname "$bin/dirname"
-        cat > "$bin/dpkg" <<'EOF'
+        cat > "$bin/rpm" <<'EOF'
 #!/bin/bash
-echo arm64
+if [[ "${1:-}" == "--eval" ]]; then
+    echo aarch64
+    exit 0
+fi
+echo "rpm $*" >> "$STUB_LOG"
+exit 99
 EOF
         cat > "$bin/sudo" <<'EOF'
 #!/bin/bash
 echo "sudo $*" >> "$STUB_LOG"
 exit 99
 EOF
-        cat > "$bin/wget" <<'EOF'
+        cat > "$bin/curl" <<'EOF'
 #!/bin/bash
-echo "wget $*" >> "$STUB_LOG"
+echo "curl $*" >> "$STUB_LOG"
 exit 99
 EOF
-        chmod +x "$bin/dpkg" "$bin/sudo" "$bin/wget"
+        cat > "$bin/dnf" <<'EOF'
+#!/bin/bash
+echo "dnf $*" >> "$STUB_LOG"
+exit 99
+EOF
+        chmod +x "$bin/rpm" "$bin/sudo" "$bin/curl" "$bin/dnf"
         if STUB_LOG="$log" HOME="$TEST_TMP/home" PATH="$bin" /bin/bash "$script" \
             > "$output" 2>&1; then
             fail "$name installer accepted unsupported arm64"
         fi
-        assert_contains "$output" "supports amd64 only"
+        assert_contains "$output" "$expected"
         [ ! -e "$log" ] || fail "$name mutated the system or network before rejecting arm64"
     done
 }

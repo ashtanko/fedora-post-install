@@ -20,7 +20,7 @@ Automated shell scripts to provision a fresh Ubuntu installation with a develope
 - `bash` (every script auto-re-execs under bash if invoked via `sh`)
 - `sudo` privileges (you'll be prompted as needed)
 - Network access for package downloads
-- `amd64` for Google Chrome and Warp; their scripts reject other architectures before changing apt state
+- `x86_64` for Google Chrome and the native Bitwarden CLI; those scripts reject other architectures before changing package or repository state. Warp and Postman support both `x86_64` and `aarch64`
 - Go 1.25+ only when building the terminal UI from source; published releases include prebuilt binaries
 
 ## Quick install
@@ -101,7 +101,7 @@ bash updates/update-codex.sh
 bash updates/update-all.sh
 ```
 
-Each individual updater exits successfully with a skip message when its tool is absent. Package-manager-owned software continues to use the normal `apt`, Snap, or application auto-update path. [`updates/skipped.txt`](updates/skipped.txt) records why every selectable installer without a wrapper is intentionally omitted.
+Each individual updater exits successfully with a skip message when its tool is absent. Package-manager-owned software continues to use the normal DNF, Flatpak, or application auto-update path. [`updates/skipped.txt`](updates/skipped.txt) records why every selectable installer without a wrapper is intentionally omitted.
 
 ## What's installed
 
