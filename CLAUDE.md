@@ -32,7 +32,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 | `ai/` | LLM tooling: Ollama, llama.cpp, Claude Code, Codex, Gemini, Copilot, Hugging Face, Aider, opencode, prompt-runner |
 | `updates/` | Maintenance wrappers for installed tools with documented scriptable updater paths; not part of the fresh-install menu |
 | `software/` | Virtualization: VirtualBox, GNOME Boxes/virt-manager, VMware prereqs |
-| `vpn/` | VPN clients: NordVPN |
+| `vpn/` | VPN clients: NordVPN and Tailscale |
 | `mobile/` | Mobile dev utilities (manual; not wired into setup.sh) |
 | `setup.sh` | Interactive master installer with category menus and progress logging |
 
@@ -179,8 +179,8 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### vpn/
 | Script | Purpose |
 |---|---|
-| `nord.sh` | NordVPN official Linux app via `install.sh`; adds user to `nordvpn` group; prints reminder to run `nordvpn login` |
-| `tailscale.sh` | Tailscale mesh VPN via the official installer; `$TAILSCALE_AUTHKEY` enables non-interactive `tailscale up` |
+| `nord.sh` | NordVPN from its signed RPM repository; enables `nordvpnd`, adds the user to `nordvpn`, and prints the login reminder |
+| `tailscale.sh` | Tailscale from its signed Fedora repository; enables `tailscaled`, and `$TAILSCALE_AUTHKEY` optionally enrolls the host |
 
 ### mobile/
 | Script | Purpose |

@@ -8,7 +8,7 @@ VERSION ?=
 export VERSION
 
 .DEFAULT_GOAL := help
-.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression tools-regression ide-regression mobile-regression software-regression identity-regression runtime-regression installer-regression \
+.PHONY: help lint manifest config-regression pkg-regression essentials-regression system-regression apps-regression dev-regression tools-regression ide-regression mobile-regression software-regression vpn-regression identity-regression runtime-regression installer-regression \
         contract-regression regressions check smoke smoke-all \
         idempotency idempotency-all setup version tui-test tui-build tag dist release-artifact \
         release-dry-run clean clean-markers
@@ -59,6 +59,9 @@ mobile-regression: ## Verify the Fedora-native Flutter plugin archive utility
 
 software-regression: ## Verify Fedora-native virtualization installers and Secure Boot paths
 	bash tests/software-regression.sh
+
+vpn-regression: ## Verify Fedora-native VPN repositories, services, and enrollment paths
+	bash tests/vpn-regression.sh
 
 identity-regression: ## Verify the Fedora project identity is used consistently
 	bash tests/identity-regression.sh

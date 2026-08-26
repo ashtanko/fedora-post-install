@@ -176,8 +176,8 @@ SCRIPTS=(
   "software/vmware.sh|no|||needs a manual Broadcom download and bare-metal kernel modules; covered by software-regression.sh"
 
   # vpn/
-  "vpn/nord.sh|no|||installer invokes systemctl to enable nordvpnd; daemon won't start in container — verify on real hardware"
-  "vpn/tailscale.sh|no|||installer invokes systemctl to enable tailscaled; daemon won't start in container — verify on real hardware"
+  "vpn/nord.sh|no|||needs systemd and a live VPN daemon; Fedora repository, service, and group paths are covered by vpn-regression.sh"
+  "vpn/tailscale.sh|no|||needs systemd and tailnet enrollment; Fedora repository, service, and auth-key paths are covered by vpn-regression.sh"
 
   # mobile/
   "mobile/zip_flutter_plugin.sh|no|||manual Fedora archive utility; covered by mobile-regression.sh"

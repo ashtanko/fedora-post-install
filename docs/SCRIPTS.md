@@ -216,8 +216,8 @@ VPN clients.
 
 | Script | Purpose |
 |---|---|
-| [nord.sh](../vpn/nord.sh) | NordVPN official Linux app via `install.sh`; adds user to `nordvpn` group |
-| [tailscale.sh](../vpn/tailscale.sh) | Tailscale mesh VPN via the official installer; `$TAILSCALE_AUTHKEY` enables non-interactive `tailscale up` |
+| [nord.sh](../vpn/nord.sh) | NordVPN from its signed RPM repository; enables `nordvpnd` and adds the user to the `nordvpn` group |
+| [tailscale.sh](../vpn/tailscale.sh) | Tailscale from its signed Fedora repository; enables `tailscaled`, and `$TAILSCALE_AUTHKEY` optionally enrolls the host |
 
 ## mobile/
 

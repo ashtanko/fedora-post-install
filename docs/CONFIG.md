@@ -72,7 +72,7 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `BACKUP_ENCRYPT` | [tools/backup-home.sh](../tools/backup-home.sh) | `no` | `yes` = GPG-encrypt the tarball |
 | `BACKUP_GPG_RECIPIENT` | [tools/backup-home.sh](../tools/backup-home.sh) | `$GIT_EMAIL` | GPG recipient for encrypted backups |
 | `DOTFILES_REPO` | [tools/dotfiles.sh](../tools/dotfiles.sh) | — | Optional repo URL for `chezmoi init`; the script never runs `chezmoi apply` |
-| `TAILSCALE_AUTHKEY` | [vpn/tailscale.sh](../vpn/tailscale.sh) | — | Non-interactive `tailscale up`; empty = manual browser login |
+| `TAILSCALE_AUTHKEY` | [vpn/tailscale.sh](../vpn/tailscale.sh) | — | Sensitive auth key for non-interactive host enrollment; empty = manual browser login |
 | `LLAMA_CPP_DIR` | [ai/llama-cpp.sh](../ai/llama-cpp.sh), [updates/update-llama-cpp.sh](../updates/update-llama-cpp.sh) | `$HOME/.local/src/llama.cpp` | Where llama.cpp is cloned and built; the updater requires a clean checkout and existing CMake build |
 | `OLLAMA_MODELS` | [ai/ollama-models.sh](../ai/ollama-models.sh) | — | Required whitespace-separated model references; downloads only when the script is explicitly run |
 | `CLAUDE_CHANNEL` | [ai/claude.sh](../ai/claude.sh), [updates/update-claude.sh](../updates/update-claude.sh) | `stable` | Anthropic APT channel, and the npm dist-tag the updater installs: `stable` or `latest` |

@@ -67,5 +67,5 @@ ai/prompt-runner.sh|repository-local wrapper has no independent upstream softwar
 software/virtualbox.sh|VirtualBox and its akmod are maintained through the configured RPM Fusion repositories and DNF; rerun the installer to refresh an opted-in Oracle Extension Pack
 software/boxes.sh|Fedora virtualization packages are maintained through DNF
 software/vmware.sh|Fedora build prerequisites are maintained through DNF; the manually downloaded VMware Workstation bundle is not owned by this project
-vpn/nord.sh|vendor package is maintained through its configured APT repository
-vpn/tailscale.sh|vendor package is maintained through its configured APT repository
+vpn/nord.sh|vendor RPM package is maintained through its configured repository and DNF
+vpn/tailscale.sh|vendor RPM package is maintained through its configured repository and DNF

@@ -8,37 +8,45 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing NordVPN..."
 
+ARCH="$(rpm_arch)"
 USERNAME="${USER:-$(id -un)}"
+SYSTEMD_RUNTIME_DIR="${_FPI_SYSTEMD_RUNTIME_DIR:-/run/systemd/system}"
 
-if command -v nordvpn >/dev/null 2>&1; then
+dnf_install curl gnupg2
+
+echo "📦 Configuring NordVPN's signed RPM repository..."
+repo_add nordvpn \
+    "https://repo.nordvpn.com/yum/nordvpn/centos/$ARCH" \
+    'https://repo.nordvpn.com/gpg/nordvpn_public.asc' \
+    'BC5480EFEC5C081CE5BCFBE26B219E535C964CA1'
+
+if dnf_installed nordvpn && command -v nordvpn &>/dev/null; then
     echo "✅ NordVPN already installed ($(nordvpn --version 2>/dev/null | head -1))"
 else
-    echo "📦 Ensuring curl is present..."
-    sudo apt-get update
-    sudo apt-get install -y curl
+    echo "📦 Installing NordVPN..."
+    dnf_install nordvpn
 
-    echo "📦 Downloading and running official NordVPN installer..."
-    # Execute from a completed file so retries cannot duplicate streamed input,
-    # while leaving stdin attached to the terminal for apt's "Y/n" prompt.
-    NORD_INSTALLER=$(mktemp)
-    trap 'rm -f "$NORD_INSTALLER"' EXIT
-    curl -sSf --retry 3 --retry-all-errors -o "$NORD_INSTALLER" \
-        https://downloads.nordcdn.com/apps/linux/install.sh
-    sh "$NORD_INSTALLER"
-    rm -f "$NORD_INSTALLER"
-    trap - EXIT
-
-    if ! command -v nordvpn >/dev/null 2>&1; then
+    if ! command -v nordvpn &>/dev/null; then
         echo "❌ NordVPN installation failed or 'nordvpn' is not in PATH"
         exit 1
     fi
     echo "✅ NordVPN installed ($(nordvpn --version 2>/dev/null | head -1))"
+fi
+
+if [ -d "$SYSTEMD_RUNTIME_DIR" ] && command -v systemctl &>/dev/null; then
+    echo "🔧 Enabling the NordVPN daemon..."
+    sudo systemctl enable --now nordvpnd.socket nordvpnd.service
+else
+    echo "⚠️  systemd is not running; NordVPN was installed but nordvpnd was not started"
 fi
 
 # Add current user to nordvpn group (needed for non-root CLI access)

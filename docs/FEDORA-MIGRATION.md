@@ -190,8 +190,8 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `vpn/nord.sh` | port | Pending; replace Debian-oriented vendor setup with NordVPN's Fedora repository path |
-| `vpn/tailscale.sh` | port | Pending; install from Tailscale's Fedora `.repo` definition with verified trust settings |
+| `vpn/nord.sh` | port | Complete; uses NordVPN's signed x86_64/aarch64 RPM repository, pins key `BC5480EFEC5C081CE5BCFBE26B219E535C964CA1`, enables `nordvpnd`, and retains non-root group setup |
+| `vpn/tailscale.sh` | port | Complete; reproduces Tailscale's signed Fedora `.repo` definition with pinned key `2596A99EAAB33821893C0A79458CA832957F5868`, enables `tailscaled`, and retains optional auth-key enrollment |
 
 ## Entry points and updater inventory
 
@@ -287,6 +287,17 @@ Phase 3 application references (checked 2026-08-26):
   packages: <https://docs.warp.dev/getting-started/quickstart/installation-and-setup>.
   The downloaded primary key fingerprint is
   `0913165C78D5B7A41B42AC657FF7AB39D60F803F`.
+- NordVPN's Fedora troubleshooting path publishes its RPM release repository,
+  and the current vendor installer resolves that repository to architecture-specific
+  URLs under `https://repo.nordvpn.com/yum/nordvpn/centos/`:
+  <https://support.nordvpn.com/hc/en-us/articles/38295918469393-I-can-t-install-or-update-the-NordVPN-app-on-Linux>.
+  The downloaded primary key fingerprint is
+  `BC5480EFEC5C081CE5BCFBE26B219E535C964CA1`.
+- Tailscale publishes a Fedora `.repo` with its stable `$basearch` URL,
+  package and repository-metadata signature checks, and repository key URL:
+  <https://pkgs.tailscale.com/stable/fedora/tailscale.repo>.
+  The downloaded primary key fingerprint is
+  `2596A99EAAB33821893C0A79458CA832957F5868`.
 - Bitwarden documents a native Linux x64 build and directs ARM64 users to npm:
   <https://bitwarden.com/help/cli/>. Postman publishes both Linux x64 and ARM64
   desktop downloads: <https://www.postman.com/downloads/>.
@@ -294,7 +305,8 @@ Phase 3 application references (checked 2026-08-26):
   <https://packages.fedoraproject.org/pkgs/guake/guake/> and
   <https://packages.fedoraproject.org/pkgs/flameshot/flameshot/>.
 
-All three current `repomd.xml` signatures were also verified successfully with
+The current signed `repomd.xml` files used by these completed categories were
+also verified successfully with
 `gpgv` against the downloaded pinned keys before enabling `repo_gpgcheck=1`;
 the key files were inspected locally with GnuPG rather than trusting search
 snippets.
