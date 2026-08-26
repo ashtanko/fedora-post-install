@@ -171,9 +171,9 @@ SCRIPTS=(
   "updates/update-vscode.sh|no|||requires the Microsoft RPM-packaged VS Code installation; covered by local regression"
 
   # software/
-  "software/boxes.sh|no|||GNOME Boxes needs KVM + display"
-  "software/virtualbox.sh|no|||needs kernel modules + bare metal"
-  "software/vmware.sh|no|||VMware Workstation needs manual download + kernel build"
+  "software/boxes.sh|no|||needs systemd, KVM, libvirt networking, and a display; covered by software-regression.sh"
+  "software/virtualbox.sh|no|||needs bare-metal kernel modules and Secure Boot firmware enrollment; covered by software-regression.sh"
+  "software/vmware.sh|no|||needs a manual Broadcom download and bare-metal kernel modules; covered by software-regression.sh"
 
   # vpn/
   "vpn/nord.sh|no|||installer invokes systemctl to enable nordvpnd; daemon won't start in container — verify on real hardware"

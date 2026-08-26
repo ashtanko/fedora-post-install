@@ -172,9 +172,9 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### software/
 | Script | Purpose |
 |---|---|
-| `virtualbox.sh` | VirtualBox + extension pack |
-| `boxes.sh` | GNOME Boxes + virt-manager |
-| `vmware.sh` | Installs kernel build prereqs for VMware Workstation Pro (manual download required) |
+| `virtualbox.sh` | RPM Fusion VirtualBox + akmods, MOK enrollment guidance, and optional verified Oracle Extension Pack |
+| `boxes.sh` | Fedora KVM/libvirt stack with GNOME Boxes + virt-manager |
+| `vmware.sh` | Fedora kernel-build and module-signing prereqs for VMware Workstation Pro (manual download required) |
 
 ### vpn/
 | Script | Purpose |

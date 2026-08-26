@@ -136,9 +136,9 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `software/boxes.sh` | port | Pending; use Fedora virtualization packages and groups |
-| `software/virtualbox.sh` | replace | Pending; choose a verified Fedora RPM source and document akmods/Secure Boot MOK enrollment |
-| `software/vmware.sh` | port | Pending; use Fedora kernel-devel, compiler, Perl, and libelf package names |
+| `software/boxes.sh` | port | Complete; installs Fedora's virtualization group plus GNOME Boxes, enables libvirt and its default NAT network, and grants the user libvirt access |
+| `software/virtualbox.sh` | replace | Complete; uses RPM Fusion Free's x86_64 `VirtualBox` and `akmod-VirtualBox` packages through a fingerprint-pinned repository, builds for the running kernel, stops for required Secure Boot MOK enrollment, and optionally verifies Oracle's published SHA-256 before the PUEL Extension Pack license prompt |
+| `software/vmware.sh` | port | Complete; installs the exact running-kernel development package and Fedora compiler, Perl, libelf, signing, and MOK prerequisites, then documents Broadcom's manual bundle and Secure Boot module-signing path |
 
 ### `system/`
 

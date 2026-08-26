@@ -64,6 +64,7 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `VSCODE_EXTENSIONS` | [ide/vscode-extensions.sh](../ide/vscode-extensions.sh), [updates/update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | empty | Whitespace-separated extension IDs; the updater refreshes all installed extensions |
 | `JETBRAINS_TOOLBOX_DIR` | [ide/jetbrains-toolbox.sh](../ide/jetbrains-toolbox.sh) | `$HOME/.local/share/JetBrains/Toolbox` | Toolbox install dir |
 | `POSTMAN_INSTALL_DIR` | [apps/postman.sh](../apps/postman.sh) | `$HOME/.local/share/Postman` | Where Postman is extracted; symlinked into `~/.local/bin` |
+| `INSTALL_VIRTUALBOX_EXTPACK` | [software/virtualbox.sh](../software/virtualbox.sh) | `no` | Set `yes` to checksum-verify and install the matching Oracle PUEL Extension Pack; Oracle's license still requires explicit interactive acceptance |
 | `GPG_KEY_ID` | [system/gpg.sh](../system/gpg.sh) | unique `GIT_EMAIL` match | Select an existing secret key explicitly when email lookup is ambiguous |
 | `ENABLE_GIT_COMMIT_SIGNING` | [tools/git-config.sh](../tools/git-config.sh) | `no` | Flip to `yes` after running [system/gpg.sh](../system/gpg.sh) |
 | `TMUX_PLUGIN_DIR` | [tools/tmux-config.sh](../tools/tmux-config.sh), [updates/update-tpm.sh](../updates/update-tpm.sh) | `$HOME/.tmux/plugins/tpm` | Where TPM is cloned; the updater requires a clean checkout |

@@ -206,9 +206,9 @@ Virtualization stacks.
 
 | Script | Purpose |
 |---|---|
-| [virtualbox.sh](../software/virtualbox.sh) | VirtualBox + extension pack |
-| [boxes.sh](../software/boxes.sh) | GNOME Boxes + virt-manager |
-| [vmware.sh](../software/vmware.sh) | Installs kernel build prereqs for VMware Workstation Pro (manual download required) |
+| [virtualbox.sh](../software/virtualbox.sh) | RPM Fusion VirtualBox + akmods, Secure Boot MOK guidance, and optional checksum-verified Oracle Extension Pack |
+| [boxes.sh](../software/boxes.sh) | Fedora's KVM/libvirt virtualization group, GNOME Boxes, and virt-manager |
+| [vmware.sh](../software/vmware.sh) | Fedora kernel-build and Secure Boot signing prerequisites for VMware Workstation Pro (manual download required) |
 
 ## vpn/
 
