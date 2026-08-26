@@ -155,6 +155,8 @@ test_updater_ownership_and_docs() {
         'FPI_ANDROID_STUDIO_UPDATE=1'
     assert_file_contains "$REPO_ROOT/tests/manifest.sh" \
         'ide/nvim.sh|yes||command -v nvim && rpm -q neovim'
+    assert_file_contains "$REPO_ROOT/config/catalog.txt" \
+        'ide|IDEs|Neovim|ide/nvim.sh'
     if grep -Eq 'update-nvim|NVIM_(VERSION|ARCHIVE|INSTALL_DIR)|CURSOR_INSTALL_DIR' \
         "$REPO_ROOT/.env.example" "$REPO_ROOT/docs/CONFIG.md" "$REPO_ROOT/docs/SCRIPTS.md"; then
         fail "retired IDE tarball/AppImage configuration remains documented"

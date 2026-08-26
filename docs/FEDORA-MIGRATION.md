@@ -12,7 +12,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, `tools/`, and `ide/` categories are ported; the other categories remain pending |
+| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, `tools/`, `ide/`, and `mobile/` categories are ported; the other categories remain pending |
 | 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -130,7 +130,7 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `mobile/zip_flutter_plugin.sh` | neutral | Audit pending; manual archive utility |
+| `mobile/zip_flutter_plugin.sh` | port | Complete; installs Fedora's `zip` package through the shared helper, validates source/output paths, and atomically replaces a fresh archive while excluding its own output so deleted files cannot survive from an earlier run |
 
 ### `software/`
 

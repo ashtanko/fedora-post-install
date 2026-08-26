@@ -225,4 +225,4 @@ Manual utilities — **not** wired into `setup.sh`.
 
 | Script | Purpose |
 |---|---|
-| [zip_flutter_plugin.sh](../mobile/zip_flutter_plugin.sh) | Archives a Flutter plugin directory excluding build artefacts |
+| [zip_flutter_plugin.sh](../mobile/zip_flutter_plugin.sh) | Uses Fedora's `zip` package to atomically create a fresh Flutter plugin archive, excluding generated state, local state, and the output archive itself |

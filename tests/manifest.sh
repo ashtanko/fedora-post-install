@@ -180,7 +180,7 @@ SCRIPTS=(
   "vpn/tailscale.sh|no|||installer invokes systemctl to enable tailscaled; daemon won't start in container — verify on real hardware"
 
   # mobile/
-  "mobile/zip_flutter_plugin.sh|no|||manual utility, not a setup script"
+  "mobile/zip_flutter_plugin.sh|no|||manual Fedora archive utility; covered by mobile-regression.sh"
 
   # root/
   "setup.sh|no|||interactive menu orchestrator; covered by local regression tests rather than Docker"

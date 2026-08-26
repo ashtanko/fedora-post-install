@@ -185,7 +185,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 ### mobile/
 | Script | Purpose |
 |---|---|
-| `zip_flutter_plugin.sh` | Manual utility — archives a Flutter plugin directory excluding build artefacts |
+| `zip_flutter_plugin.sh` | Manual utility — installs Fedora's `zip` package and atomically archives a Flutter plugin while excluding generated state and its own output |
 
 ## Conventions
 

@@ -12,6 +12,7 @@ bash tests/apps-regression.sh
 bash tests/dev-regression.sh
 bash tests/tools-regression.sh
 bash tests/ide-regression.sh
+bash tests/mobile-regression.sh
 bash tests/identity-regression.sh
 bash tests/catalog-regression.sh
 bash tests/script-contract-regression.sh
@@ -43,7 +44,7 @@ if grep -REn --include='*.sh' 'set -a;[[:space:]]*(source|\.)[[:space:]].*\.env|
     exit 1
 fi
 
-mapfile -t configured_scripts < <(find ai apps dev essentials ide software system tools updates vpn \
+mapfile -t configured_scripts < <(find ai apps dev essentials ide mobile software system tools updates vpn \
     -maxdepth 1 -type f -name '*.sh' | sort)
 for configured_script in "${configured_scripts[@]}"; do
     # The repository-root token is intentionally matched literally.

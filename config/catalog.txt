@@ -77,7 +77,7 @@ tools|Terminal Tools|Atuin (shell history search/sync)|tools/atuin.sh
 ide|IDEs|Zed editor|ide/zed.sh
 ide|IDEs|VS Code extensions (from .env)|ide/vscode-extensions.sh
 ide|IDEs|JetBrains Toolbox|ide/jetbrains-toolbox.sh
-ide|IDEs|Neovim (latest)|ide/nvim.sh
+ide|IDEs|Neovim|ide/nvim.sh
 ide|IDEs|Android Studio|ide/android-studio.sh
 ide|IDEs|Cursor editor|ide/cursor.sh
 ide|IDEs|DBeaver (database GUI)|ide/dbeaver.sh
