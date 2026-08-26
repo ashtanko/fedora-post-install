@@ -12,7 +12,7 @@ it does **not** mean the Fedora audit or runtime validation is complete.
 | 0 — branch and inventory | Complete | `feat/fedora-migration` created; all 110 original installer/manual scripts and 44 updater scripts were inventoried; one confirmed Ubuntu-only script has since been removed |
 | 1 — shared package layer | Complete | `lib/pkg.bash` provides DNF4/DNF5, repository, COPR, Flatpak, and architecture helpers with isolated regression coverage |
 | 2 — identity rename | Complete | Runtime paths, configuration, TUI/module, CLI, release artifacts, workflows, tests, and documentation use the Fedora identity |
-| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, and `tools/` categories are ported; the other categories remain pending |
+| 3 — installer ports | In progress | The complete `essentials/`, `system/`, `apps/`, `dev/`, `tools/`, and `ide/` categories are ported; the other categories remain pending |
 | 4 — updater ports | In progress | Updaters coupled to completed categories use RPM ownership and Fedora architecture helpers; the remaining category audit is pending |
 | 5 — Fedora tests and CI | Not started | Docker image, release matrix, manifest, and contracts still target Ubuntu |
 | 6 — documentation | Not started | Identity references are renamed; distro-specific package, security, testing, and troubleshooting claims still need Fedora rewrites |
@@ -118,13 +118,13 @@ until its implementation and tests have moved to Fedora.
 
 | Script | Disposition | Status / reason |
 |---|---|---|
-| `ide/android-studio.sh` | replace | Pending; replace Snap with the official tarball or Flathub and migrate its updater in lockstep |
-| `ide/cursor.sh` | port | Pending; install Fedora FUSE support or extract the AppImage; use shared architecture mapping |
-| `ide/dbeaver.sh` | port | Pending; use DBeaver's RPM repository and pinned signing key |
-| `ide/jetbrains-toolbox.sh` | port | Pending; retain tarball and translate GUI/archive prerequisites |
-| `ide/nvim.sh` | neutral | Audit pending; verified GitHub release archive with its own architecture mapping |
-| `ide/vscode-extensions.sh` | neutral | Audit pending; operates through an existing editor CLI |
-| `ide/zed.sh` | neutral | Audit pending; official user-local installer |
+| `ide/android-studio.sh` | replace | Complete; replaces Snap with Google's x86_64 tarball, resolves its current URL and SHA-256 from the official page, and activates validated archives transactionally |
+| `ide/cursor.sh` | replace | Complete; Cursor now publishes a signed x86_64/aarch64 RPM repository, whose current key fingerprint and signed metadata are pinned instead of retaining the old AppImage |
+| `ide/dbeaver.sh` | replace | Complete; DBeaver's documented RPM is a standalone download and the claimed RPM repository URLs return 404, so the script uses the Flathub app listed on DBeaver's official download page |
+| `ide/jetbrains-toolbox.sh` | port | Complete; maps x86_64/aarch64 release metadata, verifies JetBrains' published SHA-256, and installs the documented Fedora runtime packages without obsolete FUSE |
+| `ide/nvim.sh` | replace | Complete; Fedora 43 provides Neovim 0.11 and Fedora 44 provides 0.12, so the current signed Fedora package replaces the separately managed release archive |
+| `ide/vscode-extensions.sh` | neutral | Complete; operates through the existing RPM-owned VS Code CLI and exits explicitly after reporting extension failures |
+| `ide/zed.sh` | port | Complete; retains Zed's official saved preview installer, validates a supported RPM architecture, and installs its curl prerequisite through DNF |
 
 ### `mobile/`
 
@@ -204,7 +204,7 @@ can update them in lockstep with their installers.
 |---|---|---|
 | `updates/update-aider.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-all.sh` | port | Pending; orchestration, output, and Fedora ownership audit |
-| `updates/update-android-studio.sh` | replace | Pending; must match the new tarball or Flatpak installation |
+| `updates/update-android-studio.sh` | replace | Complete; delegates a managed installation to the checksum-verifying transactional tarball installer |
 | `updates/update-antigravity.sh` | replace | Pending; remove APT ownership path |
 | `updates/update-atuin.sh` | port | Complete; delegates only user-owned Atuin binaries to the checksum-verifying installer |
 | `updates/update-aws-cli.sh` | port | Pending; replace Debian package ownership checks |
@@ -232,7 +232,7 @@ can update them in lockstep with their installers.
 | `updates/update-mcp-inspector.sh` | neutral | Audit pending; npm ownership logic |
 | `updates/update-mistral-vibe.sh` | neutral | Audit pending; Python-owned updater |
 | `updates/update-node.sh` | neutral | Audit pending; NVM-owned updater |
-| `updates/update-nvim.sh` | neutral | Audit pending; verified release updater |
+| `updates/update-nvim.sh` | delete | Complete; removed because Fedora's current Neovim package and DNF now own updates |
 | `updates/update-oh-my-zsh.sh` | neutral | Complete; tool-owned updater has no distribution package path |
 | `updates/update-opencode.sh` | neutral | Audit pending; tool-owned updater |
 | `updates/update-pipx-tools.sh` | neutral | Audit pending; pipx-owned updater |

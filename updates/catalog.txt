@@ -1,7 +1,7 @@
 # updater|installer(s)|update method
 update-aider.sh|ai/aider.sh|aider --upgrade
 update-all.sh|updates/catalog.txt|aggregate every updater in this catalog
-update-android-studio.sh|ide/android-studio.sh|snap refresh android-studio
+update-android-studio.sh|ide/android-studio.sh|install the checksum-verified current official tarball
 update-antigravity.sh|ai/antigravity.sh|targeted APT package upgrade
 update-atuin.sh|tools/atuin.sh|install the checksum-verified latest official release asset
 update-aws-cli.sh|dev/aws-cli.sh|signature-verified AWS CLI v2 installer --update
@@ -26,7 +26,6 @@ update-llama-cpp.sh|ai/llama-cpp.sh|fast-forward source checkout and rebuild exi
 update-mcp-inspector.sh|ai/mcp-inspector.sh|npm install the latest package in the owning prefix
 update-mistral-vibe.sh|ai/mistral-vibe.sh|uv tool upgrade mistral-vibe
 update-node.sh|dev/node.sh|update the official NVM checkout then install and select the latest Node.js LTS
-update-nvim.sh|ide/nvim.sh|replace the managed installation only when the official release digest is verifiable
 update-oh-my-zsh.sh|tools/zsh.sh|Oh My Zsh automation upgrade script
 update-opencode.sh|ai/opencode.sh|opencode upgrade using its original curl install method
 update-pipx-tools.sh|dev/python.sh,dev/databases.sh,ai/llm-cli.sh,ai/litellm.sh|pipx upgrade each installed named application

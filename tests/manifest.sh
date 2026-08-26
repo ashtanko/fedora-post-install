@@ -99,13 +99,13 @@ SCRIPTS=(
   "tools/atuin.sh|yes||test -x \$HOME/.local/bin/atuin && \$HOME/.local/bin/atuin --version||\$HOME/.local/bin/atuin"
 
   # ide/
-  "ide/jetbrains-toolbox.sh|no|||GUI app; needs display"
-  "ide/nvim.sh|yes|NVIM_INSTALL_DIR=\$HOME/.local/share/nvim-stable|test -x \$HOME/.local/bin/nvim && \$HOME/.local/bin/nvim --version >/dev/null||\$HOME/.local/share/nvim-stable"
+  "ide/jetbrains-toolbox.sh|no|||checksum-verified GUI archive is large and needs a display"
+  "ide/nvim.sh|yes||command -v nvim && rpm -q neovim &>/dev/null||\$HOME/.config/nvim"
   "ide/vscode-extensions.sh|no|||requires VS Code installed + display"
   "ide/zed.sh|no|||GUI editor"
-  "ide/android-studio.sh|no|||snap install needs snapd + a running snapd daemon; large GUI-only download, no test value"
-  "ide/cursor.sh|no|||Electron AppImage GUI editor; needs FUSE + display, no test value"
-  "ide/dbeaver.sh|no|||GUI database client; needs display"
+  "ide/android-studio.sh|no|||checksum-verified official archive is about 1.6 GB and the IDE needs a display"
+  "ide/cursor.sh|no|||vendor RPM is a large GUI editor and needs a display"
+  "ide/dbeaver.sh|no|||Flathub GUI database client needs a display"
 
   # ai/
   "ai/aider.sh|yes||test -x \$HOME/.local/bin/aider && \$HOME/.local/bin/aider --version|"
@@ -134,7 +134,7 @@ SCRIPTS=(
   # are exercised with offline command stubs by update-scripts-regression.sh.
   "updates/update-aider.sh|no|||requires the user-local Aider installation created by this project; covered by local regression"
   "updates/update-all.sh|no|||runs every supported updater against existing host installations; covered by local regression"
-  "updates/update-android-studio.sh|no|||requires an existing Android Studio snap and snapd; covered by local regression"
+  "updates/update-android-studio.sh|no|||requires the project-managed Android Studio tarball and network access; covered by local regression"
   "updates/update-antigravity.sh|no|||requires the Google APT-packaged Antigravity installation; covered by local regression"
   "updates/update-atuin.sh|no|||requires the user-local Atuin installation and network access; covered by local regression"
   "updates/update-aws-cli.sh|no|||requires the standalone AWS CLI v2 installation and network access; covered by local regression"
@@ -159,7 +159,6 @@ SCRIPTS=(
   "updates/update-mcp-inspector.sh|no|||requires the npm-owned MCP Inspector installation; covered by local regression"
   "updates/update-mistral-vibe.sh|no|||requires the uv-managed Mistral Vibe installation; covered by local regression"
   "updates/update-node.sh|no|||requires an existing NVM installation and network access; covered by local regression"
-  "updates/update-nvim.sh|no|||requires the managed Neovim release installation and network access; covered by local regression"
   "updates/update-oh-my-zsh.sh|no|||requires an existing Oh My Zsh checkout; covered by local regression"
   "updates/update-opencode.sh|no|||requires the curl-installed opencode CLI; covered by local regression"
   "updates/update-pipx-tools.sh|no|||requires one or more project-managed pipx applications; covered by local regression"

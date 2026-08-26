@@ -55,4 +55,7 @@ done
 
 echo ""
 echo "✅ Done — $INSTALLED_COUNT installed · $SKIPPED_COUNT skipped · $FAILED_COUNT failed"
-[ "$FAILED_COUNT" -gt 0 ] && exit 1 || exit 0
+if [ "$FAILED_COUNT" -gt 0 ]; then
+    exit 1
+fi
+exit 0

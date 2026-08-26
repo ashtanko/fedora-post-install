@@ -120,11 +120,11 @@ Editors and IDEs.
 |---|---|
 | [zed.sh](../ide/zed.sh) | Zed editor (preview channel) via official installer |
 | [vscode-extensions.sh](../ide/vscode-extensions.sh) | Bulk-install extensions from `$VSCODE_EXTENSIONS` (whitespace-separated) |
-| [jetbrains-toolbox.sh](../ide/jetbrains-toolbox.sh) | JetBrains Toolbox app + desktop entry; pick IDEs from the Toolbox UI |
-| [nvim.sh](../ide/nvim.sh) | Latest Neovim from official GitHub release tarball; writes starter `init.lua` if absent |
-| [android-studio.sh](../ide/android-studio.sh) | Android Studio via snap (`--classic`) — the SDK/emulator/device tooling `dev/flutter.sh` leaves out of scope |
-| [cursor.sh](../ide/cursor.sh) | Cursor editor (official AppImage, amd64 only) — GUI counterpart to `ai/cursor-agent.sh`'s CLI agent |
-| [dbeaver.sh](../ide/dbeaver.sh) | DBeaver Community via its official apt repo — GUI counterpart to `dev/databases.sh`'s CLI clients |
+| [jetbrains-toolbox.sh](../ide/jetbrains-toolbox.sh) | Checksum-verified JetBrains Toolbox archive for x86_64 or aarch64, with Fedora GUI runtime packages |
+| [nvim.sh](../ide/nvim.sh) | Fedora's current Neovim package; writes a starter `init.lua` if absent |
+| [android-studio.sh](../ide/android-studio.sh) | Checksum-verified current Android Studio tarball for x86_64 — the SDK/emulator setup that `dev/flutter.sh` leaves out of scope |
+| [cursor.sh](../ide/cursor.sh) | Cursor editor from its fingerprint-pinned official RPM repository on x86_64 or aarch64 |
+| [dbeaver.sh](../ide/dbeaver.sh) | DBeaver Community through the Flathub package listed by DBeaver's official download page |
 
 ## ai/
 
@@ -162,7 +162,7 @@ Maintenance wrappers for tools already installed by this project. They are not p
 |---|---|
 | [update-aider.sh](../updates/update-aider.sh) | Upgrade the repository-managed Aider CLI |
 | [update-all.sh](../updates/update-all.sh) | Run every supported updater, continue after individual failures, and return a combined result |
-| [update-android-studio.sh](../updates/update-android-studio.sh) | Refresh the installed Android Studio snap |
+| [update-android-studio.sh](../updates/update-android-studio.sh) | Install Google's checksum-verified current Android Studio tarball |
 | [update-antigravity.sh](../updates/update-antigravity.sh) | Upgrade the Antigravity package from Google's configured APT repository |
 | [update-atuin.sh](../updates/update-atuin.sh) | Install the checksum-verified latest Atuin release asset |
 | [update-aws-cli.sh](../updates/update-aws-cli.sh) | Verify AWS's detached signature, then update the repository-managed AWS CLI v2 installation |
@@ -187,7 +187,6 @@ Maintenance wrappers for tools already installed by this project. They are not p
 | [update-mcp-inspector.sh](../updates/update-mcp-inspector.sh) | Update the npm-owned MCP Inspector installation |
 | [update-mistral-vibe.sh](../updates/update-mistral-vibe.sh) | Upgrade Mistral Vibe through its existing uv tool installation |
 | [update-node.sh](../updates/update-node.sh) | Update the official NVM checkout, then install and select the latest Node.js LTS |
-| [update-nvim.sh](../updates/update-nvim.sh) | Replace the managed Neovim installation only when an official or configured digest is available |
 | [update-oh-my-zsh.sh](../updates/update-oh-my-zsh.sh) | Run Oh My Zsh's automation-safe upgrade script |
 | [update-opencode.sh](../updates/update-opencode.sh) | Update the curl-installed opencode CLI through its native updater |
 | [update-pipx-tools.sh](../updates/update-pipx-tools.sh) | Upgrade installed Poetry, database CLIs, LLM, and LiteLLM pipx applications |

@@ -125,90 +125,6 @@ EOF
     pass "Go rejects incomplete installs and honors a custom verified archive target"
 }
 
-test_nvim_safety_and_rollback() {
-    local root="$TEST_ROOT/nvim" home="$TEST_ROOT/nvim/home" fakebin="$TEST_ROOT/nvim/bin"
-    local good="$root/good.tar.gz" bad="$root/bad.tar.gz" checksum target status outside="$root/outside"
-    mkdir -p "$home" "$outside" "$root/good/nvim-linux-x86_64/bin" "$root/bad/nvim-linux-x86_64/bin" "$fakebin"
-    make_wget_mock "$fakebin/wget"
-
-    local unsafe_target
-    ln -s "$outside" "$home/escape"
-    for unsafe_target in "/" "$home" "$home/nvim" "$home/apps/editor" \
-        "$home/.config/nvim" "$home/.ssh/nvim" "$home/.gnupg/nvim" \
-        "$home/.local/bin/nvim" "$home/escape/nvim-test"; do
-        set +e
-        HOME="$home" PATH="$fakebin:$PATH" NVIM_INSTALL_DIR="$unsafe_target" NVIM_VERSION=vtest \
-            NVIM_ARCHIVE_URL=file:///unused /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null 2>&1
-        status=$?
-        set -e
-        [ "$status" -ne 0 ] || fail "unsafe Neovim target should be rejected: $unsafe_target"
-    done
-
-    mkdir -p "$home/Documents/nvim"
-    printf 'unrelated data\n' > "$home/Documents/nvim/notes.txt"
-    set +e
-    HOME="$home" PATH="$fakebin:$PATH" NVIM_INSTALL_DIR="$home/Documents/nvim" NVIM_VERSION=vtest \
-        NVIM_ARCHIVE_URL=file:///unused /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null 2>&1
-    status=$?
-    set -e
-    [ "$status" -ne 0 ] || fail "unmanaged existing Neovim-named directory should be rejected"
-    [ -f "$home/Documents/nvim/notes.txt" ] || fail "unmanaged existing directory was modified"
-
-    cat > "$root/good/nvim-linux-x86_64/bin/nvim" <<'EOF'
-#!/bin/bash
-echo 'NVIM vtest'
-EOF
-    cat > "$root/bad/nvim-linux-x86_64/bin/nvim" <<'EOF'
-#!/bin/bash
-exit 1
-EOF
-    chmod +x "$root/good/nvim-linux-x86_64/bin/nvim" "$root/bad/nvim-linux-x86_64/bin/nvim"
-    tar -C "$root/good" -czf "$good" nvim-linux-x86_64
-    tar -C "$root/bad" -czf "$bad" nvim-linux-x86_64
-    checksum=$(sha256sum "$good" | awk '{print $1}')
-    target="$home/apps/nvim-test"
-    set +e
-    HOME="$home" PATH="$fakebin:$PATH" NVIM_INSTALL_DIR="$target" NVIM_VERSION=vtest \
-        NVIM_ARCHIVE_URL="file://$good" /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null 2>&1
-    status=$?
-    set -e
-    [ "$status" -ne 0 ] || fail "custom Neovim archive without a checksum should fail"
-
-    HOME="$home" PATH="$fakebin:$PATH" NVIM_INSTALL_DIR="$target" NVIM_VERSION=vtest \
-        NVIM_ARCHIVE_URL="file://$good" NVIM_ARCHIVE_SHA256="$checksum" \
-        /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null
-    [ -x "$target/bin/nvim" ] || fail "Neovim valid staged install failed"
-    printf 'preserve\n' > "$target/sentinel"
-
-    set +e
-    HOME="$home" PATH="$fakebin:$PATH" NVIM_INSTALL_DIR="$target" NVIM_VERSION=vtest \
-        NVIM_ARCHIVE_URL="file://$bad" NVIM_ARCHIVE_SHA256="$(sha256sum "$bad" | awk '{print $1}')" \
-        /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null 2>&1
-    status=$?
-    set -e
-    [ "$status" -ne 0 ] || fail "invalid Neovim archive should fail validation"
-    [ "$(cat "$target/sentinel")" = preserve ] || fail "failed Neovim replacement damaged existing install"
-
-    cat > "$fakebin/mv" <<'EOF'
-#!/bin/bash
-if [[ "$1" == */.nvim-stage.* && "$2" == "$NVIM_MV_FAIL_TARGET" ]]; then
-    exit 1
-fi
-exec /bin/mv "$@"
-EOF
-    chmod +x "$fakebin/mv"
-    set +e
-    HOME="$home" PATH="$fakebin:$PATH" NVIM_MV_FAIL_TARGET="$target" \
-        NVIM_INSTALL_DIR="$target" NVIM_VERSION=vtest NVIM_ARCHIVE_URL="file://$good" \
-        NVIM_ARCHIVE_SHA256="$checksum" /bin/bash "$REPO_ROOT/ide/nvim.sh" >/dev/null 2>&1
-    status=$?
-    set -e
-    [ "$status" -ne 0 ] || fail "simulated Neovim replacement failure should fail"
-    [ "$(cat "$target/sentinel")" = preserve ] || fail "Neovim replacement failure did not restore the old install"
-    [ -x "$target/bin/nvim" ] || fail "Neovim replacement failure lost the old executable"
-    pass "Neovim rejects unsafe targets and validates before replacing"
-}
-
 test_swap_persistence() {
     local root="$TEST_ROOT/swap" fakebin="$TEST_ROOT/swap/bin" swapfile="$TEST_ROOT/swap/swapfile"
     local fstab="$TEST_ROOT/swap/fstab" calls="$TEST_ROOT/swap/swapon.calls"
@@ -298,7 +214,6 @@ EOF
 test_setup_summary
 test_backup_cleanup
 test_go_install
-test_nvim_safety_and_rollback
 test_swap_persistence
 test_gpg_selection
 echo "All runtime core regressions passed."

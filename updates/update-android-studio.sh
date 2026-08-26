@@ -12,13 +12,11 @@ CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
-if ! command -v snap &>/dev/null || ! snap list android-studio &>/dev/null; then
-    echo "⏭️  Skipping Android Studio update: the android-studio snap is not installed."
+ANDROID_STUDIO_BIN="$HOME/.local/share/android-studio/bin/studio.sh"
+if [ ! -x "$ANDROID_STUDIO_BIN" ]; then
+    echo "⏭️  Skipping Android Studio update: the project-managed tarball installation was not found."
     exit 0
 fi
 
-BEFORE_VERSION=$(snap list android-studio 2>/dev/null | awk 'NR == 2 {print $2}')
-echo "🚀 Updating Android Studio (${BEFORE_VERSION:-version unknown})..."
-sudo snap refresh android-studio
-AFTER_VERSION=$(snap list android-studio 2>/dev/null | awk 'NR == 2 {print $2}')
-echo "✅ Android Studio updated: ${BEFORE_VERSION:-unknown} → ${AFTER_VERSION:-unknown}"
+echo "🚀 Checking for an Android Studio update..."
+FPI_ANDROID_STUDIO_UPDATE=1 /bin/bash "$REPO_ROOT/ide/android-studio.sh"

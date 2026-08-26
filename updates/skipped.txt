@@ -56,8 +56,9 @@ tools/restic.sh|Fedora package is maintained through DNF
 tools/yq.sh|Fedora package is maintained through DNF
 ide/zed.sh|the application manages its own updates
 ide/jetbrains-toolbox.sh|JetBrains Toolbox manages its own updates
-ide/cursor.sh|the application manages its own updates
-ide/dbeaver.sh|vendor package is maintained through the configured APT repository
+ide/nvim.sh|Fedora's current Neovim package is maintained through DNF
+ide/cursor.sh|vendor RPM package is maintained through the configured repository and DNF
+ide/dbeaver.sh|the application is maintained through the official-site-listed Flathub package
 ai/ollama.sh|the documented rerun path executes a mutable installer without an independently authenticated script payload
 ai/ollama-models.sh|model-data maintenance is separate from updating the Ollama executable
 ai/qwen-code.sh|the standalone rerun installer publishes no documented checksum or detached signature

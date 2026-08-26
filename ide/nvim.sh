@@ -8,171 +8,35 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
-GITHUB_HELPER="$REPO_ROOT/lib/github.bash"
-# shellcheck source=lib/github.bash
-source "$GITHUB_HELPER" || { echo "❌ Missing github helper: $GITHUB_HELPER" >&2; exit 1; }
 
-echo "🚀 Installing latest Neovim from official GitHub release..."
+echo "🚀 Installing Neovim..."
 
-INSTALL_DIR="${NVIM_INSTALL_DIR:-$HOME/.local/share/nvim-stable}"
-BIN_DIR="$HOME/.local/bin"
-NVIM_BIN="$BIN_DIR/nvim"
-
-HOME_CANON=$(realpath -m "$HOME")
-INSTALL_DIR=$(realpath -m "$INSTALL_DIR")
-case "$INSTALL_DIR" in
-    "$HOME_CANON"/*) ;;
-    *) echo "❌ NVIM_INSTALL_DIR must resolve beneath HOME"; exit 1 ;;
-esac
-INSTALL_RELATIVE=${INSTALL_DIR#"$HOME_CANON"/}
-INSTALL_BASENAME=${INSTALL_DIR##*/}
-if [[ "$INSTALL_RELATIVE" != */* ]] || [[ ! "$INSTALL_BASENAME" =~ ^nvim($|-) ]]; then
-    echo "❌ Unsafe NVIM_INSTALL_DIR: require at least two components beneath HOME and basename nvim or nvim-*"
-    exit 1
-fi
-case "$INSTALL_RELATIVE" in
-    .config/*|.ssh/*|.gnupg/*|.aws/*|.kube/*|.password-store/*|.local/bin/*)
-        echo "❌ Unsafe NVIM_INSTALL_DIR: protected user configuration, secret, and executable paths are not install targets"
-        exit 1
-        ;;
-esac
-if [[ -e "$INSTALL_DIR" || -L "$INSTALL_DIR" ]] \
-    && { [[ ! -x "$INSTALL_DIR/bin/nvim" ]] || ! "$INSTALL_DIR/bin/nvim" --version &>/dev/null; }; then
-    echo "❌ Refusing to replace $INSTALL_DIR because it is not a valid existing Neovim installation"
-    exit 1
+# Fedora 43 ships Neovim 0.11 and Fedora 44 ships 0.12, so the distribution
+# package is current enough to prefer over an independently managed tarball.
+# Unlink only the command created by this repository's former tarball installer;
+# retain the old installation directory for manual recovery.
+LEGACY_INSTALL_DIR="${NVIM_INSTALL_DIR:-$HOME/.local/share/nvim-stable}"
+LEGACY_LINK="$HOME/.local/bin/nvim"
+if [ -L "$LEGACY_LINK" ] \
+    && [ "$(readlink -m "$LEGACY_LINK")" = "$(readlink -m "$LEGACY_INSTALL_DIR/bin/nvim")" ]; then
+    unlink "$LEGACY_LINK"
+    echo "🔧 Removed the legacy Neovim tarball command link"
 fi
 
-# Skip if a recent enough nvim is on PATH
-if command -v nvim &>/dev/null && [ "${FPI_NVIM_UPDATE:-0}" != "1" ]; then
-    INSTALLED=$(nvim --version | head -1 | awk '{print $2}' | tr -d 'v')
-    echo "✅ Neovim $INSTALLED already on PATH ($(command -v nvim))"
-    echo "💡 To force a reinstall, remove $INSTALL_DIR and re-run."
-    exit 0
-fi
-
-# Resolve latest release tag
-echo "🔍 Resolving latest Neovim release..."
-NVIM_VERSION="${NVIM_VERSION:-}"
-if [ -z "$NVIM_VERSION" ]; then
-    NVIM_VERSION=$(latest_github_tag neovim/neovim)
-fi
-echo "📥 Neovim $NVIM_VERSION"
-
-# Pick correct asset for arch (Neovim ships nvim-linux-x86_64 / nvim-linux-arm64)
-ARCH_RAW=$(uname -m)
-case "$ARCH_RAW" in
-    x86_64)  ASSET="nvim-linux-x86_64.tar.gz" ;;
-    aarch64) ASSET="nvim-linux-arm64.tar.gz"  ;;
-    *) echo "❌ Unsupported architecture: $ARCH_RAW"; exit 1 ;;
-esac
-
-URL="${NVIM_ARCHIVE_URL:-https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${ASSET}}"
-
-if [ "${FPI_NVIM_UPDATE:-0}" = "1" ] && [ -n "${NVIM_ARCHIVE_URL:-}" ]; then
-    echo "❌ Automatic Neovim updates do not allow a custom archive URL"
-    exit 1
-fi
-
-TMP=$(mktemp -d)
-STAGE=""
-BACKUP=""
-cleanup() {
-    rm -rf "$TMP"
-    [ -z "$STAGE" ] || rm -rf "$STAGE"
-    if [ -n "$BACKUP" ] && [ -e "$BACKUP" ] && [ ! -e "$INSTALL_DIR" ]; then
-        mv "$BACKUP" "$INSTALL_DIR" || echo "⚠️  Previous install retained at $BACKUP" >&2
-    fi
-}
-trap cleanup EXIT
-wget --tries=3 --waitretry=2 -nv --show-progress -O "$TMP/nvim.tar.gz" "$URL"
-
-# A custom mirror is untrusted, so it must always declare its digest.
-EXPECTED_SHA="${NVIM_ARCHIVE_SHA256:-}"
-if [ -z "$EXPECTED_SHA" ] && [ -n "${NVIM_ARCHIVE_URL:-}" ]; then
-    echo "❌ A custom Neovim archive requires NVIM_ARCHIVE_SHA256"
-    exit 1
-fi
-
-# Upstream's checksum publishing has moved around: v0.10.x shipped a per-asset
-# <asset>.sha256sum, v0.11.0 shipped an aggregate shasum.txt, and v0.11.4 and
-# later publish neither. Try both locations and verify whenever upstream gives
-# us something to verify against.
-if [ -z "$EXPECTED_SHA" ]; then
-    RELEASE_BASE="${URL%/*}"
-    if wget --tries=3 --waitretry=2 -q -O "$TMP/asset.sha256sum" "${URL}.sha256sum"; then
-        EXPECTED_SHA=$(awk 'NR==1 {print $1}' "$TMP/asset.sha256sum")
-    elif wget --tries=3 --waitretry=2 -q -O "$TMP/shasum.txt" "${RELEASE_BASE}/shasum.txt"; then
-        EXPECTED_SHA=$(awk -v want="$ASSET" '$2 == want || $2 == "*" want {print $1; exit}' "$TMP/shasum.txt")
-    fi
-fi
-
-if [ -n "$EXPECTED_SHA" ] && [[ ! "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{64}$ ]]; then
-    echo "❌ Neovim checksum is not a valid SHA-256 digest"
-    exit 1
-fi
-
-if [ -n "$EXPECTED_SHA" ]; then
-    echo "$EXPECTED_SHA  $TMP/nvim.tar.gz" | sha256sum --check --quiet
-    echo "✅ Checksum verified"
-elif [ "${FPI_NVIM_UPDATE:-0}" = "1" ]; then
-    echo "❌ Refusing to replace Neovim during an automatic update without a valid checksum"
-    exit 1
+if dnf_installed neovim; then
+    echo "✅ Neovim is already installed ($(rpm -q --qf '%{VERSION}\n' neovim))"
 else
-    echo "⚠️  Neovim $NVIM_VERSION publishes no checksum asset — cannot verify the download"
-    echo "   Fetched over TLS from github.com; set NVIM_ARCHIVE_SHA256 to enforce a digest."
+    echo "📦 Installing Fedora's Neovim package..."
+    dnf_install neovim
 fi
 
-# Build and validate away from the destination, then replace it atomically.
-INSTALL_PARENT=$(dirname "$INSTALL_DIR")
-mkdir -p "$INSTALL_PARENT"
-STAGE=$(mktemp -d "$INSTALL_PARENT/.nvim-stage.XXXXXX")
-tar -xzf "$TMP/nvim.tar.gz" -C "$STAGE" --strip-components=1
-if [ ! -x "$STAGE/bin/nvim" ] || ! "$STAGE/bin/nvim" --version &>/dev/null; then
-    echo "❌ Downloaded archive does not contain a working Neovim binary"
-    exit 1
-fi
-
-if [ -e "$INSTALL_DIR" ]; then
-    BACKUP=$(mktemp -d "$INSTALL_PARENT/.nvim-backup.XXXXXX")
-    rmdir "$BACKUP"
-    mv "$INSTALL_DIR" "$BACKUP"
-fi
-if ! mv "$STAGE" "$INSTALL_DIR"; then
-    if [ -n "$BACKUP" ] && mv "$BACKUP" "$INSTALL_DIR"; then
-        BACKUP=""
-    fi
-    echo "❌ Could not replace Neovim installation"
-    exit 1
-fi
-STAGE=""
-if [ -n "$BACKUP" ]; then
-    rm -rf "$BACKUP"
-    BACKUP=""
-fi
-
-# Link the validated install into ~/.local/bin.
-mkdir -p "$BIN_DIR"
-ln -sf "$INSTALL_DIR/bin/nvim" "$NVIM_BIN"
-
-# Ensure ~/.local/bin is on PATH (idempotent).
-# Single quotes are intentional — `$HOME` / `$PATH` must be literal in the rc file.
-# shellcheck disable=SC2016
-PATH_LINE='[ -d "$HOME/.local/bin" ] && case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH";; esac'
-for RC in "$HOME/.zshrc" "$HOME/.bashrc"; do
-    # shellcheck disable=SC2016
-    if [ -f "$RC" ] && ! grep -qF '$HOME/.local/bin' "$RC"; then
-        {
-            echo ""
-            echo "# ~/.local/bin (added by nvim.sh)"
-            echo "$PATH_LINE"
-        } >> "$RC"
-    fi
-done
-
-# Skeleton config if user has none
+# Write a small starter only when the user has no existing Neovim config.
 NVIM_CONFIG="$HOME/.config/nvim"
 if [ ! -e "$NVIM_CONFIG/init.lua" ] && [ ! -e "$NVIM_CONFIG/init.vim" ]; then
     mkdir -p "$NVIM_CONFIG"
@@ -192,6 +56,9 @@ LUA
     echo "📝 Wrote starter $NVIM_CONFIG/init.lua"
 fi
 
-echo ""
-echo "✅ Neovim $NVIM_VERSION installed → $NVIM_BIN"
-echo "💡 Launch with: nvim"
+if command -v nvim &>/dev/null; then
+    echo "✅ Neovim installed ($(nvim --version | head -1))"
+else
+    echo "❌ Neovim installation failed"
+    exit 1
+fi

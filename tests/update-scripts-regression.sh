@@ -452,25 +452,6 @@ if find "$go_case/home/sdk" -maxdepth 1 -name '.go-update-*' | grep -q .; then
     fail "update-go left rollback artifacts after restoring the previous SDK"
 fi
 
-nvim_pin_case="$TMP/mock-nvim-pin"
-nvim_pin_install="$nvim_pin_case/home/.local/share/nvim-stable"
-mkdir -p "$nvim_pin_install/bin" "$nvim_pin_case/home/.local/bin" "$nvim_pin_case/bin"
-make_logging_tool nvim "$nvim_pin_install/bin"
-ln -s "$nvim_pin_install/bin/nvim" "$nvim_pin_case/home/.local/bin/nvim"
-for command_name in dirname readlink; do
-    ln -s "$(command -v "$command_name")" "$nvim_pin_case/bin/$command_name"
-done
-: >"$nvim_pin_case/invocations.log"
-/usr/bin/env -i HOME="$nvim_pin_case/home" PATH="$nvim_pin_case/bin" \
-    NVIM_VERSION=v0.11.4 UPDATE_TEST_LOG="$nvim_pin_case/invocations.log" \
-    /bin/bash "$UPDATES_DIR/update-nvim.sh" >"$nvim_pin_case/output.log" 2>&1 \
-    || fail "update-nvim failed while honoring NVIM_VERSION"
-grep -Fqi 'pinned' "$nvim_pin_case/output.log" \
-    || fail "update-nvim did not report its NVIM_VERSION skip"
-if [[ -s "$nvim_pin_case/invocations.log" ]]; then
-    fail "update-nvim invoked the managed binary despite NVIM_VERSION"
-fi
-
 # Mistral Vibe is an explicitly named uv tool rather than a broad tool upgrade.
 mistral_case="$TMP/mock-mistral-vibe"
 mkdir -p "$mistral_case/home/.local/share/uv/tools/mistral-vibe" \
@@ -484,31 +465,6 @@ make_logging_tool uv "$mistral_case/bin"
     /bin/bash "$UPDATES_DIR/update-mistral-vibe.sh" >"$mistral_case/output.log" 2>&1 \
     || fail "updates/update-mistral-vibe.sh failed against the uv fixture"
 assert_log_line 'uv tool upgrade mistral-vibe' "$mistral_case/invocations.log"
-
-# Android Studio's updater must target only its snap, not refresh every snap.
-android_case="$TMP/mock-android-studio"
-mkdir -p "$android_case/home" "$android_case/bin"
-for command_name in dirname awk; do
-    ln -s "$(command -v "$command_name")" "$android_case/bin/$command_name"
-done
-cat >"$android_case/bin/snap" <<'SNAP_STUB'
-#!/bin/bash
-printf 'snap %s\n' "$*" >>"$UPDATE_TEST_LOG"
-if [[ "$*" == 'list android-studio' ]]; then
-    printf '%s\n' 'Name Version Rev Tracking Publisher Notes' 'android-studio 2026.1 1 latest/stable google classic'
-fi
-SNAP_STUB
-cat >"$android_case/bin/sudo" <<'SUDO_STUB'
-#!/bin/bash
-printf 'sudo %s\n' "$*" >>"$UPDATE_TEST_LOG"
-SUDO_STUB
-chmod +x "$android_case/bin/snap" "$android_case/bin/sudo"
-: >"$android_case/invocations.log"
-/usr/bin/env -i HOME="$android_case/home" PATH="$android_case/bin" \
-    UPDATE_TEST_LOG="$android_case/invocations.log" \
-    /bin/bash "$UPDATES_DIR/update-android-studio.sh" >"$android_case/output.log" 2>&1 \
-    || fail "updates/update-android-studio.sh failed against the snap fixture"
-assert_log_line 'sudo snap refresh android-studio' "$android_case/invocations.log"
 
 # Fisher uses Fish's command mode and updates Fisher plus installed plugins.
 fisher_case="$TMP/mock-fisher"
@@ -950,8 +906,8 @@ grep -Fq 'FPI_LAZYDOCKER_UPDATE=1' "$UPDATES_DIR/update-lazydocker.sh" \
     || fail "update-lazydocker does not delegate to the verified installer"
 grep -Fq 'FPI_ATUIN_UPDATE=1' "$UPDATES_DIR/update-atuin.sh" \
     || fail "update-atuin does not delegate to the verified installer"
-grep -Fq 'FPI_NVIM_UPDATE=1' "$UPDATES_DIR/update-nvim.sh" \
-    || fail "update-nvim does not delegate to the rollback-capable installer"
+grep -Fq 'FPI_ANDROID_STUDIO_UPDATE=1' "$UPDATES_DIR/update-android-studio.sh" \
+    || fail "update-android-studio does not delegate to the checksum-verifying installer"
 
 verified_source="$UPDATES_DIR/update-ctop.sh"
 grep -Fq 'sha256sum --check --quiet' "$verified_source" \

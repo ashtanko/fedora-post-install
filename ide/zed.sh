@@ -8,8 +8,11 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_HELPER="$REPO_ROOT/lib/config.bash"
+PKG_HELPER="$REPO_ROOT/lib/pkg.bash"
 # shellcheck source=lib/config.bash
 source "$CONFIG_HELPER" || { echo "❌ Missing config helper: $CONFIG_HELPER" >&2; exit 1; }
+# shellcheck source=lib/pkg.bash
+source "$PKG_HELPER" || { echo "❌ Missing package helper: $PKG_HELPER" >&2; exit 1; }
 load_config "$REPO_ROOT"
 
 echo "🚀 Installing Zed IDE..."
@@ -19,6 +22,12 @@ if [[ -f "$ZED_BIN" ]] && "$ZED_BIN" --version 2>/dev/null | grep -qi "zed"; the
     echo "✅ Zed already installed ($("$ZED_BIN" --version 2>/dev/null || echo 'version unknown'))"
     exit 0
 fi
+
+# Zed's official installer supports the two RPM architectures mapped by the
+# shared helper. Fedora's Zed packages are community-maintained, so retain the
+# upstream installer and ensure its download prerequisite through DNF.
+rpm_arch >/dev/null
+dnf_install curl
 
 echo "📦 Installing Zed (preview channel) via official install script..."
 ZED_INSTALLER=$(mktemp)

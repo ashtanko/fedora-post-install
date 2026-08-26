@@ -138,11 +138,11 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 |---|---|
 | `zed.sh` | Zed editor (preview channel) via official installer |
 | `vscode-extensions.sh` | Bulk-install extensions from `$VSCODE_EXTENSIONS` (whitespace-separated) |
-| `jetbrains-toolbox.sh` | JetBrains Toolbox app + desktop entry; pick IDEs from the Toolbox UI |
-| `nvim.sh` | Latest Neovim from official GitHub release tarball; writes starter `init.lua` if absent |
-| `android-studio.sh` | Android Studio via snap (`--classic`) — the SDK/emulator/device tooling `dev/flutter.sh` leaves out of scope |
-| `cursor.sh` | Cursor editor (official AppImage, amd64 only) — GUI counterpart to `ai/cursor-agent.sh`'s CLI agent |
-| `dbeaver.sh` | DBeaver Community via its official apt repo — GUI counterpart to `dev/databases.sh`'s CLI clients |
+| `jetbrains-toolbox.sh` | Checksum-verified Toolbox archive plus Fedora GUI runtime packages |
+| `nvim.sh` | Fedora's current Neovim package; writes starter `init.lua` if absent |
+| `android-studio.sh` | Google's checksum-verified current Android Studio tarball for x86_64 |
+| `cursor.sh` | Cursor editor from its fingerprint-pinned official RPM repository |
+| `dbeaver.sh` | DBeaver Community through the Flathub package listed on its official download page |
 
 ### ai/
 | Script | Purpose |
@@ -286,10 +286,6 @@ Copy `.env.example` to `.env` and fill in your values. `.env` is gitignored. Eve
 | `ANTHROPIC_API_KEY` | ai/prompt-runner.sh | — required for `-b anthropic` |
 | `VSCODE_EXTENSIONS` | ide/vscode-extensions.sh | — empty = no-op |
 | `JETBRAINS_TOOLBOX_DIR` | ide/jetbrains-toolbox.sh | `$HOME/.local/share/JetBrains/Toolbox` |
-| `NVIM_INSTALL_DIR` | ide/nvim.sh | `$HOME/.local/share/nvim-stable` |
-| `NVIM_VERSION` | ide/nvim.sh | latest release |
-| `NVIM_ARCHIVE_URL` / `NVIM_ARCHIVE_SHA256` | ide/nvim.sh | official release — a custom URL requires the checksum |
-| `CURSOR_INSTALL_DIR` | ide/cursor.sh | `$HOME/.local/share/Cursor` |
 | `POSTMAN_INSTALL_DIR` | apps/postman.sh | `$HOME/.local/share/Postman` |
 | `ENABLE_GIT_COMMIT_SIGNING` | tools/git-config.sh | `no` |
 | `GPG_KEY_ID` | system/gpg.sh, tools/git-config.sh | — unique `GIT_EMAIL` match |

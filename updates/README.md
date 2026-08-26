@@ -18,7 +18,7 @@ bash updates/update-all.sh
 |---|---|
 | `update-aider.sh` | `aider --upgrade` |
 | `update-all.sh` | Runs every other updater and reports a combined result |
-| `update-android-studio.sh` | `snap refresh android-studio` |
+| `update-android-studio.sh` | Installs the checksum-verified current Android Studio tarball from Google |
 | `update-antigravity.sh` | Upgrades only the `antigravity` APT package |
 | `update-atuin.sh` | Installs the checksum-verified latest official Atuin release asset |
 | `update-aws-cli.sh` | Verifies AWS's detached signature, then runs the v2 installer with `--update` |
@@ -43,7 +43,6 @@ bash updates/update-all.sh
 | `update-mcp-inspector.sh` | Installs the latest npm package into the owning global prefix |
 | `update-mistral-vibe.sh` | `uv tool upgrade mistral-vibe` |
 | `update-node.sh` | Updates the official NVM checkout, then installs and selects the latest Node.js LTS |
-| `update-nvim.sh` | Replaces the managed installation only when an official or configured release digest is available |
 | `update-oh-my-zsh.sh` | Runs Oh My Zsh's automation-safe upgrade script |
 | `update-opencode.sh` | `opencode upgrade --method curl` |
 | `update-pipx-tools.sh` | Upgrades installed project-managed pipx applications |
@@ -52,11 +51,11 @@ bash updates/update-all.sh
 | `update-rust.sh` | `rustup update` |
 | `update-starship.sh` | Atomically installs the checksum-verified latest official release asset |
 | `update-tpm.sh` | Fast-forwards the clean TPM checkout |
-| `update-vscode-extensions.sh` | `code --update-extensions` for the Debian-packaged VS Code installation |
-| `update-vscode.sh` | Upgrades only the Microsoft `code` APT package |
+| `update-vscode-extensions.sh` | `code --update-extensions` for the RPM-packaged VS Code installation |
+| `update-vscode.sh` | Upgrades only the Microsoft `code` RPM package |
 
 Individual scripts exit successfully when the matching installation is absent or is not owned by the installation method this project uses. Source-checkout updaters fail instead of overwriting uncommitted changes. `update-all.sh` continues after a failure and returns a non-zero status with the failed script names.
 
-Version pins are also respected: Codex, Cline, GitHub Copilot CLI, Go, Neovim, MCP Inspector, LLM, and LiteLLM stay unchanged when their corresponding configuration selects a fixed release or custom archive.
+Version pins are also respected: Codex, Cline, GitHub Copilot CLI, Go, MCP Inspector, LLM, and LiteLLM stay unchanged when their corresponding configuration selects a fixed release or custom archive.
 
-Most software installed through APT remains covered by normal system package upgrades, and applications with their own automatic updater keep using it. The repository omits tools that have no documented, ownership-compatible, verifiable scriptable update path; it does not guess at manual downloads or execute unauthenticated mutable installers. See `skipped.txt` for the audited per-installer reasons.
+Most software installed through DNF remains covered by normal system package upgrades, and applications with their own automatic updater keep using it. The repository omits tools that have no documented, ownership-compatible, verifiable scriptable update path; it does not guess at manual downloads or execute unauthenticated mutable installers. See `skipped.txt` for the audited per-installer reasons.

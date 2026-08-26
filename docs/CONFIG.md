@@ -63,10 +63,6 @@ For a source checkout, `.env` is gitignored and is a convenient repo-local confi
 | `SUDO_TIMESTAMP_TIMEOUT_MINUTES` | [system/sudoers.sh](../system/sudoers.sh) | — | Opt-in only: unset = script skips. Minutes; `-1` = never expire |
 | `VSCODE_EXTENSIONS` | [ide/vscode-extensions.sh](../ide/vscode-extensions.sh), [updates/update-vscode-extensions.sh](../updates/update-vscode-extensions.sh) | empty | Whitespace-separated extension IDs; the updater refreshes all installed extensions |
 | `JETBRAINS_TOOLBOX_DIR` | [ide/jetbrains-toolbox.sh](../ide/jetbrains-toolbox.sh) | `$HOME/.local/share/JetBrains/Toolbox` | Toolbox install dir |
-| `NVIM_INSTALL_DIR` | [ide/nvim.sh](../ide/nvim.sh), [updates/update-nvim.sh](../updates/update-nvim.sh) | `$HOME/.local/share/nvim-stable` | Where the Neovim tarball is extracted |
-| `NVIM_VERSION` | [ide/nvim.sh](../ide/nvim.sh), [updates/update-nvim.sh](../updates/update-nvim.sh) | latest release | Pins a release tag (e.g. `v0.11.4`); the updater leaves pinned installs unchanged |
-| `NVIM_ARCHIVE_URL` / `NVIM_ARCHIVE_SHA256` | [ide/nvim.sh](../ide/nvim.sh), [updates/update-nvim.sh](../updates/update-nvim.sh) | official release | Custom URLs require a SHA-256 digest and disable automatic updates; a digest alone can authorize the matching official latest asset |
-| `CURSOR_INSTALL_DIR` | [ide/cursor.sh](../ide/cursor.sh) | `$HOME/.local/share/Cursor` | Where the Cursor AppImage is placed |
 | `POSTMAN_INSTALL_DIR` | [apps/postman.sh](../apps/postman.sh) | `$HOME/.local/share/Postman` | Where Postman is extracted; symlinked into `~/.local/bin` |
 | `GPG_KEY_ID` | [system/gpg.sh](../system/gpg.sh) | unique `GIT_EMAIL` match | Select an existing secret key explicitly when email lookup is ambiguous |
 | `ENABLE_GIT_COMMIT_SIGNING` | [tools/git-config.sh](../tools/git-config.sh) | `no` | Flip to `yes` after running [system/gpg.sh](../system/gpg.sh) |
