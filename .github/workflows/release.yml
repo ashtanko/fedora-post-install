@@ -7,15 +7,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build (without leading v) — for dry-run only'
+        description: 'Version to build (without leading v)'
         required: true
         default: '0.0.0-dev'
+      skip_tests:
+        description: 'Skip the lint and smoke gates (only when they already passed for this commit)'
+        type: boolean
+        default: false
+      publish:
+        description: 'Publish a real GitHub Release instead of uploading dry-run artifacts'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   lint:
+    if: ${{ !inputs.skip_tests }}
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +35,7 @@ jobs:
       - run: make check
 
   smoke:
+    if: ${{ !inputs.skip_tests }}
     runs-on: self-hosted
     strategy:
       fail-fast: false
@@ -47,6 +57,9 @@ jobs:
 
   release:
     needs: [lint, smoke]
+    # success() (the default) is false when a needed job is skipped, which would
+    # strand this job whenever skip_tests is used. Real gate failures still block.
+    if: ${{ !cancelled() && !failure() }}
     runs-on: self-hosted
     permissions:
       contents: write
@@ -112,7 +125,7 @@ jobs:
         run: bash tests/release-artifact.sh "$SEMVER"
 
       - name: Upload artifacts (workflow_dispatch dry-run)
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.publish }}
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ steps.ver.outputs.semver }}
@@ -122,7 +135,7 @@ jobs:
             dist/SHA256SUMS
 
       - name: Create GitHub Release
-        if: github.event_name == 'push'
+        if: ${{ github.event_name == 'push' || inputs.publish }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
