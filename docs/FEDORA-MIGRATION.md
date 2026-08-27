@@ -357,10 +357,13 @@ Phase 5 test and CI references (checked 2026-08-26):
   <https://fedorapeople.org/groups/schedule/f-44/f-44-key-tasks.html>. Fedora's
   lifecycle policy is documented at
   <https://docs.fedoraproject.org/en-US/releases/lifecycle/>.
-- GitHub's official Ubuntu 24.04 runner inventory includes ShellCheck, so the
-  workflows retain `ubuntu-latest` as their host and use its preinstalled
-  binary while Fedora remains the Docker target:
-  <https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md>.
+- All workflow jobs run on `self-hosted` runners while Fedora remains the
+  Docker target. The runner host must therefore provide the tooling that
+  GitHub-hosted images preinstall: `shellcheck` (the `Verify runner tools`
+  step fails fast when it is missing), Docker with Buildx, `git`, `rsync`,
+  and `tar`. Go is still provisioned per job by `actions/setup-go` from
+  `go.mod`. Runner labels are documented at
+  <https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/using-self-hosted-runners-in-a-workflow>.
 - The Fedora 43 and 44 full Docker smoke and idempotency stages each selected
   all 148 manifest entries: 77 passed, 0 failed, and 71 were intentionally
   skipped with a Fedora-specific reason. The test image includes `diffutils`
