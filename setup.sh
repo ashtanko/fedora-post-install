@@ -94,14 +94,23 @@ run_script() {
     else
         log "\n$(date '+%Y-%m-%d %H:%M:%S') ▶ Running: $label"
     fi
-    if bash "$SCRIPT_DIR/$script" 2>&1 | tee -a "$LOG_FILE"; then
-        touch "$marker"
-        success "$label complete"
-        RESULTS["$label"]="ok"
-    else
-        fail "$label FAILED (see $LOG_FILE for details)"
-        RESULTS["$label"]="failed"
-    fi
+    local status=0
+    bash "$SCRIPT_DIR/$script" 2>&1 | tee -a "$LOG_FILE" || status=$?
+    case "$status" in
+        0)
+            touch "$marker"
+            success "$label complete"
+            RESULTS["$label"]="ok"
+            ;;
+        "$FPI_EXIT_UNSUPPORTED_HOST")
+            warn "$label skipped — this host cannot run it (see $LOG_FILE)"
+            RESULTS["$label"]="unsupported"
+            ;;
+        *)
+            fail "$label FAILED (see $LOG_FILE for details)"
+            RESULTS["$label"]="failed"
+            ;;
+    esac
 }
 
 declare -a CATALOG_CATEGORY_IDS=()
@@ -161,9 +170,10 @@ if [ "$MODE" = "run-item" ]; then
         exit 2
     fi
     run_script "$RUN_LABEL" "$RUN_ITEM"
-    if [ "${RESULTS[$RUN_LABEL]}" = "failed" ]; then
-        exit 1
-    fi
+    case "${RESULTS[$RUN_LABEL]}" in
+        failed)      exit 1 ;;
+        unsupported) exit "$FPI_EXIT_UNSUPPORTED_HOST" ;;
+    esac
     exit 0
 fi
 
@@ -264,9 +274,10 @@ header "Setup Summary"
 OK=0; FAILED=0; SKIPPED=0
 for label in "${!RESULTS[@]}"; do
     case "${RESULTS[$label]}" in
-        ok)      success "$label"; ((++OK)) ;;
-        failed)  fail    "$label"; ((++FAILED)) ;;
-        skipped) warn    "$label (skipped)"; ((++SKIPPED)) ;;
+        ok)          success "$label"; ((++OK)) ;;
+        failed)      fail    "$label"; ((++FAILED)) ;;
+        skipped)     warn    "$label (skipped — already ran)"; ((++SKIPPED)) ;;
+        unsupported) warn    "$label (skipped — unsupported on this host)"; ((++SKIPPED)) ;;
     esac
 done
 

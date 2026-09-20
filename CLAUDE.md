@@ -198,6 +198,7 @@ All scripts require `sudo` where needed and will prompt for credentials. Scripts
 - Latest GitHub release lookups: use the `latest_github_tag` helper (follows the `github.com/<owner>/<repo>/releases/latest` redirect), never `api.github.com` — unauthenticated API calls are rate-limited per IP and start returning 403 in CI
 - Network fetches: `curl --retry 3 --retry-all-errors`, so one dropped connection doesn't fail the whole script under `set -e`
 - Fedora packages: use `dnf_install`/`dnf_group_install`; use `repo_add` for third-party RPM repositories and keep package signature checking enabled
+- Atomic hosts: `dnf_install`, `dnf_group_install`, `copr_enable`, and `repo_add` call `pkg_require_mutable_host`, which exits `$FPI_EXIT_UNSUPPORTED_HOST` (78) on an rpm-ostree/bootc image rather than letting dnf fail with a message about the wrong problem. Scripts need no change to benefit; anything reaching for RPMs directly should call the guard itself
 - Never pipe a download into a shell (`curl … | bash`). Fetch to a file, verify the digest where upstream publishes one, then run or install it — see [tools/just.sh](tools/just.sh) for the shape
 - Never end a script with a bare `[[ cond ]] && cmd`: as the last line it exits 1 whenever the condition is false, so setup.sh reports a successful run as FAILED and writes no marker. Use an `if` block
 
@@ -210,6 +211,7 @@ The Fedora-only package/architecture rules and the final two safety rules are en
 - Logs all output with timestamps to `~/fedora-setup.log`
 - Tracks completed steps via marker files in `~/.cache/fedora-setup/`; delete a marker to force re-run
 - Shows a pass/fail/skipped summary at the end
+- Exit 78 from a step means the host cannot run it (an atomic image that cannot layer RPMs). It counts as skipped, not failed, and deliberately writes **no** marker so the step runs when the repo is used on a mutable Fedora host
 
 ## .env Configuration
 

@@ -131,6 +131,12 @@ chmod +x "$FAKEBIN"/*
 export PATH="$FAKEBIN:$PATH"
 export PKG_TEST_CALL_LOG="$CALL_LOG"
 export PKG_TEST_CAPTURE_ROOT="$CAPTURE_ROOT"
+# Everything below assumes a mutable host unless a case opts into the atomic
+# marker, so the suite gives the same result on an ostree machine.
+MUTABLE_MARKER="$TMP/not-ostree"
+ATOMIC_MARKER="$TMP/ostree-booted"
+: >"$ATOMIC_MARKER"
+export _FPI_OSTREE_MARKER="$MUTABLE_MARKER"
 
 # shellcheck source=../lib/pkg.bash
 source "$HELPER"
@@ -238,5 +244,56 @@ PKG_TEST_FINGERPRINTS="$fingerprint" \
         https://packages.example.test/key.asc "$fingerprint" >/dev/null 2>&1 \
     && fail "repo_add accepted an unsafe repository name"
 assert_no_sudo_calls
+
+
+# ── Atomic (rpm-ostree/bootc) hosts ──────────────────────────────────────────
+# dnf cannot layer RPMs there, so the helpers must skip with the reserved status
+# instead of letting dnf fail with a message about the wrong problem.
+
+# The guard exits rather than returns, so the call has to run in a subshell.
+# The marker is flipped in this shell, not inside it, so the value is not lost.
+with_atomic_host() {
+    local status=0
+    _FPI_OSTREE_MARKER="$ATOMIC_MARKER"
+    ( "$@" ) || status=$?
+    _FPI_OSTREE_MARKER="$MUTABLE_MARKER"
+    return "$status"
+}
+
+assert_exits_unsupported() {
+    local description="$1"
+    shift
+    local status=0
+    with_atomic_host "$@" >/dev/null 2>&1 || status=$?
+    [[ "$status" -eq "$FPI_EXIT_UNSUPPORTED_HOST" ]] \
+        || fail "$description returned $status instead of $FPI_EXIT_UNSUPPORTED_HOST on an atomic host"
+}
+
+: >"$CALL_LOG"
+assert_exits_unsupported "dnf_install" dnf_install ghost-package
+assert_exits_unsupported "dnf_group_install" dnf_group_install development-tools
+assert_exits_unsupported "copr_enable" copr_enable someone/project
+assert_exits_unsupported "repo_add" \
+    repo_add atomic https://packages.example.test/repo \
+        https://packages.example.test/key.asc "$fingerprint"
+assert_no_sudo_calls
+if grep -q '^dnf:' "$CALL_LOG"; then
+    fail "an atomic host still reached dnf"
+fi
+
+# A package the image already ships must stay a success, otherwise every step
+# whose only RPM need is an already-present prerequisite regresses into a skip.
+: >"$CALL_LOG"
+export RPM_TEST_INSTALLED="tmux"
+with_atomic_host dnf_install tmux \
+    || fail "dnf_install skipped a package the atomic image already has"
+unset RPM_TEST_INSTALLED
+assert_no_sudo_calls
+
+# Flatpak is a supported install path on atomic hosts and must not be guarded.
+: >"$CALL_LOG"
+with_atomic_host flatpak_install io.example.App >/dev/null \
+    || fail "flatpak_install was blocked on an atomic host"
+assert_log "flatpak:install --user -y flathub io.example.App"
 
 echo "✅ Fedora package helper regression checks passed"

@@ -43,6 +43,41 @@ EOF
     pass "setup summary counts success, failure, and skipped under set -e"
 }
 
+# A host that cannot layer RPMs (an atomic image) must report skips, not a
+# broken run: every step reporting the reserved status has to leave the summary
+# free of failures, exit 0, and write no markers so the steps run elsewhere.
+test_setup_unsupported_host() {
+    local root="$TEST_ROOT/unsupported"
+    local home="$TEST_ROOT/unsupported/home" fakebin="$TEST_ROOT/unsupported/bin"
+    mkdir -p "$home/.cache/fedora-setup" "$fakebin"
+    cat > "$fakebin/clear" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+    cat > "$fakebin/bash" <<'EOF'
+#!/bin/bash
+case "$1" in
+    */essentials/swap.sh|*/essentials/firewall.sh) exit 78 ;;
+    *) exit 99 ;;
+esac
+EOF
+    chmod +x "$fakebin/clear" "$fakebin/bash"
+
+    local output status
+    set +e
+    output=$(printf '\n1 2\n\n\n\n\n\n\n\n\ny\n' | HOME="$home" PATH="$fakebin:$PATH" \
+        SETUP_LOG_FILE="$root/setup.log" /bin/bash "$REPO_ROOT/setup.sh" 2>&1)
+    status=$?
+    set -e
+    [ "$status" -eq 0 ] || fail "a run whose steps the host cannot support should exit 0, got $status"
+    assert_contains "$output" "0 failed"
+    assert_contains "$output" "2 skipped"
+    assert_contains "$output" "unsupported on this host"
+    [ ! -f "$home/.cache/fedora-setup/essentials_swap.sh.done" ] \
+        || fail "an unsupported step wrote a completion marker"
+    pass "unsupported host reports skips, exits 0, and stays re-runnable"
+}
+
 test_backup_cleanup() {
     local home="$TEST_ROOT/backup/home" fakebin="$TEST_ROOT/backup/bin" output status
     mkdir -p "$home/.ssh" "$home/backups" "$fakebin"
@@ -212,6 +247,7 @@ EOF
 }
 
 test_setup_summary
+test_setup_unsupported_host
 test_backup_cleanup
 test_go_install
 test_swap_persistence

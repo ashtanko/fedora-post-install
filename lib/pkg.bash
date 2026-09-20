@@ -1,7 +1,16 @@
 # shellcheck shell=bash
 
+# Exit status a script uses to tell the installer "this host cannot run me".
+# setup.sh maps it to a skip rather than a failure so an unsupported host does
+# not read as 20 broken scripts, and the step stays re-runnable elsewhere.
+FPI_EXIT_UNSUPPORTED_HOST=78
+
 _pkg_error() {
     echo "❌ $*" >&2
+}
+
+_pkg_skip() {
+    echo "⏭️  $*" >&2
 }
 
 _pkg_require_command() {
@@ -10,6 +19,35 @@ _pkg_require_command() {
         _pkg_error "Required command is not available: $command_name"
         return 1
     fi
+}
+
+# Fedora's atomic variants (Silverblue, Kinoite, Bazzite, Bluefin, ...) boot a
+# composed ostree image: /usr is read-only, the rpmdb underneath it cannot be
+# written, and dnf either refuses to run or cannot commit its transaction.
+# ostree-prepare-root stamps this file on every such boot — including bootc
+# images — so keying off it covers every derivative without matching on distro
+# names that change.
+_pkg_atomic_host() {
+    [[ -e "${_FPI_OSTREE_MARKER:-/run/ostree-booted}" ]]
+}
+
+# Stops a script that has to layer RPMs when the booted image will not allow it.
+# Explains the host and the supported alternatives, then exits with the reserved
+# skip status instead of letting dnf fail with a message about the wrong problem.
+pkg_require_mutable_host() {
+    local what="${1:-This step}"
+
+    _pkg_atomic_host || return 0
+
+    _pkg_skip "$what needs to install RPMs, which this host does not allow."
+    _pkg_skip "Detected an atomic Fedora image (rpm-ostree/bootc): /usr is" \
+        "read-only and dnf cannot commit a transaction."
+    _pkg_skip "Install it one of these ways instead:"
+    _pkg_skip "  rpm-ostree install <package>  # layer onto the image, needs a reboot"
+    _pkg_skip "  flatpak install <app-id>      # GUI applications"
+    _pkg_skip "  brew install <formula>        # CLI tools, no reboot"
+    _pkg_skip "  distrobox create              # a mutable Fedora box for dev work"
+    exit "$FPI_EXIT_UNSUPPORTED_HOST"
 }
 
 dnf_major() {
@@ -65,6 +103,7 @@ dnf_install() {
         return 0
     fi
 
+    pkg_require_mutable_host "Installing ${missing[*]}"
     _pkg_require_command dnf || return 1
     sudo dnf -q install -y --setopt=install_weak_deps=False "${missing[@]}"
 }
@@ -73,6 +112,7 @@ dnf_group_install() {
     local group="${1:?dnf_group_install requires a group name}"
     local major
 
+    pkg_require_mutable_host "Installing the '$group' package group"
     major="$(dnf_major)" || return 1
     if [[ "$major" == 5 ]]; then
         sudo dnf -q group install -y --setopt=install_weak_deps=False "$group"
@@ -166,6 +206,7 @@ EOF
         return 0
     fi
 
+    pkg_require_mutable_host "Configuring the '$name' repository"
     curl -fsSL --retry 3 --retry-all-errors -o "$TMP_KEY" "$gpgkey_url"
     if ! _pkg_key_matches "$TMP_KEY" "$expected_fingerprint"; then
         actual_fingerprint="$(_pkg_key_fingerprints "$TMP_KEY" | paste -sd, -)"
@@ -191,6 +232,7 @@ copr_enable() {
         return 2
     fi
 
+    pkg_require_mutable_host "Enabling the '$project' COPR"
     dnf_install dnf-plugins-core
     sudo dnf -q copr enable -y "$project"
 }

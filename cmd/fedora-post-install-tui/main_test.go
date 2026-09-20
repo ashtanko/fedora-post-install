@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -122,5 +123,26 @@ func TestParseOptionsUsesFedoraDefaults(t *testing.T) {
 	}
 	if want := filepath.Join(home, "fedora-setup.log"); opts.logFile != want {
 		t.Fatalf("unexpected default log file: got %q, want %q", opts.logFile, want)
+	}
+}
+
+func TestUnsupportedHostExitIsSkippedNotFailed(t *testing.T) {
+	skipErr := exec.Command("/bin/bash", "-c", "exit 78").Run()
+	if skipErr == nil {
+		t.Fatal("expected a non-nil error for exit 78")
+	}
+	if !unsupportedHost(skipErr) {
+		t.Error("exit 78 was not recognised as an unsupported host")
+	}
+	if interrupted(skipErr) {
+		t.Error("exit 78 was misread as an interrupt")
+	}
+
+	failErr := exec.Command("/bin/bash", "-c", "exit 1").Run()
+	if unsupportedHost(failErr) {
+		t.Error("an ordinary failure was misread as an unsupported host")
+	}
+	if unsupportedHost(nil) {
+		t.Error("success was misread as an unsupported host")
 	}
 }

@@ -480,11 +480,23 @@ func (m model) finishScript(msg scriptFinishedMsg) (tea.Model, tea.Cmd) {
 		m.screen = summaryScreen
 		m.notice = "Installation stopped during " + m.items[msg.index].label
 		return m, nil
+	} else if unsupportedHost(msg.err) {
+		m.items[msg.index].status = skipped
 	} else {
 		m.items[msg.index].status = failed
 	}
 	m.queuePosition++
 	return m.startNextScript()
+}
+
+// Mirrors FPI_EXIT_UNSUPPORTED_HOST in lib/pkg.bash: the step could not run on
+// this host (an atomic image that cannot layer RPMs), which is a skip, not a
+// failure, and so is not offered for retry.
+const unsupportedHostExit = 78
+
+func unsupportedHost(err error) bool {
+	var exitError *exec.ExitError
+	return errors.As(err, &exitError) && exitError.ExitCode() == unsupportedHostExit
 }
 
 func interrupted(err error) bool {

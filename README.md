@@ -17,6 +17,7 @@ Automated shell scripts to provision a fresh Fedora Workstation installation wit
 ## Requirements
 
 - Fedora Workstation 43 or 44; other Fedora editions and derivatives are not tested
+- A **mutable** Fedora install. Atomic images (Silverblue, Kinoite, Bazzite, Bluefin) boot a read-only ostree/bootc system where RPMs cannot be layered from a script — see [Atomic Fedora variants](#atomic-fedora-variants)
 - `bash` (every script auto-re-execs under bash if invoked via `sh`)
 - `sudo` privileges (you'll be prompted as needed)
 - Network access for package downloads
@@ -199,10 +200,41 @@ Every script follows the same shape:
 - Temp files cleaned via `trap 'rm -f "$TMP"' EXIT`
 - Shell config additions written to **both** `~/.zshrc` and `~/.bashrc`, guarded by `grep -q`
 - Fedora packages go through `dnf_install`/`dnf_group_install`; third-party RPM repositories go through the fingerprint-pinning `repo_add` helper with package signature checks enabled
+- Those helpers detect an atomic host and skip rather than fail — see [Atomic Fedora variants](#atomic-fedora-variants)
 - Debian/Ubuntu package paths and ad-hoc architecture probes are rejected; downloads land in a file and are checksum-verified where upstream publishes a digest rather than piped into a shell
 - Emoji legend: 🚀 start · 📦 installing · ✅ success · ❌ error · ⚠️ warning · 💡 tip · 🔧 configuring · 🔍 detecting
 
 The mechanical parts of these conventions are enforced by [tests/script-contract-regression.sh](tests/script-contract-regression.sh), which checks every script — including the ones no Docker stage can execute.
+
+## Atomic Fedora variants
+
+Fedora's atomic images — Silverblue, Kinoite, **Bazzite**, Bluefin — boot a
+composed ostree/bootc system. `/usr` is read-only, the rpmdb underneath it
+cannot be written, and `dnf` either refuses to run or cannot commit its
+transaction. Nothing in this toolkit can layer an RPM there.
+
+Rather than let every affected step die with a message about the wrong problem,
+the package helpers detect the host and stop early:
+
+```
+⏭️  Installing bat fzf ripgrep eza jq htop tmux tree gh needs to install RPMs, which this host does not allow.
+⏭️  Detected an atomic Fedora image (rpm-ostree/bootc): /usr is read-only and dnf cannot commit a transaction.
+⏭️  Install it one of these ways instead:
+⏭️    rpm-ostree install <package>  # layer onto the image, needs a reboot
+⏭️    flatpak install <app-id>      # GUI applications
+⏭️    brew install <formula>        # CLI tools, no reboot
+⏭️    distrobox create              # a mutable Fedora box for dev work
+```
+
+Such a step counts as **skipped**, not failed, so the run summary reflects what
+the host can actually do. No completion marker is written, so the step runs
+normally if you later use the repo on a mutable Fedora install.
+
+Everything that installs into `$HOME` or `/usr/local` still works unchanged —
+on an atomic host that covers rustup, Starship, the Nerd Fonts, Zed, JetBrains
+Toolbox, lazydocker, tmux config, git config, and the GNOME/locale/hostname
+settings. Flatpak installs are not guarded either, since Flatpak is a supported
+path on these images.
 
 ## Contributing
 
